@@ -18,7 +18,9 @@
 
 iOS: Xcode 27.1 / iOS Simulator 27.0 arm64 대상으로 Debug Development Build 생성 성공. `xcodebuild -workspace ios/app.xcworkspace -scheme app -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,id=<available simulator id>' CODE_SIGNING_ALLOWED=NO build`로 검증했다. 설치·실행은 아직 확인하지 않았다.
 
-Android: 빌드 결과 확인 중. 로컬 검증용 식별자는 `com.example.mogeum.dev`다. 운영 식별자, 서명, 실기기 설치·실행, 네이티브 OCR 검증은 별도로 필요하다.
+Android: Android Studio JBR 25.0.3에서 `ANDROID_HOME=<SDK path> ./gradlew :app:assembleDebug --console=plain` 실행 성공(9분 25초, 499 tasks). arm64-v8a/armeabi-v7a/x86/x86_64 Debug APK를 생성했다. 기기 설치·실행은 아직 확인하지 않았다.
+
+GitHub Actions의 새 checkout에서도 npm ci → check → Expo 호환성 검사 → 전체 플랫폼 export가 통과했다. 로컬 작업 폴더 변경 후 새 checkout에서 npm ci와 check도 다시 통과했다. 네이티브 빌드는 동일 소스를 임시 checkout에서 검증한 결과다. 로컬 검증용 식별자는 `com.example.mogeum.dev`다. 운영 식별자, 서명, 실기기 설치·실행, 네이티브 OCR 검증은 별도로 필요하다.
 
 ## 의존성 점검
 
