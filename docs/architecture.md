@@ -1,6 +1,6 @@
 # 기술 구조
 
-상태: 구현 전 기본 설계. 실제 라이브러리 버전과 OCR 엔진은 검증 이슈에서 고정한다.
+상태: Expo 58 / RN 0.88 / Router 58 초기화. 아래 서버·상태 관리·OCR 구조는 구현 예정 설계다.
 
 ## 구성
 
@@ -19,7 +19,7 @@ React Native + Expo Development Build + TypeScript 앱이 Supabase Auth로 인�
 
 ## 권장 폴더 구조
 
-아직 아래 앱 폴더는 생성되지 않았다. 부트스트랩 이슈에서 불필요한 패키지 분리를 피하고 단일 Expo 앱으로 시작한다.
+현재 app/, src/lib/, tests/가 생성됐다. 아래는 후속 기능을 포함한 목표 구조다. 단일 Expo 앱으로 시작한다.
 
 ```text
 app/                     Expo Router routes

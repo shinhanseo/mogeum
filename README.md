@@ -6,7 +6,7 @@
 
 ## 현재 상태
 
-**개발 준비 단계입니다. 실행 가능한 앱이나 배포된 백엔드는 아직 없습니다.** 이 저장소에는 제품·디자인·기술 기준, 작업 이슈와 주종별 SVG 에셋이 있습니다. 개발 시작점은 [개발 로드맵](docs/milestones.md)과 [이슈 지도](docs/issue-map.md)입니다. 예시 화면의 메뉴·가격·사용자 기록은 실제 운영 데이터가 아닙니다.
+**앱 초기 설정을 구현 중입니다.** Expo Router 시작 화면, 서버 환경 설정 검증, CI와 테스트가 있습니다. 사용자용 화면·기록 저장·배포된 백엔드는 아직 없습니다. 제품·디자인·기술 기준, 작업 이슈와 주종별 SVG 에셋도 포함합니다. 개발 시작점은 [개발 로드맵](docs/milestones.md)과 [이슈 지도](docs/issue-map.md)입니다. 예시 화면의 메뉴·가격·사용자 기록은 실제 운영 데이터가 아닙니다.
 
 ## 출시 범위
 
@@ -40,6 +40,7 @@
 ## 문서
 
 - [개발 이슈 지도와 전체 체크리스트](docs/issue-map.md)
+- [앱 초기 설정 검증 결과](docs/verification/bootstrap.md)
 
 - [제품 정의와 사용자 흐름](docs/product.md)
 - [디자인·피그마 화면 지도](docs/design.md)
@@ -61,4 +62,15 @@
 
 ## 실행 안내
 
-아직 package.json, 앱 코드, Supabase 마이그레이션은 없습니다. 부트스트랩 이슈에서 실제 설치 버전을 고정하고 실행·검증 명령을 이 문서에 추가합니다. [환경 변수 예시](.env.example)에 비밀 값은 포함하지 않았습니다. Public 레포이므로 실제 키·개인 사진·로그인 토큰을 커밋하지 않습니다.
+Node **24.22.0**, npm **11.12.1**, Expo **58.0.14**, React Native **0.88.0**, React **19.3.0** 기준입니다. 실제 의존성은 package-lock.json에 고정합니다.
+
+```sh
+nvm use
+npm ci
+npm run check
+npm run web
+```
+
+설정 없이도 개발 상태 화면이 열립니다. 서버를 연결할 때 `.env.example`을 `.env`로 복사하고 Supabase URL/Publishable key를 설정합니다. 앱이 표시하는 설정 확인은 네트워크 연결 성공을 뜻하지 않습니다.
+
+Development Build는 `npm run ios` / `npm run android`로 만듭니다. Xcode 또는 Android SDK와 JDK가 필요하며 번들 식별자를 환경 변수로 지정해야 합니다. [개발 환경 설정](docs/setup.md)의 명령을 참고하세요. 네이티브 앱 설치 후 `npm start`로 Metro를 실행합니다. Web 확인은 네이티브 OCR·실기기 검증을 대체하지 않습니다.

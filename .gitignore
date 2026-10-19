@@ -15,3 +15,8 @@ coverage/
 *.mobileprovision
 supabase/.temp/
 supabase/.branches/
+
+ios/
+android/
+*.tsbuildinfo
+expo-env.d.ts
