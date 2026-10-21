@@ -1,15 +1,21 @@
 # 데이터 모델
 
-이 문서는 설계 계약이며 실행 가능한 마이그레이션이 아니다. 구현 시 enum·제약·인덱스·RLS와 실제 migration을 함께 확정한다. 기본 시간은 timestamptz, ID는 UUID다. 사용자 입력을 공통 제품의 검증된 정보로 자동 승격하지 않는다.
+기록 저장 기반은 `supabase/migrations/20261021090000_record_foundation.sql`과 `20261021091000_record_transactions.sql`로 구현했다. 메뉴·추천·AI 근거 테이블은 아래 설계 계약이며 아직 마이그레이션이 없다. 기본 시간은 timestamptz, ID는 UUID다. 사용자 입력을 공통 제품의 검증된 정보로 자동 승격하지 않는다.
 
 ## 핵심 테이블
 
 | 테이블 | 주요 필드·규칙 |
 |---|---|
-| profiles | id=auth user, display_name, created_at. 필요한 정보만 보관 |
+| profiles | user_id=auth user, display_name, created_at. 필요한 정보만 보관 |
+| user_settings | user_id, last_note_mode. 기존 개별 노트 모드와 독립 |
+| cellar_entries | 사용자 술장 항목. drink_id nullable, display_name/category, 대표 사진. 이름 unique/자동 병합 없음 |
 | drinks | canonical_name, category, producer, aliases, verified identity. 공통 제품 단위 |
 | drink_profiles | drink_id, version, structured descriptors, source_url, source_kind, fetched_at, verification_status. 원문과 정규화 특징 구분 |
-| tasting_records | user_id, drink_id nullable, entered_name nullable, category nullable, consumed_at, revisit nullable, note nullable, revision, operation_id unique per user |
+| tasting_records | user_id + cellar_entry_id 복합 FK, entered_name/category/revisit/rating nullable, consumed_at, vintage_status/year, revision, operation_id unique per user. 공통 drink_id는 술장 항목을 통해 연결 |
+| record_notes | record_id별 현재 mode/catalog_version, input_revision, 생성 초안·생성 입력 revision, 확정 노트·직접 편집 여부. 생성 필드는 클라이언트 쓰기 금지 |
+| record_answers | record_id/mode/catalog_version/question_id, unanswered/skipped/unknown/none/answered, descriptor_codes, intensity, free_text. 모드별 원본 답변 보존 |
+| record_drafts | user_id, record_id nullable, mode/schema_version, JSON payload. 앱의 로컬 draft 복구는 별도 미구현 |
+| photo_deletion_jobs | DB 사진 메타데이터 삭제 시 서버용 삭제 작업 보관. 실제 Storage 삭제 worker는 후속 작업 |
 | record_photos | user_id, record_id, storage_path, width, height, sort_order, upload_status |
 | record_sensations | record_id, dimension, descriptor_code, perceived=true, sentiment=liked/disliked/neutral/unknown. 단순 지각과 선호 분리 |
 | taste_summaries | user_id, input_revision, schema_version, summary_json, model metadata, created_at, status |
@@ -38,3 +44,13 @@
 ## 인덱스와 상태
 
 술장 user_id+consumed_at, drink_id별 이력, session_id별 메뉴/사진, status+updated_at별 작업을 우선 고려한다. JSON에 모든 관계를 숨기지 않고 근거·출처를 FK로 추적한다. job 상태는 queued/running/succeeded/failed/cancelled, 추천은 stale을 추가한다. 삭제·취소된 사진이 전체 메뉴 재집계에서 빠지는 것을 확인한다.
+
+## 구현한 불변 조건
+
+- 저장된 경험은 반드시 소유한 술장 항목에 속한다. `cellar_entries → tasting_records → record_photos/record_notes/record_answers/record_drafts`는 user_id를 포함한 복합 FK로 연결한다.
+- 대표 사진은 같은 사용자의 같은 술장 항목에 속한 사진이어야 한다. 기록/사진 이동 및 삭제 시 이전 대표 참조를 정리한다. `cellar_overview`는 security-invoker view이며 기록이 없는 항목은 숨긴다.
+- 새 기록은 create RPC에서 사진 또는 이름이 있어야 한다. 평가 nullable은 과거/사진만 기록의 호환 계약이다. 정상 앱 기본 평가 필수와 별점 선택 규칙은 앱 연결 단계에서 추가 검증한다.
+- 빈티지는 wine에만 가능하다. year는 실제 4자리 입력을 앱에서 받으며 DB 범위는 1–9999, NV/모름에는 연도를 넣지 않는다. DB 허용 범위와 앱 입력 UI를 혼동하지 않는다.
+- 노트 모드의 단일 원본은 record_notes.mode다. 기본 기록에 중복 mode 필드를 두지 않는다. 질문 catalog별 세부 값 검증·모드 전환 로직·AI 생성 결과의 CAS 적용은 #6/#27 후속 구현이다.
+- 기록과 노트/답변/사진의 변경은 기록 revision을 증가시킨다. 기본 수정/이동 RPC는 expected revision이 맞을 때만 반영한다.
+- 이미지 업로드와 DB 저장은 하나의 트랜잭션이 아니다. 업로드 후 메타데이터 확인, DB 실패 시 파일 보상 삭제, 삭제 작업 재시도, 주기적 고아 파일 점검이 필요하다. 현재 DB 삭제 작업 생성까지만 구현했고 실제 worker/API 검증은 남아 있다.

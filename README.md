@@ -6,7 +6,7 @@
 
 ## 현재 상태
 
-**공통 UI와 술장·기록 진입 화면을 구현 중입니다.** 색상·폰트 토큰, 버튼·선택 칩·가운데 + 바텀탭, 3열 선반과 빈 술장, 사진 선택→기본 정보→평가 화면과 날짜·주종·빈티지 선택이 있습니다. 실제 기록 저장·로그인·AI·배포된 백엔드는 아직 연결되지 않았습니다. 저장 버튼은 미연결 상태를 표시합니다. [Figma 정렬 결과와 남은 검증](docs/verification/figma-alignment.md)를 참고하세요. 개발 시작점은 [개발 로드맵](docs/milestones.md)과 [이슈 지도](docs/issue-map.md)입니다.
+**공통 UI와 술장·기록 진입 화면을 구현 중입니다.** 색상·폰트 토큰, 버튼·선택 칩·가운데 + 바텀탭, 3열 선반과 빈 술장, 사진 선택→기본 정보→평가 화면과 날짜·주종·빈티지 선택이 있습니다. 기록 DB 마이그레이션·RLS·저장/수정/이동 RPC 기반을 추가했습니다. 앱의 실제 저장·로그인·AI·배포된 백엔드는 아직 연결되지 않았습니다. 저장 버튼은 미연결 상태를 표시합니다. [Figma 정렬 결과와 남은 검증](docs/verification/figma-alignment.md)를 참고하세요. 개발 시작점은 [개발 로드맵](docs/milestones.md)과 [이슈 지도](docs/issue-map.md)입니다.
 
 ## 출시 범위
 
@@ -40,6 +40,7 @@
 ## 문서
 
 - [개발 이슈 지도와 전체 체크리스트](docs/issue-map.md)
+- [기록 저장 기반 검증](docs/verification/record-storage.md)
 - [앱 초기 설정 검증 결과](docs/verification/bootstrap.md)
 
 - [제품 정의와 사용자 흐름](docs/product.md)

@@ -54,3 +54,17 @@ Authorization Bearer JWT 검증 필수. 클라이언트가 body의 userId로 타
 ## 추천 응답 원칙
 
 kind=new/previously_liked/needs_confirmation, menuItemId, drinkProfileVersion, evidence recordIds+revision, similarFeatures, differentFeatures, unresolvedFields, explanation을 구분한다. unknown과 disliked는 다르다. 제품 특징의 출처와 사용자 근거는 각각 제공한다. 부정확한 적합도 백분율은 UI에 만들지 않는다. provider raw 응답은 이 계약을 통과해야 저장·표시한다.
+
+## 기록 저장 RPC v1 (구현됨, 앱 연결 전)
+
+모두 authenticated JWT/RLS 범위에서 실행하는 SECURITY INVOKER 함수다. userId 인자를 받지 않으며 `auth.uid()`를 사용한다.
+
+- `create_tasting_record(p_operation_id uuid, p_record jsonb, p_entry_id uuid|null)` → `{recordId, cellarEntryId, revision, replayed}`. entryId가 없으면 별도 항목을 만들고, 있으면 소유한 기존 항목에 경험을 추가한다. 같은 operation ID/같은 입력 재시도는 같은 기록을 반환한다. 다른 입력에 같은 ID를 재사용하면 23505. 동시 호출은 사용자+operation 단위 transaction advisory lock으로 직렬화한다.
+- p_record: enteredName/category/consumedAt/revisit/rating/vintageStatus/vintageYear/photo만 허용. category=`whisky|wine|beer|traditional|other`, revisit=`again|okay|not_for_me`, vintageStatus=`year|nv|unknown`. nullable 평가/주종/빈티지와 생략된 값을 구분한다.
+- photo=`{storagePath,width,height}`. Storage API로 먼저 비공개 record-photos에 올린 뒤 존재하는 자기 경로를 연결한다. `userId/records/operationId/photoId.ext` 경로를 사용하고 재시도 시 기존 파일을 덮어쓰지 않는다.
+- `update_tasting_record(p_record_id,p_expected_revision,p_patch)` → 최신 record row. enteredName/category/consumedAt/revisit/rating/vintageStatus/vintageYear만 수정한다. 소유자·operation ID·생성 payload는 바꾸지 못한다.
+- `move_tasting_record(p_record_id,p_entry_id,p_expected_revision)` → 최신 record row. 소유한 대상 항목으로 원자 이동하고 대표 사진 참조를 정리한다.
+- 잘못된 입력 22023, 권한/없는 소유 기록 42501, FK 23503, 무결성 23514, 오래된 revision 40001. 앱은 40001을 무조건 재저장하지 않고 새 기록을 불러온 뒤 사용자 수정과 비교해야 한다. SQLSTATE/HTTP 상태는 동일한 개념이 아니다.
+- `cellar_overview` → id/user_id/drink_id/display_name/category/record_count/last_consumed_at/revisit/photo_path. 정렬·페이지 조회를 앱에서 지정하고 photo_path는 필요할 때만 짧은 signed URL로 바꾼다.
+
+operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. 기록을 삭제한 뒤 도착하는 오래된 생성 요청을 막는 삭제 tombstone/operation 보존 정책은 후속 보강 대상이다. 이 단계는 실제 로그인/사진 API 업로드/앱 저장 완료를 뜻하지 않는다.
