@@ -4,6 +4,7 @@ on:
     paths:
       - 'supabase/**'
       - 'tests/database.test.ts'
+      - 'tests/storage-api.test.ts'
       - 'tests/fixtures/supabase-platform.sql'
       - 'package*.json'
       - '.github/workflows/database.yml'
@@ -30,6 +31,10 @@ jobs:
         run: npm run test:db
         env:
           MOGEUM_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      - name: Exercise real Auth, Storage binary and Data API
+        run: npm run test:storage
+        env:
+          MOGEUM_TEST_SUPABASE_HTTP: '1'
       - name: Stop ephemeral containers
         if: always()
         run: npx supabase stop --no-backup

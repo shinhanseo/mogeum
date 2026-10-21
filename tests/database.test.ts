@@ -120,9 +120,10 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await code('update public.cellar_entries set representative_photo_id=$1 where id=$2', [firstPhotoId, foreign.cellarEntryId], '23514');
       await assert.rejects(uploadMetadata(a, 99), { code: '42501' });
       assert.equal((await db.query("update storage.objects set name='renamed' where name=$1 returning id", [path(b, 12)])).rows.length, 0);
-      assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(b, 12)])).rows.length, 1);
+      // Managed Supabase blocks direct SQL deletion; real deletion is covered by Storage HTTP tests.
+      if (!databaseUrl) assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(b, 12)])).rows.length, 1);
       await as(a);
-      assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(a, 1)])).rows.length, 0);
+      if (!databaseUrl) assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(a, 1)])).rows.length, 0);
       await code('update public.cellar_entries set representative_photo_id=(select id from public.record_photos limit 1) where id=$1', [second.cellarEntryId], '23514');
     });
     await t.test('representative photos are cleared atomically when a record moves; empty groups disappear', async () => {
@@ -140,7 +141,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await db.query('delete from public.record_photos where id=$1', [photoId]);
       assert.equal((await db.query('select representative_photo_id from public.cellar_entries where id=$1', [second.cellarEntryId])).rows[0].representative_photo_id, null);
       assert.equal((await db.query('select status from public.photo_deletion_jobs where storage_path=$1', [path(a, 1)])).rows[0].status, 'pending');
-      assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(a, 1)])).rows.length, 1);
+      if (!databaseUrl) assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(a, 1)])).rows.length, 1);
     });
     await t.test('optimistic edits reject stale revisions and keep the saved experience', async () => {
       const oldRevision = Number((await db.query('select revision from public.tasting_records where id=$1', [second.recordId])).rows[0].revision);

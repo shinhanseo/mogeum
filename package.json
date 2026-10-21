@@ -16,7 +16,8 @@
     "lint": "expo lint",
     "test": "tsx --test tests/*.test.ts",
     "check": "npm run typecheck && npm run lint && npm test",
-    "test:db": "tsx --test tests/database.test.ts"
+    "test:db": "tsx --test tests/database.test.ts",
+    "test:storage": "tsx --test tests/storage-api.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "0.4.4",
