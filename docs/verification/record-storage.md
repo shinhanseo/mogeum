@@ -6,7 +6,7 @@
 
 ## 로컬 검증
 
-`npm run check`와 `npm run test:db`로 빈 PostgreSQL 엔진에 migration을 적용합니다. Docker가 설치/실행되어 있지 않아 PGlite를 사용합니다. 이는 실제 PostgreSQL RLS/제약/트리거 검증이며, auth.uid와 Storage 메타데이터 테이블은 명시적인 테스트 fixture입니다. Supabase Auth/Storage HTTP API를 구현하거나 모의 성공으로 대체하지 않습니다.
+`npm run check`와 `npm run test:db`로 빈 PostgreSQL 엔진에 migration을 적용합니다. 로컬 Docker daemon이 실행되어 있지 않아 PGlite를 사용합니다. 이는 실제 PostgreSQL RLS/제약/트리거 검증이며, auth.uid와 Storage 메타데이터 테이블은 명시적인 테스트 fixture입니다. Supabase Auth/Storage HTTP API를 구현하거나 모의 성공으로 대체하지 않습니다.
 
 - 두 사용자/비로그인 select/insert/update/delete와 FK/대표 사진 소유권 차단.
 - 사진만 기록, 동일 입력 재시도, 다른 입력의 operation 충돌, 동일 이름 분리, 동일 항목 3회 경험.
@@ -14,7 +14,9 @@
 - 수정 revision 충돌, 잘못된 별점·빈티지·없는 업로드 시 전체 트랜잭션 rollback.
 - light/deep 원본 답변 및 미응답/모름/건너뜀/없음/0 구분, owner draft와 설정 격리, AI 생성 필드 직접 쓰기 차단.
 
-PGlite는 단일 세션이라 독립 세션의 동시 요청은 로컬 테스트에서 명시적으로 skip합니다. `.github/workflows/database.yml`은 실제 Supabase의 auth/storage 스키마에서 동일 테스트와 독립 PostgreSQL 세션 2개의 동시 저장을 수행하도록 구성했습니다. 첫 실제 CI에서 테스트 드라이버가 JSON을 문자열로 이중 인코딩하는 차이를 발견해, native adapter는 sql.json으로 구조화된 값을 전달하도록 수정했습니다. 최종 CI 결과는 PR 확인 후 기록합니다.
+PGlite는 단일 세션이라 독립 세션의 동시 요청은 로컬 테스트에서 명시적으로 skip합니다. `.github/workflows/database.yml`은 실제 Supabase의 auth/storage 스키마에서 동일 테스트와 독립 PostgreSQL 세션 2개의 동시 저장을 수행하도록 구성했습니다. 첫 실제 CI에서 테스트 드라이버가 JSON을 문자열로 이중 인코딩하는 차이를 발견해, native adapter는 sql.json으로 구조화된 값을 전달하도록 수정했습니다. 관리형 Storage는 SQL DELETE 자체를 차단하므로 실제 파일 삭제 검증은 HTTP 통합 테스트로 분리했습니다. [실제 Supabase CI](https://github.com/shinhanseo/mogeum/actions/runs/39592097941)가 통과했습니다. 관리 스키마 기반 SQL 테스트 18개(독립 세션 동시 저장 포함)와 실제 Auth/Storage/Data API 통합 테스트 1개를 실행했습니다. [앱 검사 CI](https://github.com/shinhanseo/mogeum/actions/runs/39592097834)도 타입·린트·테스트·Expo 호환성 및 export를 통과했습니다. 로컬 기본 검사에서는 24개 중 22개 통과, 실제 서버가 필요한 두 개만 명시적으로 skip합니다.
+
+`npm run test:storage`는 CLI의 일회성 로컬 환경에서 합성 계정 두 개를 가입시키고 실제 JWT로 사진 binary 업로드, 기록 RPC/재시도, 술장 조회, 사용자 간 접근 차단, signed URL, 참조 중 파일 삭제 차단 및 기록 삭제 후 binary 삭제를 확인합니다. 로컬 기본 검사에서는 명시적으로 skip하며 CI에서 실행합니다. 비밀번호·토큰·signed URL은 로그에 출력하지 않습니다.
 
 ## 재현
 
@@ -25,6 +27,7 @@ npm run check
 npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,mailpit
 npx supabase db reset --local
 MOGEUM_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres npm run test:db
+MOGEUM_TEST_SUPABASE_HTTP=1 npm run test:storage
 npx supabase stop --no-backup
 ```
 
@@ -33,7 +36,7 @@ DB 테스트는 loopback URL만 허용합니다. 위 password는 Supabase CLI의
 ## 남은 검증/구현
 
 - 실제 사용자 소유 Supabase 개발 프로젝트 생성/연결 및 OAuth (#4).
-- Storage HTTP API 업로드·signed URL·binary 삭제·삭제 worker와 고아 파일 보상 처리. Storage 관리 테이블은 앱 SQL로 직접 삭제하지 않습니다.
+- 앱에서 Storage API 연결, 삭제 worker와 고아 파일 보상 처리. Storage 관리 테이블은 앱 SQL로 직접 삭제하지 않습니다.
 - 기록 저장 앱 연결과 재실행 조회 (#5/#7), 모든 주종 질문 값의 runtime catalog 검증 (#6).
 - 계정 삭제 시 DB 행 → Storage 파일 → Auth 사용자 삭제의 서버 orchestration, 비활성 토큰/사진 접근 검증.
 - 삭제된 기록의 operation tombstone, AI 생성 결과 revision 조건부 적용, 메뉴/AI 근거 테이블.
