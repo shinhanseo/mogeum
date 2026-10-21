@@ -103,7 +103,7 @@ left join public.drinks d on d.id = e.drink_id
 left join public.record_photos representative on representative.id = e.representative_photo_id
 left join lateral (select p.storage_path from public.record_photos p join public.tasting_records r on r.id = p.record_id
   where r.cellar_entry_id = e.id order by r.consumed_at desc, r.id desc, p.sort_order limit 1) fallback on true;
-revoke all on public.cellar_overview from anon;
+revoke all on public.cellar_overview from anon, authenticated;
 grant select on public.cellar_overview to authenticated;
 revoke all on function public.create_tasting_record(uuid, jsonb, uuid) from public, anon;
 revoke all on function public.update_tasting_record(uuid, integer, jsonb) from public, anon;

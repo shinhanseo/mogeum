@@ -14,7 +14,7 @@
 - 수정 revision 충돌, 잘못된 별점·빈티지·없는 업로드 시 전체 트랜잭션 rollback.
 - light/deep 원본 답변 및 미응답/모름/건너뜀/없음/0 구분, owner draft와 설정 격리, AI 생성 필드 직접 쓰기 차단.
 
-PGlite는 단일 세션이라 독립 세션의 동시 요청은 로컬 테스트에서 명시적으로 skip합니다. `.github/workflows/database.yml`은 실제 Supabase의 auth/storage 스키마에서 동일 테스트와 독립 PostgreSQL 세션 2개의 동시 저장을 수행하도록 구성했습니다. CI 실행 결과는 PR 확인 후 기록합니다.
+PGlite는 단일 세션이라 독립 세션의 동시 요청은 로컬 테스트에서 명시적으로 skip합니다. `.github/workflows/database.yml`은 실제 Supabase의 auth/storage 스키마에서 동일 테스트와 독립 PostgreSQL 세션 2개의 동시 저장을 수행하도록 구성했습니다. 첫 실제 CI에서 테스트 드라이버가 JSON을 문자열로 이중 인코딩하는 차이를 발견해, native adapter는 sql.json으로 구조화된 값을 전달하도록 수정했습니다. 최종 CI 결과는 PR 확인 후 기록합니다.
 
 ## 재현
 

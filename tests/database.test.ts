@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
 import postgres from 'postgres';
 
-type Params = (string | number | null)[];
+type JsonObject = { [key: string]: postgres.JSONValue };
+type Params = (string | number | null | JsonObject)[];
 type Row = Record<string, unknown>;
 interface Db { query<T extends Row = Row>(sql: string, params?: Params): Promise<{ rows: T[] }>; exec(sql: string): Promise<unknown>; close(): Promise<void>; }
 const a = '10000000-0000-4000-8000-000000000001';
@@ -19,7 +20,7 @@ async function connect(): Promise<Db> {
     if (!['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) throw new Error('Database tests only allow loopback test databases');
     const sql = postgres(databaseUrl, { max: 1, onnotice: () => {} });
     return {
-      async query<T extends Row>(text: string, parameters: Params = []) { return { rows: [...await sql.unsafe(text, parameters)] as unknown as T[] }; },
+      async query<T extends Row>(text: string, parameters: Params = []) { return { rows: [...await sql.unsafe(text, parameters.map(value => typeof value === 'object' && value !== null ? sql.json(value) : value))] as unknown as T[] }; },
       exec: text => sql.unsafe(text), close: () => sql.end(),
     };
   }
@@ -41,8 +42,8 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
     await db.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify(owner ? { sub: owner, role: 'authenticated' } : { role: 'anon' })]);
     await db.exec(owner ? 'set role authenticated' : 'set role anon');
   };
-  const saved = async (n: number, payload: object, entry: string | null = null): Promise<Saved> => {
-    const { rows } = await db.query<{ result: Saved }>('select public.create_tasting_record($1::uuid,$2::jsonb,$3::uuid) as result', [operation(n), JSON.stringify(payload), entry]);
+  const saved = async (n: number, payload: JsonObject, entry: string | null = null): Promise<Saved> => {
+    const { rows } = await db.query<{ result: Saved }>('select public.create_tasting_record($1::uuid,$2::jsonb,$3::uuid) as result', [operation(n), payload, entry]);
     return rows[0].result;
   };
   const code = (sql: string, values: Params, expected: string) => assert.rejects(db.query(sql, values), { code: expected });
@@ -189,7 +190,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
         const run = () => sql.begin(async tx => {
           await tx.unsafe('set local role authenticated');
           await tx.unsafe("select set_config('request.jwt.claim.sub',$1,true)", [a]);
-          const result = await tx.unsafe('select public.create_tasting_record($1,$2::jsonb) as result', [operation(100), JSON.stringify({ enteredName: 'Concurrent synthetic record' })]);
+          const result = await tx.unsafe('select public.create_tasting_record($1,$2::jsonb) as result', [operation(100), tx.json({ enteredName: 'Concurrent synthetic record' })]);
           return result[0].result as Saved;
         });
         const results = await Promise.all([run(), run()]);
