@@ -75,3 +75,5 @@ npm run web
 설정 없이도 개발 상태 화면이 열립니다. 서버를 연결할 때 `.env.example`을 `.env`로 복사하고 Supabase URL/Publishable key를 설정합니다. 앱이 표시하는 설정 확인은 네트워크 연결 성공을 뜻하지 않습니다.
 
 Development Build는 `npm run ios` / `npm run android`로 만듭니다. Xcode 또는 Android SDK와 JDK가 필요하며 번들 식별자를 환경 변수로 지정해야 합니다. [개발 환경 설정](docs/setup.md)의 명령을 참고하세요. 네이티브 앱 설치 후 `npm start`로 Metro를 실행합니다. Web 확인은 네이티브 OCR·실기기 검증을 대체하지 않습니다.
+
+기록 상세 연결: 술장 카드에서 최근 경험을 열고 날짜별 기록을 전환할 수 있습니다. 사진/확정 노트·별점·재음용 의사·빈티지를 표시하며 노트 저장 후 동일 기록 상세로 돌아옵니다. 실제 계정 iOS E2E와 기본 정보 수정/삭제·재음용 작성은 남아 있습니다. [검증 범위](docs/verification/record-detail.md).

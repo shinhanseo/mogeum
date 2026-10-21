@@ -55,7 +55,7 @@ export default function HomeScreen() {
   const openRecord = () => router.push(owner ? '/record' : '/login');
   return <SafeAreaView edges={['top', 'left', 'right']} style={styles.page}>
     <WebStatusSpace /><View style={styles.main}>
-      {loading && !data ? <View style={styles.loading}><ActivityIndicator accessibilityLabel="술장 불러오는 중" color={colors.primary} /></View> : error ? <View style={styles.error}><Text accessibilityRole="alert" style={styles.body}>{error}</Text><Button label="다시 시도" onPress={() => setReload(value => value + 1)} /></View> : tab === 'cellar' ? <CellarScreen items={data?.owner === owner ? data.items : []} onRecord={openRecord} /> : <TasteScreen onRecord={openRecord} recordCount={data?.owner === owner ? data.items.reduce((sum,item) => sum + item.recordCount,0) : 0} />}
+      {loading && !data ? <View style={styles.loading}><ActivityIndicator accessibilityLabel="술장 불러오는 중" color={colors.primary} /></View> : error ? <View style={styles.error}><Text accessibilityRole="alert" style={styles.body}>{error}</Text><Button label="다시 시도" onPress={() => setReload(value => value + 1)} /></View> : tab === 'cellar' ? <CellarScreen items={data?.owner === owner ? data.items : []} onRecord={openRecord} onOpen={entryId => router.push({ pathname: '/detail', params: { entryId } })} /> : <TasteScreen onRecord={openRecord} recordCount={data?.owner === owner ? data.items.reduce((sum,item) => sum + item.recordCount,0) : 0} />}
     </View><BottomTabBar selected={tab} onSelect={setTab} onRecord={openRecord} />
   </SafeAreaView>;
 }

@@ -6,15 +6,15 @@ import { Icon } from '../../components/Icon';
 import { colors, fonts, typography, layout } from '../../theme/tokens';
 import { categories, shelfRows, type Category, type CellarItem } from './model';
 
-function PhotoCard({ item }: { item: CellarItem }) {
+function PhotoCard({ item, onPress }: { item: CellarItem; onPress: () => void }) {
   const [failedUri, setFailedUri] = useState<string | null>(null);
-  return <View style={styles.card}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name ?? '이름 없는 술'} 기록 보기`} onPress={onPress} style={styles.card}>
     {item.photoUri && item.photoUri !== failedUri ? <Image source={{ uri: item.photoUri }} onError={() => setFailedUri(item.photoUri)} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>사진 없음</Text></View>}
     <Text numberOfLines={2} style={styles.name}>{item.name || '이름 없는 술'}</Text>
     <Text style={styles.category}>{item.category || '종류 미정'}</Text>
-  </View>;
+  </Pressable>;
 }
-export function CellarScreen({ items, onRecord }: { items: CellarItem[]; onRecord: () => void }) {
+export function CellarScreen({ items, onRecord, onOpen }: { items: CellarItem[]; onRecord: () => void; onOpen: (entryId: string) => void }) {
   const { width } = useWindowDimensions();
   const filterScale = Math.min(1, (width - 48) / 352);
   const [category, setCategory] = useState<Category | '전체'>('전체');
@@ -30,7 +30,7 @@ export function CellarScreen({ items, onRecord }: { items: CellarItem[]; onRecor
     </View>
     {!empty && filtered.length === 0 ? <View style={styles.noResults}><Text style={styles.emptyTitle}>찾는 술이 없어요</Text><Button label="검색 조건 지우기" variant="secondary" onPress={() => { setCategory('전체'); setQuery(''); }} /></View> :
       <FlatList data={shelfRows(filtered)} keyExtractor={(_, index) => `shelf-${index}`} showsVerticalScrollIndicator={false} contentContainerStyle={styles.list} renderItem={({ item: row, index }) => <View style={styles.shelf}>
-        <View style={styles.slots}>{row.map((item, column) => <View key={item?.id ?? `empty-${column}`} style={styles.slot}>{item && <PhotoCard item={item} />}</View>)}</View>
+        <View style={styles.slots}>{row.map((item, column) => <View key={item?.id ?? `empty-${column}`} style={styles.slot}>{item && <PhotoCard item={item} onPress={() => onOpen(item.id)} />}</View>)}</View>
         {empty && index === 0 && <View style={styles.empty}><Text style={styles.emptyTitle}>아직 비어 있어도 괜찮아.</Text><Text style={styles.emptyBody}>마신 한 잔의 사진부터 모아볼까요?</Text><Button label="첫 사진 남기기" onPress={onRecord} style={{ marginTop: 4, marginHorizontal: 20 }} /></View>}
         <View style={styles.shelfTop} /><View style={styles.shelfFront} />
       </View>} />}
