@@ -14,7 +14,7 @@
 
 ## 확인
 
-타입 검사·린트·로컬 회귀 검사 및 실제 Supabase CI 결과는 구현 PR에 기록한다. 로컬 Docker daemon이 없어 실제 서버 통합은 GitHub의 일회성 서버에서 실행한다. 네이티브 AsyncStorage 세션 재실행, provider redirect/취소, iOS·Android 실기기는 아직 검증하지 않았다.
+타입 검사·린트 및 로컬 27개 중 25개 테스트가 통과했다(실제 서버 필요 2개 skip). [앱 CI](https://github.com/shinhanseo/mogeum/actions/runs/39606054163)는 Expo 호환성·전체 export까지 통과했고, [실제 Supabase CI](https://github.com/shinhanseo/mogeum/actions/runs/39606054172)는 SQL 회귀 및 SDK 저장·술장 조회·signed URL을 포함한 HTTP 통합 검사를 통과했다. 로컬 Docker daemon이 없어 실제 서버 통합은 GitHub의 일회성 서버에서 실행한다. 네이티브 AsyncStorage 세션 재실행, provider redirect/취소, iOS·Android 실기기는 아직 검증하지 않았다.
 
 ## 다음 연결
 
