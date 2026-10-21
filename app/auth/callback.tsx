@@ -16,5 +16,5 @@ export default function AuthCallback() {
     void exchangeOAuthCode(client, code).then(() => { if (active) router.replace('/'); }).catch(() => { if (active) setFailed(true); });
     return () => { active = false; };
   }, [code, error, router]);
-  return <View style={{ flex:1, justifyContent:'center', padding:24, gap:16, backgroundColor:colors.background }}>{failed || error || !code || !getSupabase() ? <><Text style={{ ...typography.body, color:colors.text }}>로그인을 완료하지 못했어요. 다시 시도해주세요.</Text><Button label="로그인으로 돌아가기" onPress={() => router.replace('/login')} /></> : <ActivityIndicator accessibilityLabel="로그인 완료하는 중" color={colors.primary} />}</View>;
+  return <View style={{ flex:1, justifyContent:'center', padding:24, gap:16, backgroundColor:colors.background }}>{failed || error || typeof code !== 'string' || !getSupabase() ? <><Text style={{ ...typography.body, color:colors.text }}>로그인을 완료하지 못했어요. 다시 시도해주세요.</Text><Button label="로그인으로 돌아가기" onPress={() => router.replace('/login')} /></> : <ActivityIndicator accessibilityLabel="로그인 완료하는 중" color={colors.primary} />}</View>;
 }

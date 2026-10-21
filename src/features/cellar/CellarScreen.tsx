@@ -7,9 +7,9 @@ import { colors, fonts, typography, layout } from '../../theme/tokens';
 import { categories, shelfRows, type Category, type CellarItem } from './model';
 
 function PhotoCard({ item }: { item: CellarItem }) {
-  const [failed, setFailed] = useState(false);
+  const [failedUri, setFailedUri] = useState<string | null>(null);
   return <View style={styles.card}>
-    {item.photoUri && !failed ? <Image source={{ uri: item.photoUri }} onError={() => setFailed(true)} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>사진 없음</Text></View>}
+    {item.photoUri && item.photoUri !== failedUri ? <Image source={{ uri: item.photoUri }} onError={() => setFailedUri(item.photoUri)} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>사진 없음</Text></View>}
     <Text numberOfLines={2} style={styles.name}>{item.name || '이름 없는 술'}</Text>
     <Text style={styles.category}>{item.category || '종류 미정'}</Text>
   </View>;

@@ -17,12 +17,12 @@
 
 - 실제 개발 프로젝트 Auth settings 200, Apple/Kakao false 확인. 비로그인 Data API cellar_overview/tasting_records 조회는 401 / 42501로 차단됐다.
 - 400×868 브라우저에서 Apple 버튼 x24/y501/352×52, 원본 #252322 및 카카오 #FEE500 확인. 로그인·둘러보기·비로그인 + 진입의 로그인 유도, 공급자 미설정 시 앱 안의 오류/재시도 확인. 320px 술장 캡처도 보관했다.
-- 타입/린트·기존 DB 정책·pending 응답 유실/입력 충돌/계정 변경/receipt·OAuth code 중복 교환 검사는 구현 PR에 최종 결과를 기록한다.
+- 타입/린트·로컬 33개 중 31개 테스트가 통과했다(서버 필요 2개 skip). [앱 CI](https://github.com/shinhanseo/mogeum/actions/runs/39612770488)는 Expo 호환성·전체 export까지 통과했고, [Supabase CI](https://github.com/shinhanseo/mogeum/actions/runs/39612770407)는 SQL 정책·동시성 및 실제 Auth/Storage/기록 파이프라인 통합 검사를 통과했다. 실제 개발 프로젝트 SQL 조회도 tables=10, rls_tables=10, record_rpcs=3, private_bucket=true를 반환했다.
 - 실제 Auth/Storage/SDK/저장 파이프라인 검사는 일회성 Supabase CI에서 수행한다. 사용자 프로젝트에서 이메일 확인을 끄거나 가짜 로그인 우회를 추가하지 않았다.
 
 ## 완료하지 않은 것
 
-사용자가 Apple Services ID/카카오 앱을 아직 만들지 않았다고 확인했다. 두 provider는 현재 비활성이며 실제 소셜 로그인, 사용자 프로젝트에서 앱 UI를 통한 사진 저장/재실행 성공, iOS/Android 실기기 OAuth·파일 복원은 검증할 수 없다. 공급자 등록/credential 설정 뒤 재검증해야 하며 이슈를 닫지 않는다. 저장 RPC/SDK의 CI 성공을 사용자 앱의 소셜 로그인 성공으로 보고하지 않는다.
+사용자가 Apple Services ID/카카오 앱을 아직 만들지 않았다고 확인했다. 두 provider는 현재 비활성이며 실제 소셜 로그인, 사용자 프로젝트에서 앱 UI를 통한 사진 저장/재실행 성공, iOS/Android 물리 기기의 OAuth·파일 복원은 검증할 수 없다. 공급자 등록/credential 설정 뒤 재검증해야 하며 이슈를 닫지 않는다. 저장 RPC/SDK의 CI 성공을 사용자 앱의 소셜 로그인 성공으로 보고하지 않는다.
 
 편집 중 모든 단계의 자동 draft는 아직 없고, 저장을 누른 시점부터 pending을 보관한다. 업로드 이후 저장 실패의 장기 고아 파일 정리 worker, 계정 삭제, signed URL 주기 갱신, 술장 원격 무한 스크롤/검색 최적화도 후속이다. 현재 술장은 페이지 API로 전체를 읽어 기존 선반 FlatList로 표시한다.
 
@@ -36,3 +36,20 @@
 - 비밀 키는 사용자/서버 설정에만 보관하고 채팅·PR·EXPO_PUBLIC_에 붙이지 않는다.
 
 공식 문서: [Kakao](https://supabase.com/docs/guides/auth/social-login/auth-kakao), [Apple](https://supabase.com/docs/guides/auth/social-login/auth-apple), [PKCE code exchange](https://supabase.com/docs/reference/javascript/auth-exchangecodeforsession).
+
+## iOS 시뮬레이터 검증
+
+사용자 요청에 따라 이후 화면 검증을 iOS 네이티브로 전환했다. Xcode 27.1 / iPhone 17 Pro / iOS 26.5 / 로컬 검증 식별자 com.example.mogeum.dev에서 Development Build 생성·설치·실행에 성공했다(0 errors, 2 build warnings). Xcode 27에서는 시뮬레이터 창이 Device Hub 앱에 있다.
+
+- 네이티브 Noto Sans KR·모구·Apple/카카오 버튼과 하단 문구 표시 확인.
+- 실제 HTTPS Auth settings 호출 후 공급자 미설정 안내로 복구됨을 확인.
+- 둘러보기 → 빈 술장 → 내 취향 탭 → 가운데 + → 로그인 유도 확인.
+- 네 주종 필터가 한 줄로 유지되고 가운데 +와 하트 상단이 잘리지 않음 확인.
+- 앱 종료/재실행 후 비로그인 로그인 화면 재진입 확인. 로그인된 세션 복원이나 사진 영속 복원의 성공 검증은 아니다.
+- 설치된 Supabase SDK 2.118 내부 구현에서 lockless 세션 조정이 기본이고 processLock 옵션이 deprecated인 것을 네이티브 로그로 발견해 옵션을 제거했다.
+- 이미지가 한 번 실패한 뒤 새 signed URL을 받아도 실패 상태를 유지하던 술장 카드도 새 URI에서 다시 렌더하도록 수정했다. 서버 기록이 생기면 내 취향의 기록 개수는 실제 합계로 표시하며 AI 분석 문구를 만들지 않는다.
+
+재현: Node24 환경에서 `MOGEUM_IOS_BUNDLE_ID=com.example.mogeum.dev MOGEUM_ANDROID_PACKAGE=com.example.mogeum.dev npx expo prebuild --platform ios`, `npx expo start --dev-client --port 8081`, 별도 터미널에서 같은 식별자로 `npx expo run:ios --device <simulator-uuid> --no-bundler`. Metro의 실제 host/port에 맞춰 development client를 연다. CLI의 --port와 --no-bundler는 함께 쓸 수 없다. ios/와 빌드 산출물·서명 정보는 커밋하지 않는다.
+
+![iOS 로그인](ios-login.png)
+![iOS 빈 술장](ios-cellar.png)

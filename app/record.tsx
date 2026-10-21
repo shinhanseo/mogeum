@@ -81,6 +81,7 @@ function RecordComposer({ owner }: { owner:string }) {
     if (busyRef.current) return;
     if (!owner) { router.push('/login'); return; }
     if (!pending && !photo && !name.trim()) { setError('사진이나 술 이름을 남겨주세요.'); return; }
+    if (!pending && (name.trim().length > 200 || (category === '와인' && vintage && vintage !== 'NV' && vintage !== '모름' && Number(vintage) < 1))) { setError('술 이름과 빈티지를 확인해주세요.'); return; }
     if (!pending && !feeling) { setError('이 술이 어땠는지 골라주세요.'); return; }
     busyRef.current = true; setSaving(true); setError('');
     try {
@@ -125,7 +126,7 @@ function RecordComposer({ owner }: { owner:string }) {
         <Text style={styles.private}>내 기록은 기본적으로 나만 볼 수 있어요.</Text>
       </View> : <View style={styles.form}>
         {summary}
-        {step === 'info' ? <><View style={styles.fields}><View><Text style={styles.label}>술 이름</Text><TextInput accessibilityLabel="술 이름" value={name} onChangeText={setName} placeholder="술 이름을 입력해주세요" placeholderTextColor={colors.muted} style={styles.input} /></View>
+        {step === 'info' ? <><View style={styles.fields}><View><Text style={styles.label}>술 이름</Text><TextInput accessibilityLabel="술 이름" maxLength={200} value={name} onChangeText={setName} placeholder="술 이름을 입력해주세요" placeholderTextColor={colors.muted} style={styles.input} /></View>
           <View><Text style={styles.label}>술 종류</Text><Button label={`${category ?? '종류 선택'}  ›`} variant="secondary" onPress={() => setSheet('category')} /></View>
           {category === '와인' && <View><Text style={styles.label}>빈티지 · 선택</Text><Button label={`${vintage || '연도 · NV · 모름'}  ›`} variant="secondary" onPress={() => setSheet('vintage')} /></View>}
           <View><Text style={styles.label}>언제 마셨나요?</Text><Button label={`${dateLabel}  ›`} variant="secondary" onPress={() => { setMonth(new Date(date)); setSheet('date'); }} /></View></View>
@@ -143,7 +144,7 @@ function RecordComposer({ owner }: { owner:string }) {
         <View style={styles.monthRow}><Pressable accessibilityRole="button" accessibilityLabel="이전 달" onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><Text style={styles.monthArrow}>‹</Text></Pressable><Text style={styles.label}>{month.getFullYear()}년 {month.getMonth() + 1}월</Text><Pressable accessibilityRole="button" accessibilityLabel="다음 달" onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><Text style={styles.monthArrow}>›</Text></Pressable></View>
         <View style={styles.days}>{['일', '월', '화', '수', '목', '금', '토'].map(day => <Text key={day} style={styles.dayLabel}>{day}</Text>)}{Array.from({ length: new Date(month.getFullYear(), month.getMonth(), 1).getDay() }, (_, i) => <View key={`blank-${i}`} style={styles.day} />)}{Array.from({ length: new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate() }, (_, i) => { const day = i + 1; const selected = date.getDate() === day && date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear(); return <Pressable key={day} accessibilityRole="button" accessibilityLabel={`${month.getFullYear()}년 ${month.getMonth() + 1}월 ${day}일`} accessibilityState={{ selected }} style={styles.day} onPress={() => setDate(new Date(month.getFullYear(), month.getMonth(), day))}><Text style={[styles.dayText, selected && styles.daySelected]}>{day}</Text></Pressable>; })}</View>
       </View>}
-      <Button label={activeSheet === 'category' ? '이 종류로 선택' : activeSheet === 'date' ? '이 날짜로 선택' : '빈티지 적용'} disabled={activeSheet === 'vintage' && vintageMode === 'year' && vintageYear.length !== 4} onPress={() => { if (activeSheet === 'vintage') setVintage(vintageMode === 'year' ? vintageYear : vintageMode === 'NV' ? 'NV' : '모름'); setSheet(null); }} />
+      <Button label={activeSheet === 'category' ? '이 종류로 선택' : activeSheet === 'date' ? '이 날짜로 선택' : '빈티지 적용'} disabled={activeSheet === 'vintage' && vintageMode === 'year' && (vintageYear.length !== 4 || Number(vintageYear) < 1)} onPress={() => { if (activeSheet === 'vintage') setVintage(vintageMode === 'year' ? vintageYear : vintageMode === 'NV' ? 'NV' : '모름'); setSheet(null); }} />
     </View></View></Modal>
   </KeyboardAvoidingView></SafeAreaView>;
 }
