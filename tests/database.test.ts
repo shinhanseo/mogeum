@@ -91,6 +91,29 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.deepEqual(new Set(experiences.rows.map(row => row.revisit)), new Set(['again','not_for_me','okay']));
       assert.equal(String((await db.query('select record_count from public.cellar_overview where id=$1', [second.cellarEntryId])).rows[0].record_count), '3');
     });
+    await t.test('note save validates catalog, keeps the same experience and replays a lost response safely', async () => {
+      const record=await saved(40,{enteredName:'Synthetic tasting whisky',category:'whisky'});
+      const answers=[{questionId:'nose',status:'answered',descriptorCodes:['fruit'],intensity:null,freeText:null}];
+      const saveNote=(op:string, expected:number, input:unknown,note='과일 향이 떠올랐어요.')=>db.query<{result:Saved}>("select public.save_tasting_note($1::uuid,$2::uuid,$3,'light',2,$4::jsonb,$5,false) result",[record.recordId,op,expected,input as JsonObject,note]);
+      const before=(await db.query('select count(*) n from public.tasting_records')).rows[0].n;
+      const first=(await saveNote(operation(41),record.revision,answers)).rows[0].result;
+      assert.equal(first.recordId,record.recordId);assert.equal(first.replayed,false);
+      const retry=(await saveNote(operation(41),record.revision,answers)).rows[0].result;
+      assert.equal(retry.replayed,true);assert.equal(retry.revision,first.revision);
+      assert.equal((await db.query('select count(*) n from public.tasting_records')).rows[0].n,before);
+      await assert.rejects(saveNote(operation(41),record.revision,answers,'Changed payload'),{code:'23505'});
+      await assert.rejects(saveNote(operation(42),record.revision,answers),{code:'40001'});
+      const bad=[{...answers[0],descriptorCodes:['invented_aroma']}];
+      await assert.rejects(saveNote(operation(43),first.revision,bad),{code:'23514'});
+      const unknown=[{...answers[0],status:'unknown'}];
+      await assert.rejects(saveNote(operation(43),first.revision,unknown),{code:'23514'});
+      assert.equal((await db.query('select confirmed_note from public.record_notes where record_id=$1',[record.recordId])).rows[0].confirmed_note,'과일 향이 떠올랐어요.');
+      await code("update public.record_notes set confirmed_note='bypass' where record_id=$1",[record.recordId],'42501');
+      await code("delete from public.record_answers where record_id=$1",[record.recordId],'42501');
+      await as(b);
+      await assert.rejects(saveNote(operation(44),first.revision,answers),{code:'42501'});
+      await as(a);
+    });
     await t.test('user B cannot read A rows, photos, or the security-invoker overview', async () => {
       await as(b);
       for (const table of ['cellar_entries','tasting_records','record_photos','record_notes','record_answers','record_drafts','user_settings','profiles','photo_deletion_jobs','cellar_overview']) {
@@ -105,8 +128,8 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await code('insert into public.tasting_records(user_id,cellar_entry_id,operation_id) values ($1,$2,$3)', [b, first.cellarEntryId, operation(11)], '23503');
       await uploadMetadata(b, 12);
       await code('insert into public.record_photos(record_id,storage_path,width,height) values ($1,$2,100,100)', [first.recordId, path(b, 12)], '23503');
-      await code("insert into public.record_notes(record_id,mode,catalog_version) values ($1,'deep',1)", [first.recordId], '23503');
-      await code("insert into public.record_answers(record_id,mode,catalog_version,question_id) values ($1,'light',1,'aroma')", [first.recordId], '23503');
+      await code("insert into public.record_notes(record_id,mode,catalog_version) values ($1,'deep',1)", [first.recordId], '42501');
+      await code("insert into public.record_answers(record_id,mode,catalog_version,question_id) values ($1,'light',1,'aroma')", [first.recordId], '42501');
       await code('insert into public.record_drafts(record_id) values ($1)', [first.recordId], '23503');
     });
     await t.test('forged owner IDs and writes to another user are rejected or affect zero rows', async () => {
@@ -165,7 +188,8 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await saved(27, { enteredName:'Synthetic wine',category:'wine',vintageStatus:'year',vintageYear:2020 });
       await saved(28, { enteredName:'Synthetic NV',category:'wine',vintageStatus:'nv' });
     });
-    await t.test('light/deep answers preserve unknown, skipped, none and an answered zero separately', async () => {
+    await t.test('legacy answer fixtures preserve unknown, skipped, none and an answered zero separately', async () => {
+      await db.exec('reset role');
       await db.query("insert into public.record_notes(record_id,mode,catalog_version) values ($1,'deep',1)", [second.recordId]);
       for (const [mode, status, question, intensity] of [
         ['light','unknown','aroma',null], ['deep','none','peat',null], ['deep','skipped','color',null], ['deep','answered','alcohol',0],
@@ -174,10 +198,11 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal(answers.length, 4); assert.ok(answers.some(row => row.status === 'answered' && row.intensity === 0));
       await code("insert into public.record_answers(record_id,mode,catalog_version,question_id,status,intensity) values ($1,'deep',1,'invalid','unknown',0)", [second.recordId], '23514');
       assert.equal(Number((await db.query('select input_revision from public.record_notes where record_id=$1', [second.recordId])).rows[0].input_revision), 5);
+      await as(a);
       await code("update public.record_notes set generated_draft='forged AI' where record_id=$1", [second.recordId], '42501');
     });
     await t.test('drafts and last-used mode are owner-scoped and do not change an existing note mode', async () => {
-      await db.query("insert into public.user_settings(last_note_mode) values ('light')");
+      await db.query("insert into public.user_settings(last_note_mode) values ('light') on conflict(user_id) do update set last_note_mode='light'");
       await db.query("insert into public.record_drafts(record_id,mode,payload) values ($1,'deep','{\"stage\":\"aroma\"}')", [second.recordId]);
       assert.equal((await db.query('select mode from public.record_notes where record_id=$1', [second.recordId])).rows[0].mode, 'deep');
       await as(b);

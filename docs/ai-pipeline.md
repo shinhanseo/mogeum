@@ -52,3 +52,9 @@ OCR 성능은 엔진명이 아니라 실제 20–30장 테스트의 이름 인�
 - Expo native modules: https://docs.expo.dev/workflow/customizing/
 - Edge Functions limits: https://supabase.com/docs/guides/functions/limits
 - Durable queues: https://supabase.com/docs/guides/queues
+
+## 현재 노트 문장 정리와 AI 근거의 경계
+
+현재 질문 노트의 composeNote는 결정적 템플릿이다. 선택된 계열만으로 세부 향을 확장하지 않으며, 건너뛴 값과 숨겨진 색·향 변화·세부 향은 serializeAnswers에서 제외한다. LLM 호출 없이도 미리보기와 직접 수정을 사용할 수 있다.
+
+취향 분석 구현 시 record_notes의 현재 mode/catalog_version에 해당하는 답변만 읽고 confirmed_input_revision과 input_revision이 일치하는 확정 상태인지 확인한다. 사용자 원문을 제품의 객관적 특징이나 특정 향 선호로 승격하지 않는다. 비활성 모드·삭제된 계열·사진뿐인 기록은 감각 근거가 아니다. 분석 서버는 이 판정과 RLS/JWT 검증을 별도로 구현해야 하며, 현재 노트 화면 구현이 AI 요약 완료를 뜻하지 않는다.

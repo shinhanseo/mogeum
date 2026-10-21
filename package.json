@@ -15,9 +15,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "test": "tsx --test tests/*.test.ts",
-    "check": "npm run typecheck && npm run lint && npm test",
+    "check": "npm run typecheck && npm run lint && npm run check:tasting && npm test",
     "test:db": "tsx --test tests/database.test.ts",
-    "test:storage": "tsx --test tests/storage-api.test.ts"
+    "test:storage": "tsx --test tests/storage-api.test.ts",
+    "check:tasting": "tsx scripts/check-tasting-contract.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "0.4.4",

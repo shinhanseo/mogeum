@@ -77,12 +77,13 @@ function RecordComposer({ owner }: { owner:string }) {
     } catch { setError('사진을 열지 못했어요. 접근 권한을 확인하고 다시 시도해주세요.'); }
   }
 
-  async function saveRecord() {
+  async function saveRecord(withNote = false) {
     if (busyRef.current) return;
     if (!owner) { router.push('/login'); return; }
     if (!pending && !photo && !name.trim()) { setError('사진이나 술 이름을 남겨주세요.'); return; }
     if (!pending && (name.trim().length > 200 || (category === '와인' && vintage && vintage !== 'NV' && vintage !== '모름' && Number(vintage) < 1))) { setError('술 이름과 빈티지를 확인해주세요.'); return; }
     if (!pending && !feeling) { setError('이 술이 어땠는지 골라주세요.'); return; }
+    if (withNote && (!category || category === '기타')) { if(pending){setError('저장 중인 기록을 먼저 완료해주세요. 술 종류는 저장 후 보완할 수 있어요.');return;} setStep('info');setSheet('category');setError('테이스팅 노트를 쓸 술 종류를 골라주세요.');return; }
     busyRef.current = true; setSaving(true); setError('');
     try {
       let operation = pending;
@@ -105,9 +106,12 @@ function RecordComposer({ owner }: { owner:string }) {
         }
         setPending(operation);
       }
-      await savePending(operation, () => ownerRef.current);
+      const saved = await savePending(operation, () => ownerRef.current);
       await finishPending(operation);
-      if (ownerRef.current === owner) router.replace('/');
+      if (ownerRef.current === owner) {
+        if(withNote) router.replace({pathname:'/tasting',params:{recordId:saved.recordId}});
+        else router.replace('/');
+      }
     } catch { setError('저장을 완료하지 못했어요. 사진과 입력을 확인한 뒤 같은 기록으로 다시 시도해주세요.'); }
     finally { busyRef.current = false; setSaving(false); }
   }
@@ -133,7 +137,7 @@ function RecordComposer({ owner }: { owner:string }) {
           <Text style={[styles.caption, { marginTop: 28 }]}>다음에서 간단한 평가를 남겨요.</Text><View style={styles.bottomAction}><Button label="다음" onPress={() => setStep('rating')} /></View>
         </> : <><View style={styles.feelings}><Text style={styles.title}>이 술, 어땠어요?</Text>{['또 마시고 싶어요', '괜찮아요', '내 취향이 아니에요'].map(value => <ChoiceChip key={value} label={value} selected={feeling === value} onPress={() => { if (!pending) setFeeling(value); }} style={{ minHeight: 44, paddingVertical: 10 }} />)}</View>
           <View style={styles.rating}><Text style={[styles.label, { marginBottom: 0 }]}>별점</Text><Text style={styles.caption}>원할 때만 남겨주세요.</Text><View style={styles.starRow}>{[1, 2, 3, 4, 5].map(n => <Pressable key={n} accessibilityRole="button" accessibilityLabel={`별점 ${n}점`} accessibilityState={{ selected: stars === n }} onPress={() => { if (!pending) setStars(n); }} style={styles.starButton}><RatingStar filled={stars >= n} /></Pressable>)}</View>{stars > 0 && <Pressable accessibilityRole="button" accessibilityLabel="별점 지우기" onPress={() => { if (!pending) setStars(0); }}><Text style={styles.clear}>{stars}점 · 지우기</Text></Pressable>}</View>
-          <View style={[styles.bottomAction, { marginBottom: 4 }]}><Text style={styles.connection}>{pending ? '저장 중인 원래 기록으로 다시 시도해요.' : '내 계정에 안전하게 보관해요.'}</Text><Button label={owner ? '기록 저장' : '로그인하고 저장'} loading={saving} onPress={saveRecord} /><Button label="저장하고 테이스팅 노트 쓰기" variant="secondary" disabled onPress={() => {}} /></View>
+          <View style={[styles.bottomAction, { marginBottom: 4 }]}><Text style={styles.connection}>{pending ? '저장 중인 원래 기록으로 다시 시도해요.' : '내 계정에 안전하게 보관해요.'}</Text><Button label={owner ? '기록 저장' : '로그인하고 저장'} loading={saving} onPress={() => saveRecord()} /><Button label="저장하고 테이스팅 노트 쓰기" variant="secondary" disabled={saving} onPress={() => saveRecord(true)} /></View>
         </>}
       </View>}
       {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}

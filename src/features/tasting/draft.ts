@@ -19,6 +19,9 @@ export type TastingDraft = {
   mode: NoteMode;
   modes: Record<NoteMode, ModeDraft>;
   revision: number;
+  baseRecordRevision?: number;
+  composition?: { text: string; edited: boolean; sourceRevision: number; editBuffer?:string };
+  pendingSave?: { operationId: string; expectedRevision: number };
 };
 
 export function newTastingDraft(ownerId: string, recordId: string, category: TastingCategory, mode: NoteMode): TastingDraft {
@@ -45,12 +48,11 @@ export function switchMode(draft: TastingDraft, mode: NoteMode): TastingDraft {
   return draft.mode === mode ? draft : { ...draft, mode, revision: draft.revision + 1 };
 }
 
-/** This is the only projection intended for prose generation or taste analysis. */
+/** Low-level mode projection. Product consumers must use serializeAnswers(), which also filters conditional fields. */
 export function activeObservations(draft: TastingDraft) {
   const mode = draft.modes[draft.mode];
   const answers = Object.fromEntries(Object.entries(mode.answers).filter(([, value]) => value.status !== 'unanswered' && value.status !== 'skipped'));
-  const catalog = draft.category === 'traditional' ? null : aromaCatalogs[draft.category];
-  if (!catalog && Object.keys(mode.aromas).length) throw new Error('Traditional aroma catalog is not configured');
+  const catalog = aromaCatalogs[draft.category];
   return {
     recordId: draft.recordId, category: draft.category, mode: draft.mode,
     catalogVersion: draft.catalogVersion, revision: draft.revision, answers,

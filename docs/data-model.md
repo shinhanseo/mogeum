@@ -54,3 +54,7 @@
 - 노트 모드의 단일 원본은 record_notes.mode다. 기본 기록에 중복 mode 필드를 두지 않는다. 질문 catalog별 세부 값 검증·모드 전환 로직·AI 생성 결과의 CAS 적용은 #6/#27 후속 구현이다.
 - 기록과 노트/답변/사진의 변경은 기록 revision을 증가시킨다. 기본 수정/이동 RPC는 expected revision이 맞을 때만 반영한다.
 - 이미지 업로드와 DB 저장은 하나의 트랜잭션이 아니다. 업로드 후 메타데이터 확인, DB 실패 시 파일 보상 삭제, 삭제 작업 재시도, 주기적 고아 파일 점검이 필요하다. 현재 DB 삭제 작업 생성까지만 구현했고 실제 worker/API 검증은 남아 있다.
+
+## 노트 v2 확정 상태 · 2026-10-22
+
+record_notes의 last_operation_id/last_save_payload는 응답 유실 재시도 식별자다. confirmed_input_revision은 확정 문장에 대응하는 답변 revision이다. generated_draft는 서버 AI 출력 전용으로 유지하고, 현재 결정적 템플릿은 사용자가 확인한 confirmed_note에 저장한다. record_answers/record_notes의 일반 클라이언트 직접 쓰기는 철회하고 save_tasting_note RPC로 원자 확정한다. 기존 답변을 앱으로 읽을 때 question ID/모드/카탈로그 버전을 사용한다.

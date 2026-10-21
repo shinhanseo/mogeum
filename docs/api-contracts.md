@@ -55,7 +55,7 @@ Authorization Bearer JWT 검증 필수. 클라이언트가 body의 userId로 타
 
 kind=new/previously_liked/needs_confirmation, menuItemId, drinkProfileVersion, evidence recordIds+revision, similarFeatures, differentFeatures, unresolvedFields, explanation을 구분한다. unknown과 disliked는 다르다. 제품 특징의 출처와 사용자 근거는 각각 제공한다. 부정확한 적합도 백분율은 UI에 만들지 않는다. provider raw 응답은 이 계약을 통과해야 저장·표시한다.
 
-## 기록 저장 RPC v1 (구현됨, 앱 연결 전)
+## 기록 저장 RPC v1 (구현·앱 연결됨, 실제 소셜 로그인 검증 전)
 
 모두 authenticated JWT/RLS 범위에서 실행하는 SECURITY INVOKER 함수다. userId 인자를 받지 않으며 `auth.uid()`를 사용한다.
 
@@ -68,3 +68,16 @@ kind=new/previously_liked/needs_confirmation, menuItemId, drinkProfileVersion, e
 - `cellar_overview` → id/user_id/drink_id/display_name/category/record_count/last_consumed_at/revisit/photo_path. 정렬·페이지 조회를 앱에서 지정하고 photo_path는 필요할 때만 짧은 signed URL로 바꾼다.
 
 operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. 기록을 삭제한 뒤 도착하는 오래된 생성 요청을 막는 삭제 tombstone/operation 보존 정책은 후속 보강 대상이다. 이 단계는 실제 로그인/사진 API 업로드/앱 저장 완료를 뜻하지 않는다.
+
+## 질문형 노트 저장 RPC v2 · 구현됨
+
+`save_tasting_note(p_record_id uuid,p_operation_id uuid,p_expected_revision integer,p_mode note_mode,p_catalog_version integer,p_answers jsonb,p_note text,p_edited boolean)` → `{recordId,revision,replayed}`.
+
+- catalogVersion은 2. 질문 ID/descriptor code/최대 선택 수/강도를 `private.tasting_catalog_v2()`의 동결한 카탈로그로 검사한다. 아로마 세부 향에는 해당 계열이 함께 활성화되어 있어야 한다. 와인 종류별 색과 관찰하지 않은 향 변화의 비활성 답변은 거부한다.
+- p_answers 항목은 `{questionId,status,descriptorCodes,intensity,freeText}`. 생략/건너뜀/모름/없음/실제 강도 0은 별개다. 복합 질문의 각 감각은 `palate.sweet`, `palate.acid`처럼 개별 답변이다. 같은 질문 ID 중복을 거부한다.
+- SECURITY DEFINER 함수는 `auth.uid()`와 활성 사용자·기록 소유권을 직접 확인하고 해당 기록을 FOR UPDATE로 잠근다. JWT 사용자 외의 userId를 받지 않는다. authenticated의 record_answers 직접 쓰기와 record_notes 직접 확정을 철회했다. RLS 읽기와 소유 기록 삭제 시 cascade는 유지한다.
+- 같은 operation ID/동일 payload 재시도는 기존 결과, 같은 ID/변경 payload는 23505. 최신 revision과 다른 새 요청은 40001. 기존 마신 기록만 수정하므로 술장 항목/마신 횟수를 늘리지 않는다.
+- 답변·확정 문장·직접 편집 여부·confirmed_input_revision·마지막 사용 모드를 한 트랜잭션에 보관한다. 비활성 모드의 기존 답변은 삭제하지 않는다. 빈 확정 문장은 저장하지 않는다.
+- 앱은 기기에 저장 시도 ID와 원래 revision을 먼저 보관하고 응답이 불확실한 상태에서 다른 내용으로 덮어쓰지 않는다. 권한/충돌/연결 오류를 모두 성공처럼 처리하지 않는다. 충돌 후 최신 내용과 비교하는 UI는 후속이다.
+
+`supabase/tasting-catalog-v2.json`과 마이그레이션 내 snapshot은 동일해야 한다. v2가 개발 DB에 적용되었으므로 기존 code의 의미를 바꾸려면 새로운 버전과 마이그레이션을 추가한다. `scripts/check-tasting-contract.ts`로 앱 정의·DB snapshot·마이그레이션의 일치를 읽기 전용으로 검증한다. 적용된 마이그레이션을 수정해 재배포하지 않는다.

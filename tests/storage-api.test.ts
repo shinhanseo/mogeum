@@ -1,6 +1,9 @@
 import { submitPending, type PendingRecord } from '../src/features/records/pending';
 import { createClient } from '@supabase/supabase-js';
 import { createRecordRepository } from '../src/features/records/repository';
+import { tastingRepository } from '../src/features/tasting/repository';
+import { newTastingDraft, setAnswer } from '../src/features/tasting/draft';
+import { composeNote } from '../src/features/tasting/answers';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -47,7 +50,7 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.ok(!(await request(`/storage/v1/object/record-photos/${storagePath}`, b.token, {
     method: 'POST', headers: { 'Content-Type': 'image/png', 'x-upsert': 'true' }, body: png,
   })).ok, 'B cannot overwrite A photo');
-  const payload = { p_operation_id: operationId, p_record: { photo: { storagePath, width: 1, height: 1 } } };
+  const payload = { p_operation_id: operationId, p_record: { category:'whisky' as const, photo: { storagePath, width: 1, height: 1 } } };
   const create = () => request('/rest/v1/rpc/create_tasting_record', a.token, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   });
@@ -63,6 +66,15 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.equal((persisted as PendingRecord | null)?.saved?.recordId,saved.recordId);
   const retry = await json<Saved>(await create(), 'Record retry');
   assert.equal(retry.recordId, saved.recordId); assert.equal(retry.replayed, true);
+  const notes=tastingRepository(sdk);let noteDraft=newTastingDraft(a.id,saved.recordId,'whisky','light');
+  noteDraft=setAnswer(noteDraft,'nose',{status:'answered',descriptors:['fruit'],intensity:null,freeText:''});
+  const noteOperation=randomUUID();const noteText=composeNote(noteDraft);
+  const savedNote=await notes.save(noteDraft,noteOperation,saved.revision,noteText,false);
+  assert.equal(savedNote.recordId,saved.recordId);assert.equal(savedNote.replayed,false);
+  assert.equal((await notes.save(noteDraft,noteOperation,saved.revision,noteText,false)).replayed,true);
+  const storedNotes=await json<{confirmed_note:string}[]>(await request(`/rest/v1/record_notes?record_id=eq.${saved.recordId}`,a.token),'Own note read');
+  assert.equal(storedNotes[0].confirmed_note,noteText);
+  assert.equal((await json<unknown[]>(await request(`/rest/v1/record_notes?record_id=eq.${saved.recordId}`,b.token),'Foreign note read')).length,0);
   assert.ok((await repository.listCellar()).some(row => row.id === saved.cellarEntryId));
   assert.ok((await fetch(await repository.photoUrl(storagePath))).ok);
   const ownRows = await json<{ id: string; record_count: number; photo_path: string }[]>(await request(`/rest/v1/cellar_overview?id=eq.${saved.cellarEntryId}`, a.token), 'Own cellar read');

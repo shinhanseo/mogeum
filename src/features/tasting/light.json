@@ -1,0 +1,818 @@
+{
+  "whisky": [
+    {
+      "id": "nose",
+      "figmaId": "58:1348",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 향을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "fruit",
+              "label": "과일"
+            },
+            {
+              "code": "flower",
+              "label": "꽃"
+            },
+            {
+              "code": "honey_vanilla",
+              "label": "꿀·바닐라"
+            },
+            {
+              "code": "wood",
+              "label": "나무"
+            },
+            {
+              "code": "smoke",
+              "label": "연기"
+            },
+            {
+              "code": "alcohol",
+              "label": "알코올"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "nose.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "palate",
+      "figmaId": "58:1401",
+      "title": "첫 모금은\n어떤 맛이었나요?",
+      "hint": "느껴지는 맛을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "palate",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "sweet",
+              "label": "달콤해요"
+            },
+            {
+              "code": "fresh",
+              "label": "상큼해요"
+            },
+            {
+              "code": "bitter",
+              "label": "쌉쌀해요"
+            },
+            {
+              "code": "nutty",
+              "label": "고소해요"
+            },
+            {
+              "code": "spicy",
+              "label": "알싸해요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "palate.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "figmaId": "58:1451",
+      "title": "입안에서 얼마나\n묵직했나요?",
+      "hint": "가볍게 흐르는지, 묵직하게 감싸는지 느껴보세요.",
+      "fields": [
+        {
+          "id": "body",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "light",
+              "label": "가벼웠어요"
+            },
+            {
+              "code": "medium",
+              "label": "적당했어요"
+            },
+            {
+              "code": "heavy",
+              "label": "묵직했어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "alcohol",
+      "figmaId": "58:1495",
+      "title": "알코올의 자극은\n어땠나요?",
+      "hint": "실제 도수 대신 내가 느낀 자극을 남겨요.",
+      "fields": [
+        {
+          "id": "alcohol",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "barely",
+              "label": "거의 없었어요"
+            },
+            {
+              "code": "warm",
+              "label": "따뜻했어요"
+            },
+            {
+              "code": "hot",
+              "label": "화끈했어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "alcohol.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "58:1539",
+      "title": "삼킨 뒤 얼마나\n오래 남았나요?",
+      "hint": "입안에 남는 향과 맛을 떠올려보세요.",
+      "fields": [
+        {
+          "id": "finish",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "short",
+              "label": "금방 사라졌어요"
+            },
+            {
+              "code": "medium",
+              "label": "잠깐 남았어요"
+            },
+            {
+              "code": "long",
+              "label": "오래 남았어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "wine": [
+    {
+      "id": "nose",
+      "figmaId": "58:1659",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 향을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "berry_cherry",
+              "label": "베리·체리"
+            },
+            {
+              "code": "apple_pear",
+              "label": "사과·배"
+            },
+            {
+              "code": "citrus",
+              "label": "레몬·자몽"
+            },
+            {
+              "code": "flower",
+              "label": "꽃"
+            },
+            {
+              "code": "wood_vanilla",
+              "label": "나무·바닐라"
+            },
+            {
+              "code": "earth_leather",
+              "label": "흙·가죽"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "nose.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "palate",
+      "figmaId": "58:1712",
+      "title": "어떤 맛이\n느껴졌나요?",
+      "hint": "느껴지는 맛을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "palate",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "sweet",
+              "label": "달콤해요"
+            },
+            {
+              "code": "acidic",
+              "label": "새콤해요"
+            },
+            {
+              "code": "bitter",
+              "label": "쌉쌀해요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "palate.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "tannin",
+      "figmaId": "58:1757",
+      "title": "입안이 마르는 듯\n떫었나요?",
+      "hint": "차를 진하게 마신 뒤의 떫은 느낌을 떠올려보세요.",
+      "fields": [
+        {
+          "id": "tannin",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "none",
+              "label": "떫지 않았어요"
+            },
+            {
+              "code": "mild",
+              "label": "조금 떫었어요"
+            },
+            {
+              "code": "strong",
+              "label": "많이 떫었어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "tannin.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "figmaId": "58:1801",
+      "title": "가볍게 넘어갔나요,\n묵직했나요?",
+      "hint": "입안을 감싸는 무게를 골라주세요.",
+      "fields": [
+        {
+          "id": "body",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "light",
+              "label": "가벼웠어요"
+            },
+            {
+              "code": "medium",
+              "label": "적당했어요"
+            },
+            {
+              "code": "heavy",
+              "label": "묵직했어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "58:1845",
+      "title": "삼킨 뒤 얼마나\n오래 남았나요?",
+      "hint": "입안에 남는 향과 맛을 떠올려보세요.",
+      "fields": [
+        {
+          "id": "finish",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "short",
+              "label": "금방 사라졌어요"
+            },
+            {
+              "code": "medium",
+              "label": "잠깐 남았어요"
+            },
+            {
+              "code": "long",
+              "label": "오래 남았어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "beer": [
+    {
+      "id": "nose",
+      "figmaId": "58:1965",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 향을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "citrus",
+              "label": "레몬·자몽"
+            },
+            {
+              "code": "tropical",
+              "label": "열대과일"
+            },
+            {
+              "code": "flower_grass",
+              "label": "꽃·풀"
+            },
+            {
+              "code": "bread_grain",
+              "label": "빵·곡물"
+            },
+            {
+              "code": "coffee_chocolate",
+              "label": "커피·초콜릿"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "nose.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "palate",
+      "figmaId": "58:2015",
+      "title": "첫 모금은\n어떤 맛이었나요?",
+      "hint": "느껴지는 맛을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "palate",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "sweet",
+              "label": "달콤해요"
+            },
+            {
+              "code": "acidic",
+              "label": "새콤해요"
+            },
+            {
+              "code": "bitter",
+              "label": "쌉쌀해요"
+            },
+            {
+              "code": "nutty",
+              "label": "고소해요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "palate.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "carbonation",
+      "figmaId": "58:2062",
+      "title": "탄산은 얼마나\n느껴졌나요?",
+      "hint": "입안에서 올라오는 기포를 떠올려보세요.",
+      "fields": [
+        {
+          "id": "carbonation",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "barely",
+              "label": "거의 없었어요"
+            },
+            {
+              "code": "gentle",
+              "label": "부드럽게 올라왔어요"
+            },
+            {
+              "code": "strong",
+              "label": "톡 쏘았어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "carbonation.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "figmaId": "58:2106",
+      "title": "가볍게 넘어갔나요,\n묵직했나요?",
+      "hint": "입안을 감싸는 무게를 골라주세요.",
+      "fields": [
+        {
+          "id": "body",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "light",
+              "label": "가벼웠어요"
+            },
+            {
+              "code": "medium",
+              "label": "적당했어요"
+            },
+            {
+              "code": "heavy",
+              "label": "묵직했어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "58:2150",
+      "title": "삼킨 뒤 어떤\n느낌이 남았나요?",
+      "hint": "남아 있는 느낌을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "finish",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "clean",
+              "label": "깔끔하게 사라져요"
+            },
+            {
+              "code": "sweet",
+              "label": "달콤함이 남아요"
+            },
+            {
+              "code": "bitter",
+              "label": "쌉쌀함이 남아요"
+            },
+            {
+              "code": "acidic",
+              "label": "새콤함이 남아요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "traditional": [
+    {
+      "id": "nose",
+      "figmaId": "58:2273",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 향을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "rice_grain",
+              "label": "쌀·곡물"
+            },
+            {
+              "code": "fruit",
+              "label": "과일"
+            },
+            {
+              "code": "flower",
+              "label": "꽃"
+            },
+            {
+              "code": "nuts",
+              "label": "견과류"
+            },
+            {
+              "code": "fermented",
+              "label": "누룩·발효 향"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "nose.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "palate",
+      "figmaId": "58:2323",
+      "title": "첫 모금은\n어떤 맛이었나요?",
+      "hint": "느껴지는 맛을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "palate",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "sweet",
+              "label": "달콤해요"
+            },
+            {
+              "code": "acidic",
+              "label": "새콤해요"
+            },
+            {
+              "code": "bitter",
+              "label": "쌉쌀해요"
+            },
+            {
+              "code": "nutty",
+              "label": "고소해요"
+            },
+            {
+              "code": "umami",
+              "label": "감칠맛이 나요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "palate.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "texture",
+      "figmaId": "58:2373",
+      "title": "입안에서는\n어떤 느낌이었나요?",
+      "hint": "가장 가까운 느낌을 최대 2개 골라주세요.",
+      "fields": [
+        {
+          "id": "texture",
+          "label": "",
+          "kind": "choice",
+          "max": 2,
+          "options": [
+            {
+              "code": "clear_light",
+              "label": "맑고 가벼워요"
+            },
+            {
+              "code": "smooth",
+              "label": "매끈해요"
+            },
+            {
+              "code": "thick",
+              "label": "걸쭉해요"
+            },
+            {
+              "code": "fizzy",
+              "label": "탄산이 톡톡해요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "texture.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "alcohol",
+      "figmaId": "58:2421",
+      "title": "알코올의 자극은\n어땠나요?",
+      "hint": "실제 도수 대신 내가 느낀 자극을 남겨요.",
+      "fields": [
+        {
+          "id": "alcohol",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "barely",
+              "label": "거의 없었어요"
+            },
+            {
+              "code": "warm",
+              "label": "따뜻했어요"
+            },
+            {
+              "code": "hot",
+              "label": "화끈했어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "alcohol.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "58:2465",
+      "title": "삼킨 뒤 얼마나\n오래 남았나요?",
+      "hint": "입안에 남는 향과 맛을 떠올려보세요.",
+      "fields": [
+        {
+          "id": "finish",
+          "label": "",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "short",
+              "label": "금방 사라졌어요"
+            },
+            {
+              "code": "medium",
+              "label": "잠깐 남았어요"
+            },
+            {
+              "code": "long",
+              "label": "오래 남았어요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.memo",
+          "label": "내 말로 남기기 · 선택",
+          "kind": "text"
+        }
+      ]
+    }
+  ]
+}

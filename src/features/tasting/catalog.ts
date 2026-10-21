@@ -33,4 +33,8 @@ export const aromaCatalogs = {
     yeast_ferment: ['clove', 'pepper', 'dough', 'fermented'],
     roast: ['coffee', 'chocolate', 'roasted_grain', 'burnt'],
   },
-} as const satisfies Record<'whisky' | 'wine' | 'beer', AromaCatalog>;
+  traditional: {
+    rice_grain: ['rice', 'steamed_grain'], ferment: [],
+    fruit: ['apple_pear', 'citrus', 'tropical', 'other_fruit'], flower_herb: [], nuts: [], wood: [],
+  },
+} as const satisfies Record<TastingCategory, AromaCatalog>;

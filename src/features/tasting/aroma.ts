@@ -5,6 +5,7 @@ export type AromaDraft = {
   details: Record<string, string[]>;
   freeText: string;
   unknown: boolean;
+  skipped?: boolean;
   clarity: 'subtle' | 'moderate' | 'clear' | 'unknown' | null;
 };
 export type AromaAction =
@@ -23,6 +24,7 @@ function toggle(values: string[], code: string) {
 }
 
 export function changeAroma(draft: AromaDraft, action: AromaAction, catalog: AromaCatalog): AromaDraft {
+  draft={...draft,skipped:false};
   switch (action.type) {
     case 'family': {
       if (!Object.hasOwn(catalog, action.code)) throw new Error('Unknown aroma family');
@@ -45,7 +47,8 @@ export function changeAroma(draft: AromaDraft, action: AromaAction, catalog: Aro
 }
 
 /** Catalog ordering is stable regardless of selection order. No family expands into details. */
-export function activeAroma(draft: AromaDraft, catalog: AromaCatalog) {
+export function activeAroma(draft: AromaDraft, catalog: AromaCatalog): {status:'unknown'|'answered'|'unanswered'|'skipped';families:string[];details:Record<string,string[]>;freeText:string;clarity:AromaDraft['clarity']} {
+  if(draft.skipped)return {status:'skipped',families:[],details:{},freeText:'',clarity:null};
   if (draft.unknown) return { status: 'unknown' as const, families: [], details: {}, freeText: '', clarity: draft.clarity };
   const families = Object.keys(catalog).filter(code => draft.families.includes(code));
   const details = Object.fromEntries(families.map(code => [code, catalog[code].filter(detail => draft.details[code]?.includes(detail))]));
