@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'supabase/**'
+      - 'src/features/records/**'
       - 'tests/database.test.ts'
       - 'tests/storage-api.test.ts'
       - 'tests/fixtures/supabase-platform.sql'

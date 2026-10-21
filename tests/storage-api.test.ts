@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+import { createRecordRepository } from '../src/features/records/repository';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -49,9 +51,13 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   });
   type Saved = { recordId: string; cellarEntryId: string; replayed: boolean };
-  const saved = await json<Saved>(await create(), 'Record save');
+  const sdk = createClient(base, apiKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { headers: { Authorization: `Bearer ${a.token}` } } });
+  const repository = createRecordRepository(sdk);
+  const saved = await repository.save(operationId, payload.p_record);
   const retry = await json<Saved>(await create(), 'Record retry');
   assert.equal(retry.recordId, saved.recordId); assert.equal(retry.replayed, true);
+  assert.ok((await repository.listCellar()).some(row => row.id === saved.cellarEntryId));
+  assert.ok((await fetch(await repository.photoUrl(storagePath))).ok);
   const ownRows = await json<{ id: string; record_count: number; photo_path: string }[]>(await request(`/rest/v1/cellar_overview?id=eq.${saved.cellarEntryId}`, a.token), 'Own cellar read');
   assert.equal(ownRows.length, 1); assert.equal(Number(ownRows[0].record_count), 1); assert.equal(ownRows[0].photo_path, storagePath);
   const foreignRows = await json<unknown[]>(await request(`/rest/v1/tasting_records?id=eq.${saved.recordId}`, b.token), 'Foreign record read');
