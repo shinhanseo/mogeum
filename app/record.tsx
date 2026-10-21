@@ -1,45 +1,91 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../src/components/Button';
 import { ChoiceChip } from '../src/components/ChoiceChip';
-import { Icon } from '../src/components/Icon';
+import { RatingStar } from '../src/components/RatingStar';
+import { Mogu } from '../src/components/Mogu';
+import { ScreenHeader, WebStatusSpace } from '../src/components/ScreenHeader';
 import { categories, type Category } from '../src/features/cellar/model';
-import { colors, fonts } from '../src/theme/tokens';
+import { colors, fonts, typography } from '../src/theme/tokens';
 
+type Step = 'start' | 'info' | 'rating';
+type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
   const router = useRouter();
+  const [step, setStep] = useState<Step>('start');
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category | null>(null);
   const [feeling, setFeeling] = useState<string | null>(null);
+  const [stars, setStars] = useState(0);
+  const [sheet, setSheetValue] = useState<Sheet>(null);
+  const [lastSheet, setLastSheet] = useState<Exclude<Sheet, null>>('category');
+  const activeSheet = sheet ?? lastSheet;
+  function setSheet(value: Sheet) { if (value) setLastSheet(value); setSheetValue(value); }
+  const [date, setDate] = useState(() => new Date());
+  const [month, setMonth] = useState(() => new Date());
+  const [vintage, setVintage] = useState('');
+  const [vintageMode, setVintageMode] = useState<'year' | 'NV' | 'unknown'>('year');
+  const [vintageYear, setVintageYear] = useState('');
   const [error, setError] = useState('');
-  async function pickPhoto() {
+  const close = () => router.back();
+  const back = () => step === 'start' ? close() : setStep(step === 'rating' ? 'info' : 'start');
+  const dateLabel = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
+  async function pickPhoto(camera = false) {
     setError('');
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.85 });
-      if (!result.canceled && result.assets[0]) setPhoto(result.assets[0]);
-    } catch { setError('사진을 열지 못했어요. 앨범 접근 권한을 확인하고 다시 시도해주세요.'); }
+      if (camera && !(await ImagePicker.requestCameraPermissionsAsync()).granted) { setError('촬영하려면 카메라 접근을 허용해주세요.'); return; }
+      const options = { mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: false, quality: 0.85 };
+      const result = camera ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
+      if (!result.canceled && result.assets[0]) { setPhoto(result.assets[0]); setStep('info'); }
+    } catch { setError('사진을 열지 못했어요. 접근 권한을 확인하고 다시 시도해주세요.'); }
   }
+  const summary = <View style={styles.summary}>
+    {photo ? <Image source={{ uri: photo.uri }} resizeMode="cover" style={styles.photo} accessibilityLabel="선택한 술 사진" /> : <View style={[styles.photo, styles.noPhoto]}><Text style={styles.caption}>사진 없이{`\n`}남기는 한 잔</Text></View>}
+    <View style={styles.summaryText}>{step === 'info' ? <><Text style={styles.title}>오늘의 한 잔</Text><Text style={styles.body}>{photo ? '사진으로 가볍게 남겨요.' : '이름으로 가볍게 남겨요.'}</Text><Button label="사진 변경" variant="text" onPress={() => pickPhoto()} style={styles.changePhoto} /></> : <><Text style={styles.caption}>{category ?? '종류 미정'}</Text><Text style={styles.title} numberOfLines={3}>{name || '이름 없는 술'}</Text><Text style={styles.caption}>{dateLabel}{category === '와인' && vintage ? ` · ${vintage}` : ''}</Text></>}</View>
+  </View>;
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <View style={styles.header}><Text style={styles.title}>한 잔 남기기</Text><Pressable accessibilityRole="button" accessibilityLabel="기록 닫기" onPress={() => router.back()} style={styles.close}><Icon name="close" /></Pressable></View>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-      {photo ? <><Image source={{ uri: photo.uri }} resizeMode="contain" style={styles.photo} /><Button label="사진 바꾸기" variant="text" onPress={pickPhoto} /></> : <Button label="앨범에서 사진 고르기" onPress={pickPhoto} />}
-      {!!error && <Text accessibilityRole="alert" style={styles.body}>{error}</Text>}
-      <Text style={styles.label}>술 이름 · 선택</Text><TextInput accessibilityLabel="술 이름" value={name} onChangeText={setName} placeholder="어떤 술을 마셨나요?" placeholderTextColor={colors.muted} style={styles.input} />
-      <Text style={styles.label}>종류 · 선택</Text><View style={styles.choices}>{categories.map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => setCategory(category === value ? null : value)} />)}</View>
-      <Text style={styles.label}>이 술, 어땠어요?</Text>{['또 마시고 싶어요', '괜찮아요', '내 취향이 아니에요'].map(value => <ChoiceChip key={value} label={value} selected={feeling === value} onPress={() => setFeeling(value)} />)}
-      <Text style={styles.body}>저장 기능을 연결하고 있어요. 지금 입력한 내용은 아직 저장되지 않아요.</Text>
-      <Button label="기록 저장 · 연결 준비 중" disabled onPress={() => {}} />
+    <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
+    <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      {step === 'start' ? <View style={styles.start}>
+        <Text style={styles.display}>오늘의 한 잔을{`\n`}사진으로 남겨볼까?</Text><Text style={[styles.body, { marginTop: 8 }]}>잘 찍은 사진이 아니어도 괜찮아요.</Text>
+        <View style={styles.hero}><Mogu /><Text style={[styles.body, { marginTop: 24 }]}>사진 한 장이면 시작할 수 있어요</Text><Text style={[styles.caption, { marginTop: 8 }]}>이름과 느낌은 천천히 채워요.</Text></View>
+        <View style={styles.startActions}><Button label="앨범에서 사진 선택" onPress={() => pickPhoto()} /><Button label="카메라로 촬영" variant="secondary" onPress={() => pickPhoto(true)} /><Pressable accessibilityRole="button" onPress={() => setStep('info')} style={styles.nameOnly}><Text style={styles.nameOnlyText}>사진 없이 이름으로 기록</Text></Pressable></View>
+        <Text style={styles.private}>내 기록은 기본적으로 나만 볼 수 있어요.</Text>
+      </View> : <View style={styles.form}>
+        {summary}
+        {step === 'info' ? <><View style={styles.fields}><View><Text style={styles.label}>술 이름</Text><TextInput accessibilityLabel="술 이름" value={name} onChangeText={setName} placeholder="술 이름을 입력해주세요" placeholderTextColor={colors.muted} style={styles.input} /></View>
+          <View><Text style={styles.label}>술 종류</Text><Button label={`${category ?? '종류 선택'}  ›`} variant="secondary" onPress={() => setSheet('category')} /></View>
+          {category === '와인' && <View><Text style={styles.label}>빈티지 · 선택</Text><Button label={`${vintage || '연도 · NV · 모름'}  ›`} variant="secondary" onPress={() => setSheet('vintage')} /></View>}
+          <View><Text style={styles.label}>언제 마셨나요?</Text><Button label={`${dateLabel}  ›`} variant="secondary" onPress={() => { setMonth(new Date(date)); setSheet('date'); }} /></View></View>
+          <Text style={[styles.caption, { marginTop: 28 }]}>다음에서 간단한 평가를 남겨요.</Text><View style={styles.bottomAction}><Button label="다음" onPress={() => setStep('rating')} /></View>
+        </> : <><View style={styles.feelings}><Text style={styles.title}>이 술, 어땠어요?</Text>{['또 마시고 싶어요', '괜찮아요', '내 취향이 아니에요'].map(value => <ChoiceChip key={value} label={value} selected={feeling === value} onPress={() => setFeeling(value)} style={{ minHeight: 44, paddingVertical: 10 }} />)}</View>
+          <View style={styles.rating}><Text style={[styles.label, { marginBottom: 0 }]}>별점</Text><Text style={styles.caption}>원할 때만 남겨주세요.</Text><View style={styles.starRow}>{[1, 2, 3, 4, 5].map(n => <Pressable key={n} accessibilityRole="button" accessibilityLabel={`별점 ${n}점`} accessibilityState={{ selected: stars === n }} onPress={() => setStars(n)} style={styles.starButton}><RatingStar filled={stars >= n} /></Pressable>)}</View>{stars > 0 && <Pressable accessibilityRole="button" accessibilityLabel="별점 지우기" onPress={() => setStars(0)}><Text style={styles.clear}>{stars}점 · 지우기</Text></Pressable>}</View>
+          <View style={[styles.bottomAction, { marginBottom: 4 }]}><Text style={styles.connection}>저장 기능 연결 중 · 아직 저장되지 않아요.</Text><Button label="기록 저장" disabled onPress={() => {}} /><Button label="저장하고 테이스팅 노트 쓰기" variant="secondary" disabled onPress={() => {}} /></View>
+        </>}
+      </View>}
+      {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     </ScrollView>
+    <Modal visible={sheet !== null} transparent animationType="slide" onRequestClose={() => setSheet(null)}><View style={styles.modalRoot}><Pressable accessibilityLabel="선택 닫기" accessibilityRole="button" style={styles.scrim} onPress={() => setSheet(null)} /><View accessibilityViewIsModal style={styles.sheet}><View style={styles.handle} />
+      <Text style={styles.title}>{activeSheet === 'category' ? '어떤 종류의 술인가요?' : activeSheet === 'date' ? '언제 마셨나요?' : '어느 해의\n와인인가요?'}</Text>
+      {activeSheet === 'category' ? <View style={styles.sheetOptions}>{([...categories, '기타'] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => setCategory(value)} style={{ minHeight: 44, paddingVertical: 10 }} />)}</View> : activeSheet === 'vintage' ? <View style={styles.vintageForm}><Text style={styles.caption}>빈티지</Text><View style={styles.vintageModes}>{([['year', '연도 입력'], ['NV', 'NV'], ['unknown', '모름']] as const).map(([value, label]) => <ChoiceChip key={value} label={label} selected={vintageMode === value} onPress={() => setVintageMode(value)} style={{ flex: 1, minHeight: 44, paddingVertical: 10, paddingHorizontal: 8 }} />)}</View>{vintageMode === 'year' && <><Text style={[styles.caption, { marginTop: 8 }]}>생산연도 · 예: 2020</Text><TextInput accessibilityLabel="빈티지 연도" value={vintageYear} onChangeText={text => setVintageYear(text.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="연도 입력" style={styles.vintageInput} /></>}</View> : <View style={styles.calendar}>
+        <View style={styles.monthRow}><Pressable accessibilityRole="button" accessibilityLabel="이전 달" onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><Text style={styles.monthArrow}>‹</Text></Pressable><Text style={styles.label}>{month.getFullYear()}년 {month.getMonth() + 1}월</Text><Pressable accessibilityRole="button" accessibilityLabel="다음 달" onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><Text style={styles.monthArrow}>›</Text></Pressable></View>
+        <View style={styles.days}>{['일', '월', '화', '수', '목', '금', '토'].map(day => <Text key={day} style={styles.dayLabel}>{day}</Text>)}{Array.from({ length: new Date(month.getFullYear(), month.getMonth(), 1).getDay() }, (_, i) => <View key={`blank-${i}`} style={styles.day} />)}{Array.from({ length: new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate() }, (_, i) => { const day = i + 1; const selected = date.getDate() === day && date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear(); return <Pressable key={day} accessibilityRole="button" accessibilityLabel={`${month.getFullYear()}년 ${month.getMonth() + 1}월 ${day}일`} accessibilityState={{ selected }} style={styles.day} onPress={() => setDate(new Date(month.getFullYear(), month.getMonth(), day))}><Text style={[styles.dayText, selected && styles.daySelected]}>{day}</Text></Pressable>; })}</View>
+      </View>}
+      <Button label={activeSheet === 'category' ? '이 종류로 선택' : activeSheet === 'date' ? '이 날짜로 선택' : '빈티지 적용'} disabled={activeSheet === 'vintage' && vintageMode === 'year' && vintageYear.length !== 4} onPress={() => { if (activeSheet === 'vintage') setVintage(vintageMode === 'year' ? vintageYear : vintageMode === 'NV' ? 'NV' : '모름'); setSheet(null); }} />
+    </View></View></Modal>
   </KeyboardAvoidingView></SafeAreaView>;
 }
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background }, flex: { flex: 1 }, header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
-  title: { fontFamily: fonts.bold, fontSize: 24, color: colors.text }, close: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' },
-  content: { width: '100%', maxWidth: 600, alignSelf: 'center', padding: 24, gap: 12, paddingBottom: 40 }, photo: { height: 220, width: '100%', backgroundColor: colors.cabinet.top, borderRadius: 12 },
-  label: { marginTop: 8, fontFamily: fonts.medium, fontSize: 14, color: colors.text }, input: { minHeight: 52, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, color: colors.text, fontFamily: fonts.regular, fontSize: 16 },
-  choices: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' }, body: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 22, color: colors.muted },
+  page: { flex: 1, backgroundColor: colors.background }, flex: { flex: 1 }, scroll: { flexGrow: 1, width: '100%', maxWidth: 600, alignSelf: 'center', paddingBottom: 48 },
+  start: { paddingHorizontal: 24, paddingTop: 24 }, display: { ...typography.display, color: colors.text }, title: { ...typography.title, color: colors.text }, body: { ...typography.body, color: colors.muted }, caption: { ...typography.caption, color: colors.muted },
+  hero: { marginTop: 28, minHeight: 306, borderRadius: 24, backgroundColor: colors.illustration, alignItems: 'center', justifyContent: 'center', paddingTop: 24, paddingBottom: 36 },
+  startActions: { marginTop: 35, gap: 12 }, nameOnly: { minHeight: 52, justifyContent: 'center', alignItems: 'center' }, nameOnlyText: { fontSize: 13, lineHeight: 22, color: colors.primary, fontFamily: fonts.regular }, private: { marginTop: 10, fontSize: 11, lineHeight: 18, color: colors.muted, textAlign: 'center', fontFamily: fonts.regular },
+  form: { flex: 1, paddingHorizontal: 24, paddingTop: 24 }, summary: { flexDirection: 'row', gap: 16, minHeight: 128 }, photo: { width: 96, height: 128, borderRadius: 8 }, noPhoto: { backgroundColor: colors.illustration, justifyContent: 'center', alignItems: 'center' }, summaryText: { flex: 1, minWidth: 0, justifyContent: 'space-between', paddingVertical: 8 }, changePhoto: { alignSelf: 'flex-start', paddingHorizontal: 0, minHeight: 36, paddingVertical: 4 },
+  fields: { marginTop: 24, gap: 24 }, label: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 22, color: colors.text, marginBottom: 6 }, input: { minHeight: 52, backgroundColor: colors.selected, borderRadius: 16, paddingHorizontal: 16, color: colors.primary, fontFamily: fonts.bold, fontSize: 15, textAlign: 'center' }, bottomAction: { marginTop: 'auto', paddingTop: 32, gap: 8 },
+  feelings: { marginTop: 24, gap: 12 }, rating: { marginTop: 24, gap: 3 }, starRow: { flexDirection: 'row', width: 280, maxWidth: '100%', marginTop: 8 }, starButton: { width: 56, minHeight: 48, alignItems: 'center', justifyContent: 'center' }, clear: { ...typography.caption, color: colors.primary, paddingVertical: 8 }, connection: { fontSize: 11, lineHeight: 18, color: colors.muted, textAlign: 'center', fontFamily: fonts.regular }, error: { ...typography.caption, color: colors.primary, padding: 24 },
+  modalRoot: { flex: 1, justifyContent: 'flex-end' }, scrim: { ...StyleSheet.absoluteFill, backgroundColor: '#00000055' }, sheet: { backgroundColor: colors.surface, padding: 24, paddingBottom: 56, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 16, width: '100%', maxWidth: 600, alignSelf: 'center' }, handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginTop: -12 }, sheetOptions: { gap: 8 }, vintageForm: { gap: 8 }, vintageModes: { flexDirection: 'row', gap: 8 }, vintageInput: { minHeight: 52, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, fontSize: 14, color: colors.text, fontFamily: fonts.regular }, calendar: { gap: 12 }, monthRow: { minHeight: 44, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, monthArrow: { fontSize: 28, color: colors.text, paddingHorizontal: 12 }, days: { flexDirection: 'row', flexWrap: 'wrap' }, day: { width: `${100 / 7}%`, minHeight: 44, alignItems: 'center', justifyContent: 'center' }, dayLabel: { minHeight: 20, width: `${100 / 7}%`, textAlign: 'center', color: colors.muted, fontSize: 12 }, dayText: { fontSize: 14, lineHeight: 40, width: 40, textAlign: 'center', fontFamily: fonts.regular, color: colors.text }, daySelected: { borderRadius: 12, backgroundColor: colors.selected, color: colors.primary },
 });

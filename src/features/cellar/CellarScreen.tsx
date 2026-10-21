@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { FlatList, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Button } from '../../components/Button';
 import { ChoiceChip } from '../../components/ChoiceChip';
 import { Icon } from '../../components/Icon';
-import { colors, fonts } from '../../theme/tokens';
+import { colors, fonts, typography, layout } from '../../theme/tokens';
 import { categories, shelfRows, type Category, type CellarItem } from './model';
 
 function PhotoCard({ item }: { item: CellarItem }) {
@@ -15,34 +15,37 @@ function PhotoCard({ item }: { item: CellarItem }) {
   </View>;
 }
 export function CellarScreen({ items, onRecord }: { items: CellarItem[]; onRecord: () => void }) {
+  const { width } = useWindowDimensions();
+  const filterScale = Math.min(1, (width - 48) / 352);
   const [category, setCategory] = useState<Category | '전체'>('전체');
   const [query, setQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const filtered = items.filter(item => (category === '전체' || category === item.category) && (item.name ?? '').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   const empty = items.length === 0;
   return <View style={styles.page}>
     <View style={styles.header}>
-      <Text style={styles.title}>나의 술장</Text><Text style={styles.count}>모아둔 술 {items.length}</Text>
-      {!empty && <TextInput accessibilityLabel="술 이름 검색" placeholder="술 이름으로 찾기" placeholderTextColor={colors.muted} value={query} onChangeText={setQuery} style={styles.search} />}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filters}>{(['전체', ...categories] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => setCategory(value)} compact />)}</ScrollView>
+      <View style={styles.titleRow}><Text style={styles.title}>나의 술장</Text><Pressable accessibilityRole="button" accessibilityLabel="술 찾기" onPress={() => setSearchOpen(!searchOpen)} style={styles.searchAction}><Icon name="search" color={colors.text} /></Pressable></View><Text style={styles.count}>모아둔 술 {items.length}</Text>
+      {searchOpen && <TextInput accessibilityLabel="술 이름 검색" placeholder="술 이름으로 찾기" placeholderTextColor={colors.muted} value={query} onChangeText={setQuery} style={styles.search} />}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filters}>{(['전체', ...categories] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => setCategory(value)} compact style={{ paddingHorizontal: 15 * filterScale, minWidth: ({ 전체: 49, 위스키: 67, 와인: 53, 맥주: 53, 전통주: 74 })[value] * filterScale }} />)}</ScrollView>
     </View>
     {!empty && filtered.length === 0 ? <View style={styles.noResults}><Text style={styles.emptyTitle}>찾는 술이 없어요</Text><Button label="검색 조건 지우기" variant="secondary" onPress={() => { setCategory('전체'); setQuery(''); }} /></View> :
-      <FlatList data={shelfRows(filtered)} keyExtractor={(_, index) => `shelf-${index}`} contentContainerStyle={styles.list} renderItem={({ item: row, index }) => <View style={styles.shelf}>
+      <FlatList data={shelfRows(filtered)} keyExtractor={(_, index) => `shelf-${index}`} showsVerticalScrollIndicator={false} contentContainerStyle={styles.list} renderItem={({ item: row, index }) => <View style={styles.shelf}>
         <View style={styles.slots}>{row.map((item, column) => <View key={item?.id ?? `empty-${column}`} style={styles.slot}>{item && <PhotoCard item={item} />}</View>)}</View>
-        {empty && index === 0 && <View style={styles.empty}><Text style={styles.emptyTitle}>아직 비어 있어도 괜찮아.</Text><Text style={styles.emptyBody}>마신 한 잔의 사진부터 모아볼까요?</Text><Button label="첫 사진 남기기" onPress={onRecord} /></View>}
+        {empty && index === 0 && <View style={styles.empty}><Text style={styles.emptyTitle}>아직 비어 있어도 괜찮아.</Text><Text style={styles.emptyBody}>마신 한 잔의 사진부터 모아볼까요?</Text><Button label="첫 사진 남기기" onPress={onRecord} style={{ marginTop: 4, marginHorizontal: 20 }} /></View>}
         <View style={styles.shelfTop} /><View style={styles.shelfFront} />
       </View>} />}
   </View>;
 }
 const styles = StyleSheet.create({
-  page: { flex: 1 }, header: { padding: 20, paddingBottom: 16, gap: 4 }, title: { fontSize: 24, lineHeight: 36, fontFamily: fonts.bold, color: colors.text },
-  count: { fontSize: 13, lineHeight: 22, fontFamily: fonts.regular, color: colors.muted }, filterScroll: { marginTop: 12 }, filters: { flexDirection: 'row', gap: 6 },
+  page: { flex: 1 }, header: { minHeight: layout.cellarHeader, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 27 }, titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, searchAction: { width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center' }, title: { ...typography.heading, color: colors.text },
+  count: { marginTop: 4, fontSize: 13, lineHeight: 22, fontFamily: fonts.regular, color: colors.muted }, filterScroll: { marginTop: 24, flexGrow: 0 }, filters: { flexDirection: 'row', gap: 6 },
   search: { minHeight: 44, backgroundColor: colors.cabinet.top, paddingHorizontal: 14, borderRadius: 12, color: colors.text, fontFamily: fonts.regular },
   list: { paddingHorizontal: 16, paddingBottom: 24 }, shelf: { minHeight: 228, backgroundColor: colors.cabinet.back, borderLeftWidth: 10, borderRightWidth: 10, borderColor: colors.cabinet.side },
-  slots: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 5, paddingTop: 20, minHeight: 212 }, slot: { flex: 1, minWidth: 0 },
-  card: { padding: 6, backgroundColor: colors.surface, borderRadius: 3, gap: 4 }, photo: { width: '100%', aspectRatio: 3 / 4 },
+  slots: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 6, paddingTop: 20, minHeight: 212 }, slot: { flex: 1, minWidth: 0 },
+  card: { padding: 4, backgroundColor: colors.surface, borderRadius: 3, gap: 4 }, photo: { width: '100%', aspectRatio: 3 / 4 },
   fallback: { backgroundColor: colors.cabinet.top, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  name: { minHeight: 34, fontSize: 12, lineHeight: 17, fontFamily: fonts.bold, color: colors.text, textAlign: 'center' }, category: { fontSize: 10, lineHeight: 16, fontFamily: fonts.regular, color: colors.muted, textAlign: 'center' },
+  name: { minHeight: 32, fontSize: 11, lineHeight: 16, fontFamily: fonts.bold, color: colors.text, textAlign: 'center' }, category: { fontSize: 10, lineHeight: 16, fontFamily: fonts.regular, color: colors.muted, textAlign: 'center' },
   shelfTop: { height: 6, backgroundColor: colors.cabinet.top }, shelfFront: { height: 10, backgroundColor: colors.cabinet.front, borderBottomWidth: 2, borderBottomColor: colors.cabinet.shadow },
-  empty: { position: 'absolute', top: 32, left: 20, right: 20, gap: 12 }, emptyTitle: { fontSize: 16, lineHeight: 26, color: colors.text, fontFamily: fonts.medium, textAlign: 'center' },
-  emptyBody: { fontSize: 12, lineHeight: 20, color: colors.muted, fontFamily: fonts.regular, textAlign: 'center' }, noResults: { padding: 24, gap: 20 },
+  empty: { position: 'absolute', top: 36, left: 14, right: 14, gap: 12 }, emptyTitle: { fontSize: 20, lineHeight: 24, color: colors.muted, fontFamily: fonts.regular, textAlign: 'center' },
+  emptyBody: { fontSize: 14, lineHeight: 20, color: colors.muted, fontFamily: fonts.regular, textAlign: 'center' }, noResults: { padding: 24, gap: 20 },
 });
