@@ -1,5 +1,5 @@
 export const colors = {
-  background: '#FAF7F2', surface: '#FFFDFA', primary: '#783F4B', selected: '#F2E5E8',
+  apple: '#252322', kakao: '#FEE500', background: '#FAF7F2', surface: '#FFFDFA', primary: '#783F4B', selected: '#F2E5E8',
   text: '#332D2B', muted: '#776B65', border: '#E6DDD4', chip: '#F0EBE2', illustration: '#EEE5D7', disabled: '#E7E1DD',
   cabinet: { back: '#EDE5DB', side: '#D9CBB9', front: '#E2D6C6', top: '#F3EDE4', shadow: '#CCBDA9' },
 };

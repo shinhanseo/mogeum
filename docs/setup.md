@@ -29,7 +29,7 @@
 
 Node 24.22.0 / npm 11.12.1. `nvm use && npm ci` 후 `npm run check`로 타입 검사·린트·환경 설정 테스트를 실행한다. `npm run web`은 브라우저 확인용이다. `npx expo export --platform all`은 iOS/Android/Web 번들을 생성한다.
 
-실제 설정은 `.env.example`을 `.env`로 복사한 뒤 입력한다. `.env` 변경 후 Metro를 재시작하고 앱을 새로고침한다. 화면의 재확인 버튼은 현재 번들에 주입된 설정을 다시 읽는 동작이다. 누락/자리표시자/잘못된 URL은 앱에서 설정 안내를 표시한다. 새 `sb_publishable_` 키를 사용한다. AI provider/service role 키를 앱에 넣지 않는다. 서버 SDK와 로그인은 아직 미구현이라 환경 변수 형식이 맞아도 서버 연결 성공으로 표시하지 않는다.
+실제 설정은 `.env.example`을 `.env`로 복사한 뒤 입력한다. `.env` 변경 후 Metro를 재시작하고 앱을 새로고침한다. 화면의 재확인 버튼은 현재 번들에 주입된 설정을 다시 읽는 동작이다. 누락/자리표시자/잘못된 URL은 앱에서 설정 안내를 표시한다. 새 `sb_publishable_` 키를 사용한다. AI provider/service role 키를 앱에 넣지 않는다. 서버 SDK와 OAuth 연결 코드가 있으며 provider 등록 전에는 로그인할 수 없다. 현재 적용 상태와 수동 migration history 주의사항은 docs/verification/live-records.md를 참고한다.
 
 ```sh
 # 아래 com.example 값은 로컬 검증용이며 스토어 식별자가 아니다.

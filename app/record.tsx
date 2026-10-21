@@ -1,5 +1,10 @@
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import * as Crypto from 'expo-crypto';
+import { useAuth } from '../src/features/auth/AuthProvider';
+import { readPending, preparePhoto, savePending, finishPending } from '../src/features/records/device';
+import type { PendingRecord } from '../src/features/records/pending';
+import type { RecordInput } from '../src/features/records/repository';
+import { Redirect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +19,19 @@ import { colors, fonts, typography } from '../src/theme/tokens';
 type Step = 'start' | 'info' | 'rating';
 type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
+  const auth = useAuth();
+  if (auth.status === 'loading') return <View style={{ flex:1, backgroundColor:colors.background }} />;
+  if (auth.status !== 'signed-in') return <Redirect href="/login" />;
+  return <RecordComposer key={auth.session.user.id} owner={auth.session.user.id} />;
+}
+function RecordComposer({ owner }: { owner:string }) {
   const router = useRouter();
+  const ownerRef = useRef<string | null>(owner);
+  useEffect(() => { ownerRef.current = owner; return () => { ownerRef.current = null; }; }, [owner]);
+  const busyRef = useRef(false);
+  const [saving, setSaving] = useState(false);
+  const [restoring, setRestoring] = useState(true);
+  const [pending, setPending] = useState<PendingRecord | null>(null);
   const [step, setStep] = useState<Step>('start');
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [name, setName] = useState('');
@@ -31,8 +48,24 @@ export default function RecordScreen() {
   const [vintageMode, setVintageMode] = useState<'year' | 'NV' | 'unknown'>('year');
   const [vintageYear, setVintageYear] = useState('');
   const [error, setError] = useState('');
-  const close = () => router.back();
-  const back = () => step === 'start' ? close() : setStep(step === 'rating' ? 'info' : 'start');
+  useEffect(() => {
+    let active = true;
+    if (owner) void readPending(owner).then(value => {
+      if (!active || !value) return;
+      setPending(value); setName(value.input.enteredName ?? '');
+      const kinds = { whisky: '위스키', wine: '와인', beer: '맥주', traditional: '전통주', other: '기타' } as const;
+      setCategory(value.input.category ? kinds[value.input.category] : null);
+      const feelings = { again: '또 마시고 싶어요', okay: '괜찮아요', not_for_me: '내 취향이 아니에요' };
+      setFeeling(value.input.revisit ? feelings[value.input.revisit] : null); setStars(value.input.rating ?? 0);
+      if (value.input.consumedAt) setDate(new Date(value.input.consumedAt));
+      if (value.localPhoto && value.input.photo) setPhoto({ uri: value.localPhoto, width: value.input.photo.width, height: value.input.photo.height });
+      setVintage(value.input.vintageStatus === 'year' ? String(value.input.vintageYear) : value.input.vintageStatus === 'nv' ? 'NV' : value.input.vintageStatus === 'unknown' ? '모름' : '');
+      setStep('rating');
+    }).catch(() => { if (active) setError('저장 중인 기록을 불러오지 못했어요. 다시 열어주세요.'); }).finally(() => { if (active) setRestoring(false); });
+    return () => { active = false; };
+  }, [owner]);
+  const close = () => { if (!busyRef.current) router.back(); };
+  const back = () => { if (busyRef.current) return; if (pending) { setError('저장 중인 기록을 먼저 완료해주세요.'); return; } if (step === 'start') close(); else setStep(step === 'rating' ? 'info' : 'start'); };
   const dateLabel = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
   async function pickPhoto(camera = false) {
     setError('');
@@ -43,13 +76,48 @@ export default function RecordScreen() {
       if (!result.canceled && result.assets[0]) { setPhoto(result.assets[0]); setStep('info'); }
     } catch { setError('사진을 열지 못했어요. 접근 권한을 확인하고 다시 시도해주세요.'); }
   }
+
+  async function saveRecord() {
+    if (busyRef.current) return;
+    if (!owner) { router.push('/login'); return; }
+    if (!pending && !photo && !name.trim()) { setError('사진이나 술 이름을 남겨주세요.'); return; }
+    if (!pending && !feeling) { setError('이 술이 어땠는지 골라주세요.'); return; }
+    busyRef.current = true; setSaving(true); setError('');
+    try {
+      let operation = pending;
+      if (!operation) {
+        const operationId = Crypto.randomUUID();
+        const input: RecordInput = { consumedAt: date.toISOString() };
+        if (name.trim()) input.enteredName = name.trim();
+        if (category) input.category = ({ 위스키:'whisky', 와인:'wine', 맥주:'beer', 전통주:'traditional', 기타:'other' } as const)[category];
+        input.revisit = ({ '또 마시고 싶어요':'again', '괜찮아요':'okay', '내 취향이 아니에요':'not_for_me' } as const)[feeling as '또 마시고 싶어요'];
+        if (stars) input.rating = stars;
+        if (category === '와인' && vintage) {
+          input.vintageStatus = vintage === 'NV' ? 'nv' : vintage === '모름' ? 'unknown' : 'year';
+          if (input.vintageStatus === 'year') input.vintageYear = Number(vintage);
+        }
+        operation = { version:1, ownerId:owner, operationId, input };
+        if (photo) {
+          const prepared = await preparePhoto(photo.uri, photo.width, photo.height, operationId);
+          operation.localPhoto = prepared.localUri;
+          input.photo = { storagePath:`${owner}/records/${operationId}/photo.jpg`, width:prepared.width, height:prepared.height };
+        }
+        setPending(operation);
+      }
+      await savePending(operation, () => ownerRef.current);
+      await finishPending(operation);
+      if (ownerRef.current === owner) router.replace('/');
+    } catch { setError('저장을 완료하지 못했어요. 사진과 입력을 확인한 뒤 같은 기록으로 다시 시도해주세요.'); }
+    finally { busyRef.current = false; setSaving(false); }
+  }
+  if (restoring) return <View style={styles.page} />;
   const summary = <View style={styles.summary}>
     {photo ? <Image source={{ uri: photo.uri }} resizeMode="cover" style={styles.photo} accessibilityLabel="선택한 술 사진" /> : <View style={[styles.photo, styles.noPhoto]}><Text style={styles.caption}>사진 없이{`\n`}남기는 한 잔</Text></View>}
     <View style={styles.summaryText}>{step === 'info' ? <><Text style={styles.title}>오늘의 한 잔</Text><Text style={styles.body}>{photo ? '사진으로 가볍게 남겨요.' : '이름으로 가볍게 남겨요.'}</Text><Button label="사진 변경" variant="text" onPress={() => pickPhoto()} style={styles.changePhoto} /></> : <><Text style={styles.caption}>{category ?? '종류 미정'}</Text><Text style={styles.title} numberOfLines={3}>{name || '이름 없는 술'}</Text><Text style={styles.caption}>{dateLabel}{category === '와인' && vintage ? ` · ${vintage}` : ''}</Text></>}</View>
   </View>;
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
-    <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+    <ScrollView pointerEvents={saving ? 'none' : 'auto'} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       {step === 'start' ? <View style={styles.start}>
         <Text style={styles.display}>오늘의 한 잔을{`\n`}사진으로 남겨볼까?</Text><Text style={[styles.body, { marginTop: 8 }]}>잘 찍은 사진이 아니어도 괜찮아요.</Text>
         <View style={styles.hero}><Mogu /><Text style={[styles.body, { marginTop: 24 }]}>사진 한 장이면 시작할 수 있어요</Text><Text style={[styles.caption, { marginTop: 8 }]}>이름과 느낌은 천천히 채워요.</Text></View>
@@ -62,9 +130,9 @@ export default function RecordScreen() {
           {category === '와인' && <View><Text style={styles.label}>빈티지 · 선택</Text><Button label={`${vintage || '연도 · NV · 모름'}  ›`} variant="secondary" onPress={() => setSheet('vintage')} /></View>}
           <View><Text style={styles.label}>언제 마셨나요?</Text><Button label={`${dateLabel}  ›`} variant="secondary" onPress={() => { setMonth(new Date(date)); setSheet('date'); }} /></View></View>
           <Text style={[styles.caption, { marginTop: 28 }]}>다음에서 간단한 평가를 남겨요.</Text><View style={styles.bottomAction}><Button label="다음" onPress={() => setStep('rating')} /></View>
-        </> : <><View style={styles.feelings}><Text style={styles.title}>이 술, 어땠어요?</Text>{['또 마시고 싶어요', '괜찮아요', '내 취향이 아니에요'].map(value => <ChoiceChip key={value} label={value} selected={feeling === value} onPress={() => setFeeling(value)} style={{ minHeight: 44, paddingVertical: 10 }} />)}</View>
-          <View style={styles.rating}><Text style={[styles.label, { marginBottom: 0 }]}>별점</Text><Text style={styles.caption}>원할 때만 남겨주세요.</Text><View style={styles.starRow}>{[1, 2, 3, 4, 5].map(n => <Pressable key={n} accessibilityRole="button" accessibilityLabel={`별점 ${n}점`} accessibilityState={{ selected: stars === n }} onPress={() => setStars(n)} style={styles.starButton}><RatingStar filled={stars >= n} /></Pressable>)}</View>{stars > 0 && <Pressable accessibilityRole="button" accessibilityLabel="별점 지우기" onPress={() => setStars(0)}><Text style={styles.clear}>{stars}점 · 지우기</Text></Pressable>}</View>
-          <View style={[styles.bottomAction, { marginBottom: 4 }]}><Text style={styles.connection}>저장 기능 연결 중 · 아직 저장되지 않아요.</Text><Button label="기록 저장" disabled onPress={() => {}} /><Button label="저장하고 테이스팅 노트 쓰기" variant="secondary" disabled onPress={() => {}} /></View>
+        </> : <><View style={styles.feelings}><Text style={styles.title}>이 술, 어땠어요?</Text>{['또 마시고 싶어요', '괜찮아요', '내 취향이 아니에요'].map(value => <ChoiceChip key={value} label={value} selected={feeling === value} onPress={() => { if (!pending) setFeeling(value); }} style={{ minHeight: 44, paddingVertical: 10 }} />)}</View>
+          <View style={styles.rating}><Text style={[styles.label, { marginBottom: 0 }]}>별점</Text><Text style={styles.caption}>원할 때만 남겨주세요.</Text><View style={styles.starRow}>{[1, 2, 3, 4, 5].map(n => <Pressable key={n} accessibilityRole="button" accessibilityLabel={`별점 ${n}점`} accessibilityState={{ selected: stars === n }} onPress={() => { if (!pending) setStars(n); }} style={styles.starButton}><RatingStar filled={stars >= n} /></Pressable>)}</View>{stars > 0 && <Pressable accessibilityRole="button" accessibilityLabel="별점 지우기" onPress={() => { if (!pending) setStars(0); }}><Text style={styles.clear}>{stars}점 · 지우기</Text></Pressable>}</View>
+          <View style={[styles.bottomAction, { marginBottom: 4 }]}><Text style={styles.connection}>{pending ? '저장 중인 원래 기록으로 다시 시도해요.' : '내 계정에 안전하게 보관해요.'}</Text><Button label={owner ? '기록 저장' : '로그인하고 저장'} loading={saving} onPress={saveRecord} /><Button label="저장하고 테이스팅 노트 쓰기" variant="secondary" disabled onPress={() => {}} /></View>
         </>}
       </View>}
       {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}

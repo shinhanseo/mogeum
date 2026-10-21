@@ -1,3 +1,4 @@
+import { submitPending, type PendingRecord } from '../src/features/records/pending';
 import { createClient } from '@supabase/supabase-js';
 import { createRecordRepository } from '../src/features/records/repository';
 import assert from 'node:assert/strict';
@@ -53,7 +54,13 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   type Saved = { recordId: string; cellarEntryId: string; replayed: boolean };
   const sdk = createClient(base, apiKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { headers: { Authorization: `Bearer ${a.token}` } } });
   const repository = createRecordRepository(sdk);
-  const saved = await repository.save(operationId, payload.p_record);
+  let persisted: PendingRecord | null = null;
+  const pending: PendingRecord = { version:1, ownerId:a.id, operationId, input:payload.p_record };
+  const saved = await submitPending(pending, {
+    ownerId:()=>a.id, read:async()=>persisted, write:async value=>{persisted=value;},
+    upload:async()=>{}, save:(id,input)=>repository.save(id,input),
+  });
+  assert.equal((persisted as PendingRecord | null)?.saved?.recordId,saved.recordId);
   const retry = await json<Saved>(await create(), 'Record retry');
   assert.equal(retry.recordId, saved.recordId); assert.equal(retry.replayed, true);
   assert.ok((await repository.listCellar()).some(row => row.id === saved.cellarEntryId));
