@@ -8,10 +8,10 @@
 
 ## 실행 결과
 
-- npm run check: 56개 중 54 pass / 2 skip(로컬 HTTP/독립 PostgreSQL 미기동). 날짜 윤년/넘침·빈티지·경험 ID 보존, 삭제 revision/이미 삭제된 재시도, DB 소유권/단일 항목 이름 동기화/다중 경험 보존/파일 완료 확인 권한을 검증했다.
+- npm run check: 57개 중 55 pass / 2 skip(로컬 HTTP/독립 PostgreSQL 미기동). 날짜 윤년/넘침·빈티지·경험 ID 보존, 삭제 revision/이미 삭제된 재시도, DB 소유권/단일 항목 이름 동기화/다중 경험 보존/파일 완료 확인 권한을 검증했다.
 - 실 PostgreSQL+Auth/Storage CI 테스트에 실제 SDK 상세 읽기→기본 수정→개별 삭제/재시도→binary 정리→done 영수증 검증을 추가했다. 실행 결과는 PR checks에서 확인한다.
 - iOS 26.5 / iPhone 17 Pro의 명시적 fixture에서 원본과 같은 카드 톤/세로 사진, 평가 바텀시트, 변경 취소와 원본 복원, 날짜 변경 후 로컬 재표시를 확인했다. `ios-record-edit.png` 보관. 실제 계정 로그인 클라우드 E2E와 Android는 미검증이다.
-- Expo 호환 검사 권장값 변경으로 이전 PR의 App checks가 실패하여 SDK 58 패치와 관련 패키지를 공식 `expo install --fix`로 맞췄다. `expo install --check` 통과. native Pods를 업데이트하고 iOS 빌드를 다시 진행했다. [공식 업데이트 절차](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/).
+- Expo 호환 검사 권장값 변경으로 이전 PR의 App checks가 실패하여 SDK 58 패치와 관련 패키지를 공식 `expo install --fix`로 맞췄다. `expo install --check` 통과. native Pods를 업데이트하고 iOS 빌드/시뮬레이터 재설치를 완료했다. 새 빌드에서도 수정 화면과 개별 삭제 확인창을 확인했다. [공식 업데이트 절차](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/).
 
 ## 개발 DB 적용
 
@@ -20,3 +20,7 @@
 ## 남은 #8
 
 사진 교체·주종 변경·경험 이동·대표 사진 관리, 상시 파일 정리 worker, 향후 AI 요약의 stale UI가 남아 있다. 기본 정보 수정/삭제 연결이 #8 전체 완료를 의미하지 않는다. 이름이 여러 경험의 공유 술장 이름과 다른 경우 안내를 제공한다.
+
+삭제된 생성 operation의 재시도에 P0002를 반환하는 20261022161000_record_tombstones.sql을 추가했다. 삭제 payload 대신 사용자/operation/record ID와 삭제 시각만 보관하며, 생성과 같은 advisory lock을 사용한다. 계정 삭제 cascade를 방해하지 않는다. 실제 Storage CI는 수정/삭제/파일 완료 영수증까지 확인한다.
+
+실 Auth/Storage CI에서 상세의 역방향 복합 FK 관계 record_notes가 객체가 아닌 배열로 반환되는 것을 발견해 정규화했다. 원본 답변/확정 문장은 그대로 유지하고 0개는 null로 처리한다. 해당 배열 fixture 회귀 검증을 추가했다.

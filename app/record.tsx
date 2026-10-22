@@ -124,7 +124,10 @@ export function RecordComposer({ owner, entryId, previewEntry }: { owner:string;
         if(withNote) router.replace({pathname:'/tasting',params:{recordId:saved.recordId}});
         else router.replace({pathname:'/detail',params:{recordId:saved.recordId}});
       }
-    } catch { setError('저장을 완료하지 못했어요. 사진과 입력을 확인한 뒤 같은 기록으로 다시 시도해주세요.'); }
+    } catch (error) {
+      if((error as {code?:string}).code==='P0002'&&pending){await finishPending(pending);if(ownerRef.current===owner)router.replace('/');}
+      else setError('저장을 완료하지 못했어요. 사진과 입력을 확인한 뒤 같은 기록으로 다시 시도해주세요.');
+    }
     finally { busyRef.current = false; setSaving(false); }
   }
   if (restoring) return <View style={styles.page} />;

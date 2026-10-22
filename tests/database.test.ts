@@ -56,7 +56,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
 
     await t.test('private tables enable RLS and bucket is private', async () => {
       const { rows } = await db.query("select relname,relrowsecurity from pg_class join pg_namespace n on n.oid=relnamespace where n.nspname='public' and relkind='r'");
-      assert.equal(rows.length, 10);
+      assert.equal(rows.length, 11);
       assert.ok(rows.every(row => row.relrowsecurity === true));
       assert.equal((await db.query("select public from storage.buckets where id='record-photos'")).rows[0].public, false);
     });
@@ -123,7 +123,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
     });
     await t.test('user B cannot read A rows, photos, or the security-invoker overview', async () => {
       await as(b);
-      for (const table of ['cellar_entries','tasting_records','record_photos','record_notes','record_answers','record_drafts','user_settings','profiles','photo_deletion_jobs','cellar_overview']) {
+      for (const table of ['cellar_entries','tasting_records','record_photos','record_notes','record_answers','record_drafts','user_settings','profiles','photo_deletion_jobs','deleted_record_operations','cellar_overview']) {
         assert.equal((await db.query(`select * from public.${table}`)).rows.length, 0, table);
       }
       assert.equal((await db.query('select * from storage.objects')).rows.length, 0);
@@ -189,6 +189,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await db.query('delete from public.tasting_records where id=$1 and revision=$2 returning id',[record.recordId,row.revision])).rows.length,0);
       assert.equal((await db.query('delete from public.tasting_records where id=$1 and revision=$2 returning id',[record.recordId,updated.revision])).rows.length,1);
       assert.equal((await db.query('select id from public.tasting_records where id=$1',[another.recordId])).rows.length,1);
+      await assert.rejects(saved(70,{enteredName:'Before edit',category:'whisky',photo:photo(a,70)}),{code:'P0002'});
       const job=(await db.query('select id from public.photo_deletion_jobs where storage_path=$1',[path(a,70)])).rows[0];
       assert.equal((await db.query('select public.complete_photo_deletion($1) result',[Number(job.id)])).rows[0].result,false);
       await as(b);await assert.rejects(db.query('select public.complete_photo_deletion($1)',[Number(job.id)]),{code:'42501'});await as(a);
@@ -253,6 +254,15 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
         await as(a);
         assert.equal((await db.query('select * from public.tasting_records where operation_id=$1', [operation(100)])).rows.length, 1);
       } finally { await sql.end(); }
+    });
+    await t.test('deletion receipts do not block account deletion cascades',async()=>{
+      const owner='10000000-0000-4000-8000-000000000003';
+      await db.exec('reset role');await db.query('insert into auth.users(id,email) values($1,$2)',[owner,'cascade@example.test']);
+      await as(owner);const record=await saved(80,{enteredName:'Cascade fixture'});
+      await db.exec('reset role');await db.query('delete from auth.users where id=$1',[owner]);
+      assert.equal((await db.query('select id from public.tasting_records where id=$1',[record.recordId])).rows.length,0);
+      assert.equal((await db.query('select * from public.deleted_record_operations where user_id=$1',[owner])).rows.length,0);
+      await as(a);
     });
     await t.test('unverified common products are not client-readable or writable', async () => {
       await db.exec('reset role');

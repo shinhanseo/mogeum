@@ -94,3 +94,5 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 - 앱의 이름/현지 날짜/재음용 의사/선택 별점/와인 빈티지 수정은 새 경험을 만들지 않는다. 40001은 최신 기록을 다시 확인하게 하고 자동 덮어쓰지 않는다. 네트워크 결과 미확인 상태에서는 수정/삭제의 원래 행동으로만 재시도한다.
 - 개별 기록 삭제는 `tasting_records`의 JWT 소유자+id+revision 조건으로 실행한다. 0행 삭제 후 소유 기록이 여전히 있으면 충돌, 없으면 이미 삭제된 응답 유실 재시도로 처리한다. DB cascade는 해당 경험의 자식과 대표 사진 참조를 정리하고 binary 삭제 job을 남긴다.
 - 앱의 사진 정리기는 로그인 사용자의 미완료 job을 최대 20개 읽고 Storage remove 후 `complete_photo_deletion(p_job_id)`를 호출한다. 이 definer 함수는 활성 사용자/작업 소유자/Storage 객체 부재를 다시 확인한 뒤에만 done 처리한다. 파일이 있으면 false, 남의 작업은 42501이다. 실패 job은 다음 술장 focus에서 재시도한다. 앱이 열리지 않거나 계정이 이미 삭제된 경우 처리하는 서버 worker는 후속이다.
+
+삭제된 생성 요청 ID는 deleted_record_operations에 사용자별 ID·삭제 시각만 남긴다. create_tasting_record는 같은 advisory lock 아래 삭제 영수증을 검사하여 P0002를 반환하며 기록을 재생성하지 않는다. 앱은 그 오류의 기존 pending을 정리한다. 계정 제거 시 영수증도 cascade 정리한다. 이는 위 v1 설명의 tombstone 후속 항목을 구현한 것이다.
