@@ -10,12 +10,17 @@
     "types": [
       "node",
       "react"
-    ]
+    ],
+    "allowImportingTsExtensions": true
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "supabase/functions/taste-summary/index.ts",
+    "supabase/functions/taste-summary/provider.ts"
   ]
 }

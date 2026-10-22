@@ -1,3 +1,4 @@
+import { loadTasteContext } from '../src/features/taste/repository';
 import { applyAttachment, type PendingAttachment } from '../src/features/records/attachment';
 import { findEntryCandidates } from '../src/features/records/candidates';
 import { loadRecordDetail } from '../src/features/records/detail';
@@ -100,10 +101,14 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.ok((await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`, a.token)).ok, 'A referenced photo survives a premature file-delete request');
   const detail=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
   assert.equal(detail.record.record_notes?.confirmed_note,noteText);
-  await saveBasicEdit(sdk,detail.record,{...editInitial(detail.record),name:'Edited synthetic whisky',rating:3});
+  await saveBasicEdit(sdk,detail.record,{...editInitial(detail.record),name:'Edited synthetic whisky',rating:3,revisit:'again'});
   const edited=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
   assert.equal(edited.record.entered_name,'Edited synthetic whisky');
   assert.equal((await repository.listCellar()).find(row=>row.id===saved.cellarEntryId)?.display_name,'Edited synthetic whisky');
+  const taste=await loadTasteContext(sdk);assert.equal(taste.snapshot.records.some(r=>r.id===saved.recordId),true);assert.equal(taste.cached,null);
+  const blocked=await request('/functions/v1/taste-summary',a.token,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  assert.equal(blocked.status,503);assert.equal((await blocked.json()).code,'AI_NOT_CONFIGURED');
+  assert.equal((await request('/functions/v1/taste-summary','not-a-valid-jwt',{method:'POST',body:'{}'})).status,401);
   const candidates=await findEntryCandidates(sdk,a.id,'Edited synthetic');
   assert.equal(candidates[0].id,saved.cellarEntryId);
   const sdkB=createClient(base,apiKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{headers:{Authorization:`Bearer ${b.token}`}}});
@@ -130,6 +135,8 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   const move:PendingAttachment={version:1,owner:a.id,recordId:saved.recordId,operationId:randomUUID(),expectedRevision:replaced.record.revision,change:{kind:'move',entryId:target.cellarEntryId}};
   await assert.rejects(applyAttachment(sdkB,{...move,owner:b.id}));
   await applyAttachment(sdk,move);
+  assert.notEqual((await loadTasteContext(sdk)).snapshot.hash,taste.snapshot.hash);
+  assert.equal((await loadTasteContext(sdkB)).snapshot.records.length,0);
   const moved=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
   assert.equal(moved.record.cellar_entry_id,target.cellarEntryId);
   assert.equal(moved.history.length,2);assert.equal(moved.record.record_notes?.confirmed_note,noteText);

@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebStatusSpace } from '../src/components/ScreenHeader';
 import { BottomTabBar, type MainTab } from '../src/components/BottomTabBar';
 import { Button } from '../src/components/Button';
-import { TasteScreen } from '../src/features/taste/TasteScreen';
+import { TastePanel } from '../src/features/taste/TastePanel';
 import { CellarScreen } from '../src/features/cellar/CellarScreen';
 import type { Category, CellarItem } from '../src/features/cellar/model';
 import { useAuth } from '../src/features/auth/AuthProvider';
@@ -16,10 +16,10 @@ import { colors, typography } from '../src/theme/tokens';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { browse } = useLocalSearchParams<{ browse?: string }>();
+  const { browse,tab:initialTab } = useLocalSearchParams<{ browse?: string;tab?:string }>();
   const auth = useAuth();
   const owner = auth.status === 'signed-in' ? auth.session.user.id : null;
-  const [tab, setTab] = useState<MainTab>('cellar');
+  const [tab, setTab] = useState<MainTab>(initialTab==='taste'?'taste':'cellar');
   const [data, setData] = useState<{ owner: string; items: CellarItem[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -57,7 +57,7 @@ export default function HomeScreen() {
   const openRecord = () => router.push(owner ? '/record' : '/login');
   return <SafeAreaView edges={['top', 'left', 'right']} style={styles.page}>
     <WebStatusSpace /><View style={styles.main}>
-      {loading && !data ? <View style={styles.loading}><ActivityIndicator accessibilityLabel="술장 불러오는 중" color={colors.primary} /></View> : error ? <View style={styles.error}><Text accessibilityRole="alert" style={styles.body}>{error}</Text><Button label="다시 시도" onPress={() => setReload(value => value + 1)} /></View> : tab === 'cellar' ? <CellarScreen items={data?.owner === owner ? data.items : []} onRecord={openRecord} onOpen={entryId => router.push({ pathname: '/detail', params: { entryId } })} /> : <TasteScreen onRecord={openRecord} recordCount={data?.owner === owner ? data.items.reduce((sum,item) => sum + item.recordCount,0) : 0} />}
+      {loading && !data ? <View style={styles.loading}><ActivityIndicator accessibilityLabel="술장 불러오는 중" color={colors.primary} /></View> : error ? <View style={styles.error}><Text accessibilityRole="alert" style={styles.body}>{error}</Text><Button label="다시 시도" onPress={() => setReload(value => value + 1)} /></View> : tab === 'cellar' ? <CellarScreen items={data?.owner === owner ? data.items : []} onRecord={openRecord} onOpen={entryId => router.push({ pathname: '/detail', params: { entryId } })} /> : <TastePanel key={owner??'browse'} owner={owner} onRecord={openRecord} />}
     </View><BottomTabBar selected={tab} onSelect={setTab} onRecord={openRecord} />
   </SafeAreaView>;
 }

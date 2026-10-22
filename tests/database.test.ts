@@ -226,6 +226,25 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await db.query('select storage_path from public.record_photos where record_id=$1',[source.recordId])).rows[0].storage_path,path(a,91));
       await assert.rejects(db.query('select * from private.record_attachment_receipts'),{code:'42501'});
     });
+    await t.test('taste context is owner-scoped; only server leases can publish and stale results disappear',async()=>{
+      await as(a);const source=await saved(110,{enteredName:'Summary source',category:'whisky',revisit:'again'});
+      const context=async()=> (await db.query<{result:{snapshot:{hash:string;records:{id:string}[]};cached:unknown;stale:boolean}}>('select public.taste_summary_context() result')).rows[0].result;
+      const before=await context();assert.ok(before.snapshot.records.some(r=>r.id===source.recordId));
+      await as(b);assert.ok(!(await context()).snapshot.records.some(r=>r.id===source.recordId));await as(a);
+      await assert.rejects(db.query('select public.begin_taste_summary($1,$2,$3)',[a,before.snapshot.hash,operation(111)]),{code:'42501'});
+      await db.exec('reset role');await db.exec('set role service_role');
+      const begin=async(lease:number,hash:string)=> (await db.query('select public.begin_taste_summary($1,$2,$3) result',[a,hash,operation(lease)])).rows[0].result;
+      assert.equal(await begin(111,before.snapshot.hash),'acquired');assert.equal(await begin(112,before.snapshot.hash),'running');
+      const result={version:'taste-v1',selection:{highlightIds:['fixture-fact']},model:'fixture',generatedAt:'2026-10-23'};
+      assert.equal((await db.query('select public.finish_taste_summary($1,$2,$3,$4::jsonb) result',[a,before.snapshot.hash,operation(112),result])).rows[0].result,false);
+      assert.equal((await db.query('select public.finish_taste_summary($1,$2,$3,$4::jsonb) result',[a,before.snapshot.hash,operation(111),result])).rows[0].result,true);
+      await as(a);assert.deepEqual((await context()).cached,result);
+      await db.query("select public.update_tasting_record($1,$2,'{\"rating\":2}')",[source.recordId,source.revision]);
+      const stale=await context();assert.notEqual(stale.snapshot.hash,before.snapshot.hash);assert.equal(stale.cached,null);assert.equal(stale.stale,true);
+      await db.exec('reset role');await db.exec('set role service_role');assert.equal(await begin(113,stale.snapshot.hash),'limited');assert.equal(await begin(113,before.snapshot.hash),'stale');
+      await as(a);await assert.rejects(db.query('select * from private.taste_summary_jobs'),{code:'42501'});
+      await as(null);await assert.rejects(db.query('select public.taste_summary_context()'),{code:'42501'});await as(a);
+    });
     await t.test('optimistic edits reject stale revisions and keep the saved experience', async () => {
       const oldRevision = Number((await db.query('select revision from public.tasting_records where id=$1', [second.recordId])).rows[0].revision);
       await db.query("select public.update_tasting_record($1,$2,'{\"rating\":4}')", [second.recordId, oldRevision]);

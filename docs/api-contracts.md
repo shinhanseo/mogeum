@@ -104,3 +104,12 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 - move: `{kind:'move',entryId}`. 소유한 다른 술장으로 경험 한 건만 이동. split: `{kind:'split',name:null|string}`. 새 술장을 만들어 분리. 날짜/사진 경로/주종/평가/빈티지/확정 노트/답변은 변경하지 않는다. 다른 주종의 술장 선택 시 경고하고 원래 주종을 보존한다.
 - 앱은 계정+기록별 immutable pending을 저장한다. 응답 유실 시 같은 업로드 경로/operation/expectedRevision으로 복구한다. 계정 변경 시 중단. 충돌이면 최신 내용 재조회 후 새로운 요청으로 진행한다. 정상 완료 뒤 상세를 재조회한다.
 - record revision은 변경된다. AI 요약 증거 무효화 UI/서버는 AI 기능 구현 단계이며 이 RPC만으로 완료되었다고 보지 않는다.
+
+## 내 기록 기반 취향 요약 v1 · 2026-10-23
+
+- `taste_summary_context()`는 활성 JWT 소유자의 `{snapshot:{hash,records,totalRecords,omittedCount},cached,stale,running}`를 반환한다. hash는 모든 경험 ID/revision + taste-v1이며 상세 분석 입력은 최근 200개로 제한한다. 클라이언트는 사용자 ID/근거/완성 주장을 입력하지 않는다.
+- `POST /functions/v1/taste-summary` body `{}`. 서명된 사용자 JWT를 `Auth.getUser(token)`로 검증한 뒤 자신의 context만 읽는다. 새 asymmetric JWT를 위해 legacy-secret gateway 검사를 사용하지 않으며 handler 인증은 필수다.
+- 200 ready/insufficient, 202 running, 401 UNAUTHENTICATED, 409 STALE_INPUT, 429 RATE_LIMITED, 503 AI_NOT_CONFIGURED, 502 ANALYSIS_FAILED. 실패 응답에 provider 상세/메모/키를 포함하지 않는다.
+- service_role만 `begin_taste_summary(owner,hash,lease)`/`finish_taste_summary(owner,hash,lease,result)` 호출 가능. 사용자는 private jobs/결과에 직접 쓰지 못한다. 서버 검증된 owner만 전달한다. 90초 lease, 20초 간격, 사용자별 하루 5회 획득 한도. 모델 자동 재시도 0, 호출 25초 timeout, 최대 출력 512 tokens.
+- 같은 hash 캐시는 재사용한다. 현재 hash와 다른 결과는 반환하지 않고 이전 요약을 숨긴다. 생성 중 수정/삭제/이동되면 완료 결과를 거절한다. 소유자의 계정 삭제 시 cache도 cascade.
+- AI는 코드 집계에서 검증된 feature ID 1–3개를 선정한다. 임의 문장/새 맛/타 기록 ID를 받지 않는다. 앱은 승인된 표현과 근거 기록으로 화면을 구성한다. 모델에 사진·이름·날짜·자유 메모·확정 원문·사용자 ID를 보내지 않고 고정 특징 ID/계열/횟수/다양성만 보낸다.
