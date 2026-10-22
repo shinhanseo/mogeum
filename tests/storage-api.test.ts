@@ -1,3 +1,5 @@
+import { loadRecordDetail } from '../src/features/records/detail';
+import { saveBasicEdit, editInitial, deleteExperience, drainPhotoDeletions } from '../src/features/records/edit';
 import { submitPending, type PendingRecord } from '../src/features/records/pending';
 import { createClient } from '@supabase/supabase-js';
 import { createRecordRepository } from '../src/features/records/repository';
@@ -94,10 +96,16 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
     method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: [storagePath] }),
   });
   assert.ok((await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`, a.token)).ok, 'A referenced photo survives a premature file-delete request');
-  const deletion = await request(`/rest/v1/tasting_records?id=eq.${saved.recordId}`, a.token, { method: 'DELETE' });
-  assert.ok(deletion.ok, `Record delete: HTTP ${deletion.status}`);
-  await json(await request('/storage/v1/object/record-photos', a.token, {
-    method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: [storagePath] }),
-  }), 'Unreferenced binary cleanup');
+  const detail=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(detail.record.record_notes?.confirmed_note,noteText);
+  await saveBasicEdit(sdk,detail.record,{...editInitial(detail.record),name:'Edited synthetic whisky',rating:3});
+  const edited=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(edited.record.entered_name,'Edited synthetic whisky');
+  assert.equal((await repository.listCellar()).find(row=>row.id===saved.cellarEntryId)?.display_name,'Edited synthetic whisky');
+  await deleteExperience(sdk,a.id,edited.record);
+  await deleteExperience(sdk,a.id,edited.record); // lost response replay
+  await drainPhotoDeletions(sdk,a.id);
+  const jobs=await json<{status:string}[]>(await request(`/rest/v1/photo_deletion_jobs?storage_path=eq.${encodeURIComponent(storagePath)}`,a.token),'Deletion receipt');
+  assert.equal(jobs[0].status,'done');
   assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`, a.token)).ok, 'Deleted binary is no longer downloadable');
 });

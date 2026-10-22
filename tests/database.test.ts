@@ -173,6 +173,27 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await db.query('select status from public.photo_deletion_jobs where storage_path=$1', [path(a, 1)])).rows[0].status, 'pending');
       if (!databaseUrl) assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(a, 1)])).rows.length, 1);
     });
+    await t.test('basic edits sync a single entry label and deletion queues a private photo without touching other dates', async () => {
+      await uploadMetadata(a,70);
+      const record=await saved(70,{enteredName:'Before edit',category:'whisky',photo:photo(a,70)});
+      const row=(await db.query<{result:{revision:number}}>('select to_jsonb(public.edit_tasting_record($1,$2,$3::jsonb)) result',[record.recordId,record.revision,{enteredName:'After edit',rating:3}])).rows[0].result;
+      assert.equal((await db.query('select display_name from public.cellar_entries where id=$1',[record.cellarEntryId])).rows[0].display_name,'After edit');
+      await assert.rejects(db.query('select public.edit_tasting_record($1,$2,$3::jsonb)',[record.recordId,record.revision,{rating:2}]),{code:'40001'});
+      const another=await saved(71,{enteredName:'Another date',category:'whisky'},record.cellarEntryId);
+      const updated=(await db.query<{result:{revision:number}}>('select to_jsonb(public.edit_tasting_record($1,$2,$3::jsonb)) result',[record.recordId,row.revision,{enteredName:'This date only'}])).rows[0].result;
+      assert.equal((await db.query('select display_name from public.cellar_entries where id=$1',[record.cellarEntryId])).rows[0].display_name,'After edit');
+      await as(b);
+      await assert.rejects(db.query('select public.edit_tasting_record($1,$2,$3::jsonb)',[record.recordId,updated.revision,{rating:1}]),{code:'42501'});
+      assert.equal((await db.query('delete from public.tasting_records where id=$1 returning id',[record.recordId])).rows.length,0);
+      await as(a);
+      assert.equal((await db.query('delete from public.tasting_records where id=$1 and revision=$2 returning id',[record.recordId,row.revision])).rows.length,0);
+      assert.equal((await db.query('delete from public.tasting_records where id=$1 and revision=$2 returning id',[record.recordId,updated.revision])).rows.length,1);
+      assert.equal((await db.query('select id from public.tasting_records where id=$1',[another.recordId])).rows.length,1);
+      const job=(await db.query('select id from public.photo_deletion_jobs where storage_path=$1',[path(a,70)])).rows[0];
+      assert.equal((await db.query('select public.complete_photo_deletion($1) result',[Number(job.id)])).rows[0].result,false);
+      await as(b);await assert.rejects(db.query('select public.complete_photo_deletion($1)',[Number(job.id)]),{code:'42501'});await as(a);
+      if(!databaseUrl){await db.query('delete from storage.objects where name=$1',[path(a,70)]);assert.equal((await db.query('select public.complete_photo_deletion($1) result',[Number(job.id)])).rows[0].result,true);}
+    });
     await t.test('optimistic edits reject stale revisions and keep the saved experience', async () => {
       const oldRevision = Number((await db.query('select revision from public.tasting_records where id=$1', [second.recordId])).rows[0].revision);
       await db.query("select public.update_tasting_record($1,$2,'{\"rating\":4}')", [second.recordId, oldRevision]);

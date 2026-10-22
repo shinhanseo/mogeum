@@ -87,3 +87,10 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 `/record?entryId=<개인 술장 UUID>`는 해당 사용자의 `cellar_entries`에서 id/display_name/category만 읽는다. 전역 drinks ID나 과거 record ID로 대체하지 않는다. 조회 실패는 작성 차단 상태이며 자동으로 새 술장 저장으로 전환하지 않는다.
 
 기존 `create_tasting_record` RPC의 p_entry_id에 확인한 entryId를 전달한다. 로컬 PendingRecord v1에 선택적 entryId를 함께 영속화한다. 기존 v1 데이터의 entryId 미존재는 null(새 항목)로 호환한다. 같은 operation ID의 input뿐 아니라 entryId 변경/누락도 저장 재시도에서 거부한다. 이미 저장 중인 다른 작업이 있으면 그 작업의 payload와 연결을 복구한다. 노트 보충은 이 RPC가 아니라 기존 save_tasting_note 경로를 유지한다.
+
+## 기본 정보 수정·삭제 · 2026-10-22
+
+- `edit_tasting_record(p_record_id,p_expected_revision,p_patch)`는 기존 update RPC의 소유권/버전 검증을 재사용한다. 주종 변경은 답변 이관이 필요하므로 거부한다. 한 번만 기록한 술의 이름 변경은 술장 display_name과 원자 동기화하고, 여러 경험이 있으면 해당 경험 이름만 바꾼다.
+- 앱의 이름/현지 날짜/재음용 의사/선택 별점/와인 빈티지 수정은 새 경험을 만들지 않는다. 40001은 최신 기록을 다시 확인하게 하고 자동 덮어쓰지 않는다. 네트워크 결과 미확인 상태에서는 수정/삭제의 원래 행동으로만 재시도한다.
+- 개별 기록 삭제는 `tasting_records`의 JWT 소유자+id+revision 조건으로 실행한다. 0행 삭제 후 소유 기록이 여전히 있으면 충돌, 없으면 이미 삭제된 응답 유실 재시도로 처리한다. DB cascade는 해당 경험의 자식과 대표 사진 참조를 정리하고 binary 삭제 job을 남긴다.
+- 앱의 사진 정리기는 로그인 사용자의 미완료 job을 최대 20개 읽고 Storage remove 후 `complete_photo_deletion(p_job_id)`를 호출한다. 이 definer 함수는 활성 사용자/작업 소유자/Storage 객체 부재를 다시 확인한 뒤에만 done 처리한다. 파일이 있으면 false, 남의 작업은 42501이다. 실패 job은 다음 술장 focus에서 재시도한다. 앱이 열리지 않거나 계정이 이미 삭제된 경우 처리하는 서버 worker는 후속이다.

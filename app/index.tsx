@@ -10,6 +10,7 @@ import { CellarScreen } from '../src/features/cellar/CellarScreen';
 import type { Category, CellarItem } from '../src/features/cellar/model';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { getSupabase } from '../src/lib/supabase';
+import { drainPhotoDeletions } from '../src/features/records/edit';
 import { createRecordRepository } from '../src/features/records/repository';
 import { colors, typography } from '../src/theme/tokens';
 
@@ -31,6 +32,7 @@ export default function HomeScreen() {
     if (!owner || !client) { setData(null); setLoading(false); return; }
     setLoading(true);
     const repository = createRecordRepository(client);
+    void drainPhotoDeletions(client,owner).catch(()=>{});
     void (async () => {
       const rows = [];
       // Load all pages for the initial cellar; each server request has a bounded page size.
