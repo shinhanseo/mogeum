@@ -70,3 +70,7 @@ Chrome에서 22(4:4343) 원본을 다시 확인했다. 24px 좌우 여백, 24px 
 ## 기존 술 후보 · 2026-10-23
 
 기록 정보 폼의 기존 이름 입력과 공통 Button을 재사용한다. 후보 영역은 원본 record-info.svg에 없는 확장 상태이며, surface/border·radius16·padding16·fieldLabel/caption 토큰으로 이름 입력 바로 아래 제공한다. 자동 팝업 없이 선택/별도 술 행동을 명시한다. 원본 픽셀 일치 검증으로 주장하지 않는다.
+
+## 사진 접근 안내 · 2026-10-23
+
+모구 원본 벡터와 cream/surface/burgundy 토큰, sheetTitle/body/caption, 공통 Button으로 카메라 사전 안내·앨범 선택 안내·카메라 접근 차단 안내를 구성했다. 하단 모달은 radius24·좌우24·handle36×4이고 큰 글자에서도 내부 스크롤한다. OS 자체 권한창은 변경하지 않는다. 원본에 없던 신규 상태라 원본 Figma 픽셀 일치로 주장하지 않는다.

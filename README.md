@@ -83,3 +83,5 @@ Development Build는 `npm run ios` / `npm run android`로 만듭니다. Xcode �
 기본 정보 수정·삭제: 이름·날짜·평가·별점·와인 빈티지를 같은 기록에서 수정하고, 개별 날짜의 기록을 삭제할 수 있습니다. 파일 정리는 실패 시 다음 접속에서 재시도합니다. [검증·제약](docs/verification/record-edit.md).
 
 이름 입력 시 내 술장의 기존 후보를 보여주고 사용자가 선택한 술에만 새 기록을 연결합니다. [검증](docs/verification/existing-drink-choice.md).
+
+사진 접근 안내: 촬영/앨범 선택 전에 모구 안내 시트를 보여주고 카메라 거부 시 설정 열기를 제공합니다. 시스템 사진 picker로 선택한 사진만 가져옵니다. [검증과 실기기 잔여 항목](docs/verification/photo-access.md).
