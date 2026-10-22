@@ -6,6 +6,7 @@ create table private.record_attachment_receipts (
  result jsonb not null,
  primary key(user_id,operation_id)
 );
+alter table private.record_attachment_receipts enable row level security;
 revoke all on private.record_attachment_receipts from public,anon,authenticated;
 
 create function public.change_record_attachment(p_record_id uuid,p_operation_id uuid,p_expected_revision integer,p_change jsonb)

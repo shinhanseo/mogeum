@@ -15,5 +15,8 @@
 - iPhone17Pro iOS26.5 native: 수정 진입, 교체 비교·저장 callback, 이동 선택·확인, 새 술 이름 입력·키보드 위 버튼·취소 후 입력 보존. 개발 fixture이며 서버 저장 없음 배너를 표시한다.
 - UI screenshots: ios-record-photo-replacement.png, ios-record-move.png, ios-record-split.png. 사진 비교 예시는 같은 허가된 Figma fixture를 사용하며 실제 서로 다른 사용자 사진 교체 증거가 아니다.
 
+## 개발 DB
+20261023010000_record_attachments.sql을 mogeum-dev에 트랜잭션으로 적용했다. attachment_rpc_ready / retry_receipts_ready 모두 true를 SQL Editor에서 확인했다. private receipt는 RLS와 직접 grant 철회를 함께 사용한다. supabase-record-attachments.png에 증거를 보관한다. CLI migration history repair는 기존 수동 적용분과 함께 남아 있다.
+
 ## 남은 범위
 Apple/카카오 provider 미설정으로 사용자 실제 계정의 iOS 저장 E2E는 미검증. Android/실기기 촬영 및 접근성 글자 확대도 남아 있다. abandoned 업로드의 서버 정리 worker, AI 요약 stale 처리 UI는 후속. 이슈 전체 완료로 닫지 않는다.
