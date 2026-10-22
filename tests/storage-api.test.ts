@@ -1,3 +1,4 @@
+import { findEntryCandidates } from '../src/features/records/candidates';
 import { loadRecordDetail } from '../src/features/records/detail';
 import { saveBasicEdit, editInitial, deleteExperience, drainPhotoDeletions } from '../src/features/records/edit';
 import { submitPending, type PendingRecord } from '../src/features/records/pending';
@@ -102,6 +103,18 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   const edited=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
   assert.equal(edited.record.entered_name,'Edited synthetic whisky');
   assert.equal((await repository.listCellar()).find(row=>row.id===saved.cellarEntryId)?.display_name,'Edited synthetic whisky');
+  const candidates=await findEntryCandidates(sdk,a.id,'Edited synthetic');
+  assert.equal(candidates[0].id,saved.cellarEntryId);
+  const sdkB=createClient(base,apiKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{headers:{Authorization:`Bearer ${b.token}`}}});
+  assert.equal((await findEntryCandidates(sdkB,b.id,'Edited synthetic')).length,0);
+  const repeat=await repository.save(randomUUID(),{enteredName:'Edited synthetic whisky',category:'whisky'},candidates[0].id);
+  assert.notEqual(repeat.recordId,saved.recordId);
+  const repeated=await loadRecordDetail(sdk,a.id,{recordId:repeat.recordId});
+  assert.equal(repeated.record.record_notes,null);
+  assert.equal(repeated.record.rating,null);
+  assert.equal(repeated.history.length,2);
+  await deleteExperience(sdk,a.id,repeated.record);
+
   await deleteExperience(sdk,a.id,edited.record);
   await deleteExperience(sdk,a.id,edited.record); // lost response replay
   await drainPhotoDeletions(sdk,a.id);

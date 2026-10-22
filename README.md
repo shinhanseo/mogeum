@@ -81,3 +81,5 @@ Development Build는 `npm run ios` / `npm run android`로 만듭니다. Xcode �
 반복 음용: 상세의 ‘한 번 더 기록하기’에서 이름·주종만 채운 새 경험을 기존 술장에 연결합니다. 사진·평가·답변은 복사하지 않으며, 연결 ID도 재시도 중 유지됩니다. [검증과 남은 범위](docs/verification/repeat-record.md).
 
 기본 정보 수정·삭제: 이름·날짜·평가·별점·와인 빈티지를 같은 기록에서 수정하고, 개별 날짜의 기록을 삭제할 수 있습니다. 파일 정리는 실패 시 다음 접속에서 재시도합니다. [검증·제약](docs/verification/record-edit.md).
+
+이름 입력 시 내 술장의 기존 후보를 보여주고 사용자가 선택한 술에만 새 기록을 연결합니다. [검증](docs/verification/existing-drink-choice.md).
