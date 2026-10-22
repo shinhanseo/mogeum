@@ -11,8 +11,10 @@ export async function loadTasteContext(client:SupabaseClient):Promise<TasteConte
  if(context.cached){const value=context.cached as SummaryResult;if(value.version!==SUMMARY_VERSION||typeof value.generatedAt!=='string'||typeof value.model!=='string')throw new Error('Unsupported summary');validateSelection(value.selection,analysis);}
  return context;
 }
-export async function generateTasteSummary(client:SupabaseClient){
- const {data,error}=await client.functions.invoke('taste-summary',{body:{}});
+export async function generateTasteSummary(client:SupabaseClient,owner:string){
+ const session=(await client.auth.getSession()).data.session;
+ if(!session||session.user.id!==owner)throw Object.assign(new Error('로그인 계정이 바뀌었어요.'),{code:'UNAUTHENTICATED'});
+ const {data,error}=await client.functions.invoke('taste-summary',{body:{},headers:{Authorization:`Bearer ${session.access_token}`}});
  if(error){let code='ANALYSIS_FAILED';try{const response=(error as {context?:Response}).context;if(response){const body=await response.json();if(typeof body.code==='string')code=body.code;}}catch{/* Only map safe machine codes. */}throw Object.assign(new Error('취향 요약을 완료하지 못했어요.'),{code});}
  if(!data||!['ready','running','insufficient'].includes(data.state))throw new Error('Invalid generation response');return data as {state:'ready'|'running'|'insufficient';hash:string};
 }

@@ -12,7 +12,8 @@ export function tasteHandler(ports:SummaryPorts){return async(request:Request):P
   const user=await ports.authenticate(token);if(!user)return response(401,{code:'UNAUTHENTICATED',retryable:false});owner=user.id;
   if(Number(request.headers.get('content-length')??0)>1024)return response(413,{code:'INPUT_TOO_LARGE',retryable:false});
   // No owner, source records, model or completed claims may be supplied by the client.
-  const body=await request.text();if(body.length>1024)return response(413,{code:'INPUT_TOO_LARGE',retryable:false});
+  const reader=request.body?.getReader();let body='';let size=0;const decoder=new TextDecoder();
+  if(reader)try{for(;;){const chunk=await reader.read();if(chunk.done)break;size+=chunk.value.byteLength;if(size>1024){await reader.cancel();return response(413,{code:'INPUT_TOO_LARGE',retryable:false});}body+=decoder.decode(chunk.value,{stream:true});}body+=decoder.decode();}finally{reader.releaseLock();}
   if(body.trim()&&body.trim()!=='{}')return response(400,{code:'INVALID_INPUT',retryable:false});
   const context=await ports.context(token);const analysis=analyzeTaste(context.snapshot);hash=context.snapshot.hash;
   if(context.cached){validateSelection(context.cached.selection,analysis);return response(200,{state:'ready',hash,cached:true});}
