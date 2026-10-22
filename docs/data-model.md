@@ -64,3 +64,5 @@ record_notes의 last_operation_id/last_save_payload는 응답 유실 재시도 �
 개인 cellar_entries의 소유권 조회 후 새 operation ID/새 tasting_records ID를 생성하면서 기존 cellar_entry_id를 전달한다. 이름 일치 자동 병합이나 공통 drinks 등록은 필요 없다. 과거 record_photos/record_notes/record_answers를 새 record ID로 복제하지 않는다. DB 변경 없이 기존 소유권 검사·복합 FK·operation payload 비교를 사용한다.
 
 기본 수정은 revision을 유지 조건으로 검사하고 새 버전으로 갱신한다. 사진 정리 작업은 Storage 객체 부재를 검증한 뒤 done으로 바꾼다. 삭제 영수증 deleted_record_operations(user_id,operation_id,record_id,deleted_at)은 제거된 감상/사진/생성 payload를 보관하지 않으며, 지연된 생성 요청의 부활을 막는다. 영수증은 본인 읽기만 허용하고 쓰기는 삭제 trigger만 수행한다.
+
+사진·연결 변경의 중복 실행 방지: `private.record_attachment_receipts`는 소유자+operation ID를 키로 immutable payload와 결과를 보관한다. authenticated 직접 접근을 막고 `change_record_attachment`만 활성 JWT 소유자를 확인한 뒤 쓴다. 계정 삭제 시 cascade하며 공개 테이블 수에는 포함하지 않는다.

@@ -195,6 +195,37 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await as(b);await assert.rejects(db.query('select public.complete_photo_deletion($1)',[Number(job.id)]),{code:'42501'});await as(a);
       if(!databaseUrl){await db.query('delete from storage.objects where name=$1',[path(a,70)]);assert.equal((await db.query('select public.complete_photo_deletion($1) result',[Number(job.id)])).rows[0].result,true);}
     });
+    await t.test('photo replacement and explicit regrouping are atomic, owner-scoped and replay safely', async () => {
+      await as(a); await uploadMetadata(a,90); await uploadMetadata(a,91);
+      const source=await saved(90,{enteredName:'Source',category:'whisky',rating:4,photo:photo(a,90)});
+      const other=await saved(92,{enteredName:'Target',category:'whisky'});
+      const rev=async()=>Number((await db.query('select revision from public.tasting_records where id=$1',[source.recordId])).rows[0].revision);
+      const change=async(n:number,revision:number,input:JsonObject)=> (await db.query<{result:Saved}>('select public.change_record_attachment($1,$2,$3,$4::jsonb) result',[source.recordId,operation(n),revision,input])).rows[0].result;
+      const before=(await db.query('select entered_name,category,consumed_at,rating from public.tasting_records where id=$1',[source.recordId])).rows[0];
+      const initial=await rev(); const replacement={kind:'photo',...photo(a,91)};
+      const replaced=await change(91,initial,replacement);
+      assert.ok(replaced.revision>initial);
+      assert.equal((await change(91,initial,replacement)).replayed,true);
+      assert.equal((await db.query('select storage_path from public.record_photos where record_id=$1',[source.recordId])).rows[0].storage_path,path(a,91));
+      assert.equal((await db.query('select storage_path from public.photo_deletion_jobs where storage_path=$1',[path(a,90)])).rows.length,1);
+      assert.equal((await db.query('select p.storage_path from public.cellar_entries e join public.record_photos p on p.id=e.representative_photo_id where e.id=$1',[source.cellarEntryId])).rows[0].storage_path,path(a,91));
+      await assert.rejects(change(91,initial,{kind:'split',name:null}),{code:'23505'});
+      await assert.rejects(change(93,initial,{kind:'move',entryId:other.cellarEntryId}),{code:'40001'});
+      await assert.rejects(change(93,await rev(),{kind:'photo',...photo(a,99)}));
+      assert.equal((await db.query('select storage_path from public.record_photos where record_id=$1',[source.recordId])).rows[0].storage_path,path(a,91));
+      await as(b); await assert.rejects(change(93,replaced.revision,{kind:'split',name:null}),{code:'P0002'}); await as(a);
+      await assert.rejects(change(93,await rev(),{kind:'move',entryId:foreign.cellarEntryId}),{code:'42501'});
+      const moved=await change(93,await rev(),{kind:'move',entryId:other.cellarEntryId});
+      assert.equal(moved.cellarEntryId,other.cellarEntryId);
+      assert.equal((await db.query('select id from public.cellar_overview where id=$1',[source.cellarEntryId])).rows.length,0);
+      assert.equal(Number((await db.query('select record_count from public.cellar_overview where id=$1',[other.cellarEntryId])).rows[0].record_count),2);
+      const revision=await rev();const split=await change(94,revision,{kind:'split',name:'Separated'});
+      assert.equal((await change(94,revision,{kind:'split',name:'Separated'})).cellarEntryId,split.cellarEntryId);
+      assert.notEqual(split.cellarEntryId,other.cellarEntryId);
+      assert.deepEqual((await db.query('select entered_name,category,consumed_at,rating from public.tasting_records where id=$1',[source.recordId])).rows[0],before);
+      assert.equal((await db.query('select storage_path from public.record_photos where record_id=$1',[source.recordId])).rows[0].storage_path,path(a,91));
+      await assert.rejects(db.query('select * from private.record_attachment_receipts'),{code:'42501'});
+    });
     await t.test('optimistic edits reject stale revisions and keep the saved experience', async () => {
       const oldRevision = Number((await db.query('select revision from public.tasting_records where id=$1', [second.recordId])).rows[0].revision);
       await db.query("select public.update_tasting_record($1,$2,'{\"rating\":4}')", [second.recordId, oldRevision]);

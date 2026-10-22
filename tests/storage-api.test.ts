@@ -1,3 +1,4 @@
+import { applyAttachment, type PendingAttachment } from '../src/features/records/attachment';
 import { findEntryCandidates } from '../src/features/records/candidates';
 import { loadRecordDetail } from '../src/features/records/detail';
 import { saveBasicEdit, editInitial, deleteExperience, drainPhotoDeletions } from '../src/features/records/edit';
@@ -115,10 +116,35 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.equal(repeated.history.length,2);
   await deleteExperience(sdk,a.id,repeated.record);
 
-  await deleteExperience(sdk,a.id,edited.record);
-  await deleteExperience(sdk,a.id,edited.record); // lost response replay
+  const photoOperation=randomUUID();const newPath=`${a.id}/records/${photoOperation}/photo.jpg`;
+  await repository.uploadPhoto(newPath,new Uint8Array(png).buffer,'image/png');
+  const attachment:PendingAttachment={version:1,owner:a.id,recordId:saved.recordId,operationId:photoOperation,expectedRevision:edited.record.revision,change:{kind:'photo',storagePath:newPath,width:1,height:1}};
+  await applyAttachment(sdk,attachment);
+  assert.equal((await applyAttachment(sdk,attachment)).replayed,true);
+  await drainPhotoDeletions(sdk,a.id);
+  assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`,a.token)).ok,'Replacement cleans the previous binary');
+  const replaced=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(replaced.record.record_notes?.confirmed_note,noteText);
+  assert.equal(replaced.record.record_photos[0].storage_path,newPath);
+  const target=await repository.save(randomUUID(),{enteredName:'Other synthetic',category:'whisky'});
+  const move:PendingAttachment={version:1,owner:a.id,recordId:saved.recordId,operationId:randomUUID(),expectedRevision:replaced.record.revision,change:{kind:'move',entryId:target.cellarEntryId}};
+  await assert.rejects(applyAttachment(sdkB,{...move,owner:b.id}));
+  await applyAttachment(sdk,move);
+  const moved=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(moved.record.cellar_entry_id,target.cellarEntryId);
+  assert.equal(moved.history.length,2);assert.equal(moved.record.record_notes?.confirmed_note,noteText);
+  const split={...move,operationId:randomUUID(),expectedRevision:moved.record.revision,change:{kind:'split' as const,name:'Separated synthetic'}};
+  const splitResult=await applyAttachment(sdk,split);
+  assert.equal((await applyAttachment(sdk,split)).cellarEntryId,splitResult.cellarEntryId);
+  const separated=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(separated.history.length,1);assert.equal(separated.record.rating,3);
+  assert.equal(separated.record.record_notes?.confirmed_note,noteText);
+  await deleteExperience(sdk,a.id,(await loadRecordDetail(sdk,a.id,{recordId:target.recordId})).record);
+  await deleteExperience(sdk,a.id,separated.record);
+  await deleteExperience(sdk,a.id,separated.record); // lost response replay
   await drainPhotoDeletions(sdk,a.id);
   const jobs=await json<{status:string}[]>(await request(`/rest/v1/photo_deletion_jobs?storage_path=eq.${encodeURIComponent(storagePath)}`,a.token),'Deletion receipt');
   assert.equal(jobs[0].status,'done');
   assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`, a.token)).ok, 'Deleted binary is no longer downloadable');
+  assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${newPath}`,a.token)).ok,'Replacement binary is also deleted after record deletion');
 });

@@ -96,3 +96,11 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 - 앱의 사진 정리기는 로그인 사용자의 미완료 job을 최대 20개 읽고 Storage remove 후 `complete_photo_deletion(p_job_id)`를 호출한다. 이 definer 함수는 활성 사용자/작업 소유자/Storage 객체 부재를 다시 확인한 뒤에만 done 처리한다. 파일이 있으면 false, 남의 작업은 42501이다. 실패 job은 다음 술장 focus에서 재시도한다. 앱이 열리지 않거나 계정이 이미 삭제된 경우 처리하는 서버 worker는 후속이다.
 
 삭제된 생성 요청 ID는 deleted_record_operations에 사용자별 ID·삭제 시각만 남긴다. create_tasting_record는 같은 advisory lock 아래 삭제 영수증을 검사하여 P0002를 반환하며 기록을 재생성하지 않는다. 앱은 그 오류의 기존 pending을 정리한다. 계정 제거 시 영수증도 cascade 정리한다. 이는 위 v1 설명의 tombstone 후속 항목을 구현한 것이다.
+
+## 사진 교체·기록 이동 · 2026-10-23
+
+- `change_record_attachment(p_record_id,p_operation_id,p_expected_revision,p_change)` → `{recordId,cellarEntryId,revision,replayed}`. 활성 JWT 소유자만 호출. private receipt로 동일 요청 재실행을 반환하며 operation 재사용/다른 payload는 23505, 최신 revision 충돌은 40001, 삭제는 P0002.
+- photo: `{kind:'photo',storagePath,width,height}`. 먼저 소유자/records/operationId/photo.jpg에 새 파일을 업로드한다. 트랜잭션에서 첫 사진 metadata만 교체하고 대표 사진을 갱신한다. 기존 사진은 deletion job으로 정리하며 다른 첨부는 보존한다. 파일/입력 오류면 원래 사진을 포함해 rollback.
+- move: `{kind:'move',entryId}`. 소유한 다른 술장으로 경험 한 건만 이동. split: `{kind:'split',name:null|string}`. 새 술장을 만들어 분리. 날짜/사진 경로/주종/평가/빈티지/확정 노트/답변은 변경하지 않는다. 다른 주종의 술장 선택 시 경고하고 원래 주종을 보존한다.
+- 앱은 계정+기록별 immutable pending을 저장한다. 응답 유실 시 같은 업로드 경로/operation/expectedRevision으로 복구한다. 계정 변경 시 중단. 충돌이면 최신 내용 재조회 후 새로운 요청으로 진행한다. 정상 완료 뒤 상세를 재조회한다.
+- record revision은 변경된다. AI 요약 증거 무효화 UI/서버는 AI 기능 구현 단계이며 이 RPC만으로 완료되었다고 보지 않는다.

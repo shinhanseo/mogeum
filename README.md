@@ -76,7 +76,7 @@ npm run web
 
 Development Build는 `npm run ios` / `npm run android`로 만듭니다. Xcode 또는 Android SDK와 JDK가 필요하며 번들 식별자를 환경 변수로 지정해야 합니다. [개발 환경 설정](docs/setup.md)의 명령을 참고하세요. 네이티브 앱 설치 후 `npm start`로 Metro를 실행합니다. Web 확인은 네이티브 OCR·실기기 검증을 대체하지 않습니다.
 
-기록 상세 연결: 술장 카드에서 최근 경험을 열고 날짜별 기록을 전환할 수 있습니다. 사진/확정 노트·별점·재음용 의사·빈티지를 표시하며 노트 저장 후 동일 기록 상세로 돌아옵니다. 실제 계정 iOS E2E와 사진 교체·경험 이동은 남아 있습니다. [검증 범위](docs/verification/record-detail.md).
+기록 상세 연결: 술장 카드에서 최근 경험을 열고 날짜별 기록을 전환할 수 있습니다. 사진/확정 노트·별점·재음용 의사·빈티지를 표시하며 노트 저장 후 동일 기록 상세로 돌아옵니다. 실제 계정 iOS E2E는 남아 있습니다. 사진 교체·경험 이동은 후속 연결했습니다. [검증 범위](docs/verification/record-detail.md).
 
 반복 음용: 상세의 ‘한 번 더 기록하기’에서 이름·주종만 채운 새 경험을 기존 술장에 연결합니다. 사진·평가·답변은 복사하지 않으며, 연결 ID도 재시도 중 유지됩니다. [검증과 남은 범위](docs/verification/repeat-record.md).
 
@@ -85,3 +85,5 @@ Development Build는 `npm run ios` / `npm run android`로 만듭니다. Xcode �
 이름 입력 시 내 술장의 기존 후보를 보여주고 사용자가 선택한 술에만 새 기록을 연결합니다. [검증](docs/verification/existing-drink-choice.md).
 
 사진 접근 안내: 촬영/앨범 선택 전에 모구 안내 시트를 보여주고 카메라 거부 시 설정 열기를 제공합니다. 시스템 사진 picker로 선택한 사진만 가져옵니다. [검증과 실기기 잔여 항목](docs/verification/photo-access.md).
+
+사진 교체·기록 이동: 수정 화면에서 세로 사진을 비교한 후 저장하거나, 기록 한 건을 기존 술장/새 술장에 옮깁니다. 날짜·평가·노트는 유지하고 재시도 요청을 보관합니다. [구현 및 검증](docs/verification/record-attachments.md).
