@@ -11,8 +11,8 @@
 ## 검증
 - npm run check: 타입·린트·노트 계약·63 tests, 61 pass, 2 skip(실제 PostgreSQL 동시성/HTTP 스택은 CI).
 - PGlite 정책 테스트: 사진 교체 rollback, 대표 사진/삭제 job, 응답 유실 replay, stale revision, 외부 계정/대상 차단, 이동/분리 수와 원래 기본 정보 보존.
-- HTTP CI 테스트 추가: 실제 JWT/Storage 업로드 → 교체 → 이전 binary 정리 → 이동 → 확정 노트 유지 → 분리/replay → 최종 binary 삭제.
-- iPhone17Pro iOS26.5 native: 수정 진입, 교체 비교·저장 callback, 이동 선택·확인, 새 술 이름 입력·키보드 위 버튼·취소 후 입력 보존. 개발 fixture이며 서버 저장 없음 배너를 표시한다.
+- HTTP CI 테스트 통과 (980ee74): 실제 JWT/Storage 업로드 → 교체 → 이전 binary 정리 → 이동 → 확정 노트 유지 → 분리/replay → 최종 binary 삭제.
+- iPhone17Pro iOS26.5 native: 수정 진입 → 공통 앨범 안내 → 실제 PHPicker에서 simulator에 추가한 허가된 Figma 테스트 사진 선택 → 교체 비교·저장 callback, 이동 선택·확인, 새 술 이름 입력·키보드 위 버튼·취소 후 입력 보존. 개발 fixture이며 서버 저장 없음 배너를 표시한다.
 - UI screenshots: ios-record-photo-replacement.png, ios-record-move.png, ios-record-split.png. 사진 비교 예시는 같은 허가된 Figma fixture를 사용하며 실제 서로 다른 사용자 사진 교체 증거가 아니다.
 
 ## 개발 DB
@@ -20,3 +20,6 @@
 
 ## 남은 범위
 Apple/카카오 provider 미설정으로 사용자 실제 계정의 iOS 저장 E2E는 미검증. Android/실기기 촬영 및 접근성 글자 확대도 남아 있다. abandoned 업로드의 서버 정리 worker, AI 요약 stale 처리 UI는 후속. 이슈 전체 완료로 닫지 않는다.
+
+## CI 증거
+코드 commit 980ee74 기준 [App checks](https://github.com/shinhanseo/mogeum/actions/runs/39806355339)와 [Database policies](https://github.com/shinhanseo/mogeum/actions/runs/39806355219) 모두 success. 실제 PostgreSQL 마이그레이션/정책·동시성 검증과 실제 JWT/Storage SDK E2E 통과. 이후 변경은 이 검증 문서와 UI screenshot 갱신뿐이다.
