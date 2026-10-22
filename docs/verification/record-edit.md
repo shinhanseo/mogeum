@@ -24,3 +24,5 @@
 삭제된 생성 operation의 재시도에 P0002를 반환하는 20261022161000_record_tombstones.sql을 추가했다. 삭제 payload 대신 사용자/operation/record ID와 삭제 시각만 보관하며, 생성과 같은 advisory lock을 사용한다. 계정 삭제 cascade를 방해하지 않는다. 실제 Storage CI는 수정/삭제/파일 완료 영수증까지 확인한다.
 
 실 Auth/Storage CI에서 상세의 역방향 복합 FK 관계 record_notes가 객체가 아닌 배열로 반환되는 것을 발견해 정규화했다. 원본 답변/확정 문장은 그대로 유지하고 0개는 null로 처리한다. 해당 배열 fixture 회귀 검증을 추가했다.
+
+2026-10-23 개발 DB에서 삭제 영수증 migration도 begin/commit으로 적용해 deletion_receipts_ready/edit_ready/cleanup_ready 세 값 모두 true를 확인했다. 기록 삭제 후 기기에 남은 해당 노트 draft도 정리한다. 실제 사용자 데이터 삭제는 수행하지 않았다.

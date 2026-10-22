@@ -125,7 +125,10 @@ export function RecordComposer({ owner, entryId, previewEntry }: { owner:string;
         else router.replace({pathname:'/detail',params:{recordId:saved.recordId}});
       }
     } catch (error) {
-      if((error as {code?:string}).code==='P0002'&&pending){await finishPending(pending);if(ownerRef.current===owner)router.replace('/');}
+      if((error as {code?:string}).code==='P0002'&&pending){
+        try{await finishPending(pending);if(ownerRef.current===owner)router.replace('/');}
+        catch{setError('삭제한 기록의 임시 저장을 정리하지 못했어요. 다시 시도해주세요.');}
+      }
       else setError('저장을 완료하지 못했어요. 사진과 입력을 확인한 뒤 같은 기록으로 다시 시도해주세요.');
     }
     finally { busyRef.current = false; setSaving(false); }
