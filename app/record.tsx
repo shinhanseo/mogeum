@@ -3,8 +3,10 @@ import * as Crypto from 'expo-crypto';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { readPending, preparePhoto, savePending, finishPending } from '../src/features/records/device';
 import type { PendingRecord } from '../src/features/records/pending';
+import { loadRepeatEntry, type RepeatEntry } from '../src/features/records/repeat';
+import { getSupabase } from '../src/lib/supabase';
 import type { RecordInput } from '../src/features/records/repository';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,22 +22,25 @@ type Step = 'start' | 'info' | 'rating';
 type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
   const auth = useAuth();
+  const { entryId } = useLocalSearchParams<{entryId?:string}>();
   if (auth.status === 'loading') return <View style={{ flex:1, backgroundColor:colors.background }} />;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
-  return <RecordComposer key={auth.session.user.id} owner={auth.session.user.id} />;
+  return <RecordComposer key={`${auth.session.user.id}-${entryId??'new'}`} owner={auth.session.user.id} entryId={entryId} />;
 }
-function RecordComposer({ owner }: { owner:string }) {
+export function RecordComposer({ owner, entryId, previewEntry }: { owner:string; entryId?:string; previewEntry?:RepeatEntry }) {
   const router = useRouter();
   const ownerRef = useRef<string | null>(owner);
   useEffect(() => { ownerRef.current = owner; return () => { ownerRef.current = null; }; }, [owner]);
   const busyRef = useRef(false);
   const [saving, setSaving] = useState(false);
-  const [restoring, setRestoring] = useState(true);
+  const [restoring, setRestoring] = useState(!previewEntry);
   const [pending, setPending] = useState<PendingRecord | null>(null);
-  const [step, setStep] = useState<Step>('start');
+  const [step, setStep] = useState<Step>(previewEntry?'info':'start');
+  const [repeatEntry, setRepeatEntry] = useState<RepeatEntry|null>(previewEntry??null);
+  const [restoreFailed, setRestoreFailed] = useState(false);
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<Category | null>(null);
+  const [name, setName] = useState(previewEntry?.name??'');
+  const [category, setCategory] = useState<Category | null>(previewEntry?.category??null);
   const [feeling, setFeeling] = useState<string | null>(null);
   const [stars, setStars] = useState(0);
   const [sheet, setSheetValue] = useState<Sheet>(null);
@@ -50,8 +55,13 @@ function RecordComposer({ owner }: { owner:string }) {
   const [error, setError] = useState('');
   useEffect(() => {
     let active = true;
-    if (owner) void readPending(owner).then(value => {
-      if (!active || !value) return;
+    if(previewEntry)return;
+    if (owner) void readPending(owner).then(async value => {
+      if (!active) return;
+      if(!value){
+        if(entryId){const client=getSupabase();if(!client)throw new Error('Missing backend');const entry=await loadRepeatEntry(client,owner,entryId);if(active){setRepeatEntry(entry);setName(entry.name??'');setCategory(entry.category);setStep('info');}}
+        return;
+      }
       setPending(value); setName(value.input.enteredName ?? '');
       const kinds = { whisky: '위스키', wine: '와인', beer: '맥주', traditional: '전통주', other: '기타' } as const;
       setCategory(value.input.category ? kinds[value.input.category] : null);
@@ -61,9 +71,9 @@ function RecordComposer({ owner }: { owner:string }) {
       if (value.localPhoto && value.input.photo) setPhoto({ uri: value.localPhoto, width: value.input.photo.width, height: value.input.photo.height });
       setVintage(value.input.vintageStatus === 'year' ? String(value.input.vintageYear) : value.input.vintageStatus === 'nv' ? 'NV' : value.input.vintageStatus === 'unknown' ? '모름' : '');
       setStep('rating');
-    }).catch(() => { if (active) setError('저장 중인 기록을 불러오지 못했어요. 다시 열어주세요.'); }).finally(() => { if (active) setRestoring(false); });
+    }).catch(() => { if (active) {setRestoreFailed(true);setError('기록을 준비하지 못했어요. 술장으로 돌아가 다시 열어주세요.');} }).finally(() => { if (active) setRestoring(false); });
     return () => { active = false; };
-  }, [owner]);
+  }, [owner, entryId, previewEntry]);
   const close = () => { if (!busyRef.current) router.back(); };
   const back = () => { if (busyRef.current) return; if (pending) { setError('저장 중인 기록을 먼저 완료해주세요.'); return; } if (step === 'start') close(); else setStep(step === 'rating' ? 'info' : 'start'); };
   const dateLabel = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
@@ -79,6 +89,8 @@ function RecordComposer({ owner }: { owner:string }) {
 
   async function saveRecord(withNote = false) {
     if (busyRef.current) return;
+    if(previewEntry){setError('개발 시안에서는 서버에 저장하지 않아요.');return;}
+    if(restoreFailed)return;
     if (!owner) { router.push('/login'); return; }
     if (!pending && !photo && !name.trim()) { setError('사진이나 술 이름을 남겨주세요.'); return; }
     if (!pending && (name.trim().length > 200 || (category === '와인' && vintage && vintage !== 'NV' && vintage !== '모름' && Number(vintage) < 1))) { setError('술 이름과 빈티지를 확인해주세요.'); return; }
@@ -98,7 +110,7 @@ function RecordComposer({ owner }: { owner:string }) {
           input.vintageStatus = vintage === 'NV' ? 'nv' : vintage === '모름' ? 'unknown' : 'year';
           if (input.vintageStatus === 'year') input.vintageYear = Number(vintage);
         }
-        operation = { version:1, ownerId:owner, operationId, input };
+        operation = { version:1, ownerId:owner, operationId, input, ...(repeatEntry?{entryId:repeatEntry.id}:{}) };
         if (photo) {
           const prepared = await preparePhoto(photo.uri, photo.width, photo.height, operationId);
           operation.localPhoto = prepared.localUri;
@@ -116,12 +128,13 @@ function RecordComposer({ owner }: { owner:string }) {
     finally { busyRef.current = false; setSaving(false); }
   }
   if (restoring) return <View style={styles.page} />;
+  if(restoreFailed)return <SafeAreaView style={[styles.page,{padding:24,justifyContent:'center',gap:16}]}><Text accessibilityRole="alert" style={styles.body}>{error}</Text><Button label="술장으로 돌아가기" onPress={()=>router.replace('/')} /></SafeAreaView>;
   const summary = <View style={styles.summary}>
     {photo ? <Image source={{ uri: photo.uri }} resizeMode="cover" style={styles.photo} accessibilityLabel="선택한 술 사진" /> : <View style={[styles.photo, styles.noPhoto]}><Text style={styles.caption}>사진 없이{`\n`}남기는 한 잔</Text></View>}
-    <View style={styles.summaryText}>{step === 'info' ? <><Text style={styles.title}>오늘의 한 잔</Text><Text style={styles.body}>{photo ? '사진으로 가볍게 남겨요.' : '이름으로 가볍게 남겨요.'}</Text><Button label="사진 변경" variant="text" onPress={() => pickPhoto()} style={styles.changePhoto} /></> : <><Text style={styles.caption}>{category ?? '종류 미정'}</Text><Text style={styles.title} numberOfLines={3}>{name || '이름 없는 술'}</Text><Text style={styles.caption}>{dateLabel}{category === '와인' && vintage ? ` · ${vintage}` : ''}</Text></>}</View>
+    <View style={styles.summaryText}>{step === 'info' ? <><Text style={styles.title}>오늘의 한 잔</Text><Text style={styles.body}>{photo ? '사진으로 가볍게 남겨요.' : '이름으로 가볍게 남겨요.'}</Text><Button label={photo ? "사진 변경" : "사진 추가"} variant="text" onPress={() => pickPhoto()} style={styles.changePhoto} /></> : <><Text style={styles.caption}>{category ?? '종류 미정'}</Text><Text style={styles.title} numberOfLines={3}>{name || '이름 없는 술'}</Text><Text style={styles.caption}>{dateLabel}{category === '와인' && vintage ? ` · ${vintage}` : ''}</Text></>}</View>
   </View>;
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
+    <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (repeatEntry || pending?.entryId || category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
     <ScrollView pointerEvents={saving ? 'none' : 'auto'} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       {step === 'start' ? <View style={styles.start}>
         <Text style={styles.display}>오늘의 한 잔을{`\n`}사진으로 남겨볼까?</Text><Text style={[styles.body, { marginTop: 8 }]}>잘 찍은 사진이 아니어도 괜찮아요.</Text>
@@ -129,6 +142,8 @@ function RecordComposer({ owner }: { owner:string }) {
         <View style={styles.startActions}><Button label="앨범에서 사진 선택" onPress={() => pickPhoto()} /><Button label="카메라로 촬영" variant="secondary" onPress={() => pickPhoto(true)} /><Pressable accessibilityRole="button" onPress={() => setStep('info')} style={styles.nameOnly}><Text style={styles.nameOnlyText}>사진 없이 이름으로 기록</Text></Pressable></View>
         <Text style={styles.private}>내 기록은 기본적으로 나만 볼 수 있어요.</Text>
       </View> : <View style={styles.form}>
+        {(repeatEntry||pending?.entryId)&&<Text style={[styles.caption,{marginBottom:12}]}>같은 술에 새로운 한 잔을 남겨요.</Text>}
+        {pending&&<Text style={[styles.caption,{marginBottom:12}]}>이전에 저장 중이던 기록을 먼저 완료해주세요.</Text>}
         {summary}
         {step === 'info' ? <><View style={styles.fields}><View><Text style={styles.label}>술 이름</Text><TextInput accessibilityLabel="술 이름" maxLength={200} value={name} onChangeText={setName} placeholder="술 이름을 입력해주세요" placeholderTextColor={colors.muted} style={styles.input} /></View>
           <View><Text style={styles.label}>술 종류</Text><Button label={`${category ?? '종류 선택'}  ›`} variant="secondary" onPress={() => setSheet('category')} /></View>

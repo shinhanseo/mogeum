@@ -101,6 +101,13 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       const retry=(await saveNote(operation(41),record.revision,answers)).rows[0].result;
       assert.equal(retry.replayed,true);assert.equal(retry.revision,first.revision);
       assert.equal((await db.query('select count(*) n from public.tasting_records')).rows[0].n,before);
+      const repeat=await saved(45,{enteredName:'Synthetic tasting whisky',category:'whisky',revisit:'okay'},record.cellarEntryId);
+      assert.notEqual(repeat.recordId,record.recordId);
+      assert.equal(repeat.cellarEntryId,record.cellarEntryId);
+      assert.equal((await db.query('select * from public.record_answers where record_id=$1',[repeat.recordId])).rows.length,0);
+      assert.equal((await db.query('select * from public.record_notes where record_id=$1',[repeat.recordId])).rows.length,0);
+      assert.equal((await saved(45,{enteredName:'Synthetic tasting whisky',category:'whisky',revisit:'okay'},record.cellarEntryId)).recordId,repeat.recordId);
+
       await assert.rejects(saveNote(operation(41),record.revision,answers,'Changed payload'),{code:'23505'});
       await assert.rejects(saveNote(operation(42),record.revision,answers),{code:'40001'});
       const bad=[{...answers[0],descriptorCodes:['invented_aroma']}];

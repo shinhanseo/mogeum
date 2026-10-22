@@ -12,7 +12,7 @@ export async function readPending(owner: string): Promise<PendingRecord | null> 
   const raw = await AsyncStorage.getItem(key(owner));
   if (!raw) return null;
   const value = JSON.parse(raw) as PendingRecord;
-  if (value.version !== 1 || value.ownerId !== owner || typeof value.operationId !== 'string' || !value.input) throw new Error('저장 중인 기록을 읽지 못했어요.');
+  if (value.version !== 1 || value.ownerId !== owner || typeof value.operationId !== 'string' || !value.input || (value.entryId !== undefined && (typeof value.entryId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.entryId)))) throw new Error('저장 중인 기록을 읽지 못했어요.');
   return value;
 }
 export async function preparePhoto(uri: string, width: number, height: number, operationId: string) {
@@ -61,6 +61,6 @@ export async function savePending(pending: PendingRecord, ownerId: () => string 
         if (Number((error as { statusCode?: string }).statusCode) !== 409) throw error;
       }
     },
-    save: (id, input) => repository.save(id, input),
+    save: (id, input, entryId) => repository.save(id, input, entryId),
   });
 }

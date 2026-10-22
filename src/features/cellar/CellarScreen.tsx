@@ -11,7 +11,7 @@ function PhotoCard({ item, onPress }: { item: CellarItem; onPress: () => void })
   return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name ?? '이름 없는 술'} 기록 보기`} onPress={onPress} style={styles.card}>
     {item.photoUri && item.photoUri !== failedUri ? <Image source={{ uri: item.photoUri }} onError={() => setFailedUri(item.photoUri)} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>사진 없음</Text></View>}
     <Text numberOfLines={2} style={styles.name}>{item.name || '이름 없는 술'}</Text>
-    <Text style={styles.category}>{item.category || '종류 미정'}</Text>
+    <Text style={styles.category}>{item.category || '종류 미정'}{item.recordCount>1?` · 기록 ${item.recordCount}회`:''}</Text>
   </Pressable>;
 }
 export function CellarScreen({ items, onRecord, onOpen }: { items: CellarItem[]; onRecord: () => void; onOpen: (entryId: string) => void }) {

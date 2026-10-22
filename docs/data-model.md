@@ -58,3 +58,7 @@
 ## 노트 v2 확정 상태 · 2026-10-22
 
 record_notes의 last_operation_id/last_save_payload는 응답 유실 재시도 식별자다. confirmed_input_revision은 확정 문장에 대응하는 답변 revision이다. generated_draft는 서버 AI 출력 전용으로 유지하고, 현재 결정적 템플릿은 사용자가 확인한 confirmed_note에 저장한다. record_answers/record_notes의 일반 클라이언트 직접 쓰기는 철회하고 save_tasting_note RPC로 원자 확정한다. 기존 답변을 앱으로 읽을 때 question ID/모드/카탈로그 버전을 사용한다.
+
+### 반복 경험 연결 구현
+
+개인 cellar_entries의 소유권 조회 후 새 operation ID/새 tasting_records ID를 생성하면서 기존 cellar_entry_id를 전달한다. 이름 일치 자동 병합이나 공통 drinks 등록은 필요 없다. 과거 record_photos/record_notes/record_answers를 새 record ID로 복제하지 않는다. DB 변경 없이 기존 소유권 검사·복합 FK·operation payload 비교를 사용한다.

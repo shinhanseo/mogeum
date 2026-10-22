@@ -81,3 +81,9 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 - 앱은 기기에 저장 시도 ID와 원래 revision을 먼저 보관하고 응답이 불확실한 상태에서 다른 내용으로 덮어쓰지 않는다. 권한/충돌/연결 오류를 모두 성공처럼 처리하지 않는다. 충돌 후 최신 내용과 비교하는 UI는 후속이다.
 
 `supabase/tasting-catalog-v2.json`과 마이그레이션 내 snapshot은 동일해야 한다. v2가 개발 DB에 적용되었으므로 기존 code의 의미를 바꾸려면 새로운 버전과 마이그레이션을 추가한다. `scripts/check-tasting-contract.ts`로 앱 정의·DB snapshot·마이그레이션의 일치를 읽기 전용으로 검증한다. 적용된 마이그레이션을 수정해 재배포하지 않는다.
+
+### 반복 기록 클라이언트 계약
+
+`/record?entryId=<개인 술장 UUID>`는 해당 사용자의 `cellar_entries`에서 id/display_name/category만 읽는다. 전역 drinks ID나 과거 record ID로 대체하지 않는다. 조회 실패는 작성 차단 상태이며 자동으로 새 술장 저장으로 전환하지 않는다.
+
+기존 `create_tasting_record` RPC의 p_entry_id에 확인한 entryId를 전달한다. 로컬 PendingRecord v1에 선택적 entryId를 함께 영속화한다. 기존 v1 데이터의 entryId 미존재는 null(새 항목)로 호환한다. 같은 operation ID의 input뿐 아니라 entryId 변경/누락도 저장 재시도에서 거부한다. 이미 저장 중인 다른 작업이 있으면 그 작업의 payload와 연결을 복구한다. 노트 보충은 이 RPC가 아니라 기존 save_tasting_note 경로를 유지한다.

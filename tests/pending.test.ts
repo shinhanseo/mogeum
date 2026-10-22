@@ -31,3 +31,15 @@ test('saved receipt resumes cleanup without creating another experience',async()
   const h=harness();const value={...draft,saved};await h.ports.write(value);
   assert.deepEqual(await submitPending(value,h.ports),saved);assert.equal(h.saves(),0);
 });
+test('repeat retry persists the same entry and cannot be redirected or detached',async()=>{
+ const h=harness();const repeat={...draft,entryId:'entry-A'};let lost=true;
+ h.ports.save=async(id,input,entryId)=>{assert.equal(entryId,'entry-A');assert.equal(h.disk()?.entryId,'entry-A');if(lost){lost=false;throw Error('lost response');}return {...saved,replayed:true};};
+ await assert.rejects(submitPending(repeat,h.ports));
+ await assert.rejects(submitPending({...repeat,entryId:'entry-B'},h.ports));
+ await assert.rejects(submitPending({...repeat,entryId:undefined},h.ports));
+ assert.equal((await submitPending(h.disk()!,h.ports)).replayed,true);
+});
+test('old new-drink pending records still submit a null entry',async()=>{
+ const h=harness();h.ports.save=async(id,input,entryId)=>{assert.equal(entryId,null);return saved;};
+ await submitPending(draft,h.ports);
+});
