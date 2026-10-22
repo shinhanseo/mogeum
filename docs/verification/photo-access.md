@@ -7,3 +7,5 @@
 iOS 26.5 native fixture에서 camera 안내/나중에 닫기/거부 상태 UI를 확인하고 screenshot을 보관했다. 실제 촬영은 시뮬레이터 카메라가 없으므로 실기기 확인이 필요하다. 실제 OS 권한 거부/설정 복귀와 Android 검증은 남아 있다. `/dev/photo-access`는 실제 권한 요청 없이 시안만 보여준다.
 
 기록 본 흐름에 연결했고 타입/린트/기존 59개 테스트(57 pass,2 local services skip)를 통과했다. 사용자가 허용하기 전 카메라 요청이나 사진 선택을 시작하지 않는다. React 점검으로 Modal 전환 ref 소거·중복 동작 lock·취소 보존·외부 API 실패 안내와 접근성 버튼 라벨을 확인했다.
+
+iOS 실제 실행 추가 확인: `/dev/existing`의 RecordComposer에서 사진 추가 → 앱 앨범 안내 → 계속 → 시스템 PHPicker까지 전환되는 것을 확인했다. OS 화면에 앱이 선택 항목만 접근한다는 안내가 표시됐다. 사용자 사진을 고르거나 저장하지 않고 취소했다. 카메라 촬영·Android는 미검증이다.
