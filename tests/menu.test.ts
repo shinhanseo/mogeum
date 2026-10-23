@@ -259,3 +259,35 @@ test("a request is not sent when its recovery payload cannot be persisted", asyn
   );
   assert.equal(calls, 0);
 });
+
+test("Vision v2 image-boundary normalization is recognized without accepting arbitrary engine versions", () => {
+  const p = photo(["글렌리벳 12년 15,000원"]);
+  assert.equal(
+    validatePhotos([{ ...p, engine: "apple-vision-v2" }])[0].engine,
+    "apple-vision-v2",
+  );
+  assert.equal(validatePhotos([p])[0].engine, "apple-vision-v1");
+  assert.throws(
+    () => validatePhotos([{ ...p, engine: "apple-vision-v999" }]),
+    /INVALID_PHOTO/,
+  );
+  assert.throws(
+    () =>
+      validatePhotos([
+        {
+          ...p,
+          engine: "apple-vision-v2",
+          lines: [
+            {
+              ...p.lines[0],
+              polygon: p.lines[0].polygon.map((point) => ({
+                ...point,
+                x: -0.01,
+              })),
+            },
+          ],
+        },
+      ]),
+    /INVALID_LINE/,
+  );
+});

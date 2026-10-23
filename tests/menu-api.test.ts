@@ -87,6 +87,12 @@ test(
       photos,
     });
     assert.equal(parsed.status, 200);
+    const v2Parsed = await request(endpoint, a.access_token, {
+      action: "parse",
+      photos: photos.map((p) => ({ ...p, engine: "apple-vision-v2" })),
+    });
+    assert.equal(v2Parsed.status, 200);
+    assert.equal((await v2Parsed.json()).items[0].price, 15000);
     const { items } = await parsed.json();
     assert.equal(items[0].price, 15000);
     assert.equal(items[0].productId, null);

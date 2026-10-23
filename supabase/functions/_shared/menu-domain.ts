@@ -58,9 +58,12 @@ export function validatePhotos(input: unknown): MenuPhoto[] {
       p.height < 1 ||
       p.width > 2400 ||
       p.height > 2400 ||
-      !["apple-vision-v1", "mlkit-korean-16.0.1", "manual"].includes(
-        p.engine,
-      ) ||
+      ![
+        "apple-vision-v1",
+        "apple-vision-v2",
+        "mlkit-korean-16.0.1",
+        "manual",
+      ].includes(p.engine) ||
       !Array.isArray(p.lines) ||
       p.lines.length > 500
     )

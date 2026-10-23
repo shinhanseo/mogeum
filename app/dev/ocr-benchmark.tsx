@@ -91,13 +91,15 @@ export default function OcrBenchmark() {
           break;
         }
         const result: Result = { id: fixture.id };
-        const source = `http://127.0.0.1:8765/${fixture.id}.png`;
+        const source = `http://${Platform.OS === "ios" ? "localhost" : "127.0.0.1"}:8765/${fixture.id}.png`;
         const cache = `${FileSystem.cacheDirectory}ocr-benchmark-${runId}-${fixture.id}.png`;
         try {
           const prepareStart = performance.now();
           let local = source;
           if (/^https?:/.test(source)) {
-            await FileSystem.downloadAsync(source, cache);
+            await FileSystem.downloadAsync(source, cache, {
+              sessionType: FileSystem.FileSystemSessionType.FOREGROUND,
+            });
             local = cache;
           }
           const prepared = await prepareMenuPhoto(
