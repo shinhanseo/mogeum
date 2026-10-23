@@ -32,6 +32,7 @@ import {
 } from "../../../supabase/functions/_shared/menu-domain";
 
 type Adapter = {
+  restore?: typeof restoreMenu;
   parse: (photos: MenuPhoto[]) => Promise<MenuItem[]>;
   recommend: (photos: MenuPhoto[], items: MenuItem[]) => Promise<MenuResult>;
   save: (d: MenuDraft, photos: MenuPhoto[]) => Promise<number>;
@@ -62,6 +63,11 @@ export function MenuFlow({
   const lock = useRef(false);
   const replacement = useRef<string | undefined>(undefined);
   const restored = useRef(false);
+  const [restoreState, setRestoreState] = useState<
+    "loading" | "ready" | "failed"
+  >("loading");
+  const restoreRequest = useRef(0);
+  const restoreLoader = useRef(adapter?.restore ?? restoreMenu);
   const writes = useRef(Promise.resolve());
   const latestResult = useRef<MenuResult | null>(null);
   const demo = !!adapter;
@@ -85,21 +91,45 @@ export function MenuFlow({
       });
     }
   };
+  const loadDraft = useCallback(async () => {
+    if (!alive.current) return;
+    const request = ++restoreRequest.current;
+    restored.current = false;
+    setRestoreState("loading");
+    setError("");
+    const result = await restoreLoader
+      .current(owner)
+      .catch(() => ({ status: "failed" as const }));
+    if (!alive.current || request !== restoreRequest.current) return;
+    if (result.status === "failed") {
+      setRestoreState("failed");
+      setError(
+        "이전 메뉴판을 불러오지 못했어요. 원래 입력은 덮어쓰지 않았어요. 다시 불러오거나 잠시 후 다시 열어주세요.",
+      );
+      return;
+    }
+    if (result.status === "ready") {
+      current.current = result.draft;
+      setDraft(result.draft);
+      setStep("photos");
+    }
+    restored.current = true;
+    setRestoreState("ready");
+  }, [owner]);
+  const stopRestore = useCallback(() => {
+    alive.current = false;
+    restoreRequest.current++;
+    epoch.current++;
+  }, []);
   useEffect(() => {
     alive.current = true;
-    void restoreMenu(owner).then((d) => {
-      if (!alive.current) return;
-      if (d) {
-        current.current = d;
-        setDraft(d);
-        setStep("photos");
-      }
-      restored.current = true;
+    const generation = ++restoreRequest.current;
+    void Promise.resolve().then(() => {
+      if (alive.current && restoreRequest.current === generation)
+        void loadDraft();
     });
-    return () => {
-      alive.current = false;
-    };
-  }, [owner]);
+    return stopRestore;
+  }, [loadDraft, stopRestore]);
   useEffect(() => {
     latestResult.current = result;
   }, [result]);
@@ -405,6 +435,8 @@ export function MenuFlow({
     <>
       <MenuScreen
         draft={draft}
+        restoreState={restoreState}
+        onRestoreRetry={() => void loadDraft()}
         step={step}
         result={result}
         evidencePhotos={evidencePhotos}

@@ -227,6 +227,32 @@ test(
         ),
       );
     }
+    const archivedItem = { ...item, productId: "retired-product-id" };
+    const archivedPayload = {
+      p_id: randomUUID(),
+      p_revision: 0,
+      p_photos: photos,
+      p_items: [archivedItem],
+    };
+    for (let retry = 0; retry < 2; retry++) {
+      const archived = await request(
+        "/rest/v1/rpc/save_menu_session",
+        a.access_token,
+        archivedPayload,
+      );
+      assert.equal(archived.status, 200);
+      assert.equal(await archived.json(), 1);
+    }
+    assert.equal(
+      (
+        await request(endpoint, a.access_token, {
+          action: "recommend",
+          photos,
+          items: [archivedItem],
+        })
+      ).status,
+      400,
+    );
     const mismatched = await request(endpoint, a.access_token, {
       action: "recommend",
       photos,

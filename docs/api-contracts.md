@@ -123,3 +123,7 @@ POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{ac
 ### 메뉴 카탈로그 응답 호환성
 
 `menu-recommend`의 parse와 recommend 응답에는 `catalogVersion`을 포함한다. recommend는 `catalogSize`도 포함한다. 앱의 PRODUCT_CATALOG_VERSION과 다르거나 필드가 없는 예전 서버이면 MENU_CATALOG_MISMATCH로 결과 노출을 중단한다. 기존 사진/수정 입력을 보관한다. 추천은 메뉴 집합·제품 후보·출처 특징·근거 ID·상태·점수의 교차 참조를 검사하고 잘못된 응답은 INVALID_MENU_RESULT로 거부한다. 소유권 판단은 계속 서버의 verified JWT/RLS에서 수행한다.
+
+### 메뉴 로컬 복구와 저장 재전송
+
+로컬 restore는 empty/ready/failed로 구분하며 failed를 새 세션으로 저장하지 않는다. 현재 메뉴의 낡은 제품 확인은 해제하되 pendingSave는 정확한 내용과 revision을 보존한다. save_menu_session transport의 productId는 bounded opaque ID이며 제품 확인 권한이 아니다. 추천 Edge는 현재 카탈로그/메뉴 이름 후보와 일치하지 않는 ID를 계속 거부한다. [복구 검증과 한계](verification/menu-recovery.md)를 참조한다.

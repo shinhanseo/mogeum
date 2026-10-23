@@ -1,4 +1,10 @@
-import { activeExclusions, type MenuExclusion } from "./review";
+import {
+  parseStoredMenu,
+  readStoredMenu,
+  MAX_MENU_DRAFT_CHARS,
+  type MenuRestoreResult,
+} from "./restore";
+import { type MenuExclusion } from "./review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -6,7 +12,6 @@ import { randomUUID } from "expo-crypto";
 import { recognizeMenu } from "../../../modules/menu-ocr";
 import {
   validatePhotos,
-  validateItems,
   type MenuPhoto,
   type MenuItem,
 } from "../../../supabase/functions/_shared/menu-domain";
@@ -94,7 +99,10 @@ export async function readMenuPhoto(photo: DevicePhoto): Promise<DevicePhoto> {
   return { ...photo, state: "ready", ocr };
 }
 export async function persistMenu(owner: string, draft: MenuDraft) {
-  await AsyncStorage.setItem(key(owner), JSON.stringify(draft));
+  const raw = JSON.stringify(draft);
+  if (raw.length > MAX_MENU_DRAFT_CHARS)
+    throw new Error("MENU_DRAFT_TOO_LARGE");
+  await AsyncStorage.setItem(key(owner), raw);
   // Prune superseded local image revisions only after the new draft is durable.
   const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${draft.id}/`;
   const keep = new Set(draft.photos.map((p) => p.uri));
@@ -108,54 +116,20 @@ export async function persistMenu(owner: string, draft: MenuDraft) {
     /* Storage cleanup does not discard a successfully written draft. */
   }
 }
-export async function restoreMenu(owner: string): Promise<MenuDraft | null> {
-  try {
-    const raw = await AsyncStorage.getItem(key(owner));
-    if (!raw) return null;
-    const d = JSON.parse(raw) as MenuDraft;
-    if (
-      !/^[0-9a-f-]{36}$/i.test(d.id) ||
-      !Number.isInteger(d.revision) ||
-      d.revision < 0 ||
-      !Array.isArray(d.photos) ||
-      d.photos.length > 5 ||
-      !Array.isArray(d.items)
-    )
-      return null;
-    for (const p of d.photos) {
-      if (
-        !/^[0-9a-f-]{36}$/i.test(p.id) ||
-        !Number.isInteger(p.imageRevision) ||
-        p.imageRevision < 1 ||
-        !["waiting", "reading", "ready", "failed"].includes(p.state) ||
-        p.uri !==
-          `${FileSystem.documentDirectory}menu-drafts/${owner}/${d.id}/${p.id}-${p.imageRevision}.jpg`
-      )
-        return null;
-      if (p.ocr) {
-        validatePhotos([p.ocr]);
-        if (p.ocr.id !== p.id || p.ocr.imageRevision !== p.imageRevision)
-          return null;
+export async function restoreMenu(owner: string): Promise<MenuRestoreResult> {
+  return readStoredMenu(
+    () => AsyncStorage.getItem(key(owner)),
+    async (raw) => {
+      const d = parseStoredMenu(raw, owner, FileSystem.documentDirectory!);
+      for (const p of d.photos) {
+        const exists = await FileSystem.getInfoAsync(p.uri);
+        if (!exists.exists) {
+          p.state = "failed";
+          p.ocr = null;
+        } else if (p.state === "reading") p.state = "waiting";
+        else if (p.state === "ready" && !p.ocr) p.state = "failed";
       }
-      const exists = await FileSystem.getInfoAsync(p.uri);
-      if (!exists.exists) {
-        p.state = "failed";
-        p.ocr = null;
-      }
-      if (p.state === "reading") p.state = "waiting";
-    }
-    if (d.pendingSave) {
-      validatePhotos(d.pendingSave.photos);
-      validateItems(d.pendingSave.items, d.pendingSave.photos);
-      if (
-        !Number.isInteger(d.pendingSave.revision) ||
-        d.pendingSave.revision < 0
-      )
-        return null;
-    }
-    d.exclusions = activeExclusions(d.exclusions, d.photos);
-    return d;
-  } catch {
-    return null;
-  }
+      return d;
+    },
+  );
 }

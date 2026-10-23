@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { restoreMenu } from "../../src/features/menu/device";
 import { Image, Text, View } from "react-native";
 import { Redirect, useLocalSearchParams } from "expo-router";
 import { MenuFlow } from "../../src/features/menu/MenuFlow";
@@ -43,6 +45,7 @@ export default function DevMenu() {
     catalog?: string;
     failure?: string;
   }>();
+  const restoreAttempts = useRef(0);
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <View style={{ flex: 1 }}>
@@ -81,6 +84,11 @@ export default function DevMenu() {
               )!.uri
         }
         adapter={{
+          restore: async (owner) => {
+            if (failure === "restore" && restoreAttempts.current++ === 0)
+              return { status: "failed" as const };
+            return restoreMenu(owner);
+          },
           parse: async (photos) => {
             if (failure === "catalog") throw new Error("MENU_CATALOG_MISMATCH");
             return parseMenu(photos);

@@ -176,7 +176,12 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
   }
   return output.slice(0, 100);
 }
-export function validateItems(input: unknown, photos: MenuPhoto[]): MenuItem[] {
+/** Stored replay is opaque transport, never a product confirmation or recommendation permission. */
+export function validateItems(
+  input: unknown,
+  photos: MenuPhoto[],
+  productMode: "catalog" | "stored" = "catalog",
+): MenuItem[] {
   if (!Array.isArray(input) || input.length > 100)
     throw new Error("INVALID_ITEMS");
   const seen = new Set<string>();
@@ -204,7 +209,13 @@ export function validateItems(input: unknown, photos: MenuPhoto[]): MenuItem[] {
       item.lineIds.length > 20 ||
       item.lineIds.some((id: unknown) => !p.lines.some((l) => l.id === id)) ||
       (item.productId !== null &&
-        !productCandidates(item.name).some((p) => p.id === item.productId))
+        (typeof item.productId !== "string" ||
+          !item.productId.trim() ||
+          item.productId.length > 160 ||
+          (productMode === "catalog" &&
+            !productCandidates(item.name).some(
+              (p) => p.id === item.productId,
+            ))))
     )
       throw new Error("INVALID_ITEM");
     seen.add(item.id);

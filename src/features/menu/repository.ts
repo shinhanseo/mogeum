@@ -54,7 +54,7 @@ export async function saveMenuSession(
   items: MenuItem[],
 ) {
   validatePhotos(photos);
-  validateItems(items, photos);
+  validateItems(items, photos, "stored");
   const scoped = await menuClient(client, owner);
   const { data, error } = await scoped.rpc("save_menu_session", {
     p_id: id,
