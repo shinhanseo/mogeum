@@ -73,8 +73,12 @@ export async function prepareMenuPhoto(
     ocr: null,
   };
 }
-export async function readMenuPhoto(photo: DevicePhoto): Promise<DevicePhoto> {
+export async function readMenuPhoto(
+  photo: DevicePhoto,
+  observeNative?: (result: Awaited<ReturnType<typeof recognizeMenu>>) => void,
+): Promise<DevicePhoto> {
   const result = await recognizeMenu(photo.uri);
+  observeNative?.(result);
   if (result.width !== photo.width || result.height !== photo.height)
     throw new Error("OCR_ORIENTATION");
   const ocr: MenuPhoto = {

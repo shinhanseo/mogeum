@@ -80,3 +80,5 @@ CI: [앱 검사/양 플랫폼 export](https://github.com/shinhanseo/mogeum/actio
 경계 100/101개, 여러 사진 합계, 입력 원문 불변 회귀 3개와 실제 HTTP의 101개 입력→400/명시적 코드 검증을 추가했다. iOS는 개발용 failure=capacity 경로에서 오류를 주입해 안내와 기존 사진2장/OCR 보존을 확인했다. 이 기기 확인은 101줄짜리 실메뉴 OCR 정확도 측정이 아니다. 해당 신호를 반환하려면 관리형 Edge 함수 재배포가 필요하며 현재 브라우저 비활성화로 대기 중이다.
 
 ![용량 초과 안내와 사진 보존](menu/ios-menu-capacity.png)
+
+현재 양 플랫폼의 실제 네이티브 OCR 실행 증거는 [합성 메뉴 14종 baseline](native-ocr-benchmark.md)에 있다. Android는 개발 경로 자동 실행으로 ML Kit 호출과 결과를 확인했으며, 기존의 Android 화면/권한 E2E 미검증과 구분한다. 두 열 가격 연결과 iOS 경계 좌표 실패를 재현했고 후속 수정을 진행한다.
