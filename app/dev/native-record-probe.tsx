@@ -29,6 +29,7 @@ import {
   loadTasteContext,
   analyzeTaste,
 } from "../../src/features/taste/repository";
+import { probeNativeMenu } from "../../src/dev/menu-backend-probe";
 type Report = {
   version: 1;
   synthetic: true;
@@ -39,13 +40,18 @@ type Report = {
   status: "running" | "completed" | "failed";
   phase: string;
   passed: string[];
+  menu?: Awaited<ReturnType<typeof probeNativeMenu>>;
 };
 const activeProbeRuns = new Set<string>();
 const ensure = (condition: unknown) => {
   if (!condition) throw new Error("PROBE_EXPECTATION");
 };
 export default function NativeRecordProbe() {
-  const query = useLocalSearchParams<{ run?: string; runId?: string }>();
+  const query = useLocalSearchParams<{
+    run?: string;
+    runId?: string;
+    menu?: string;
+  }>();
   const [defaultRunId] = useState(
     () => `${Platform.OS}-native-${randomUUID()}`,
   );
@@ -265,13 +271,27 @@ export default function NativeRecordProbe() {
       await FileSystem.writeAsStringAsync(guardUri, "owned synthetic guard");
       // A stale caller URI must not decide which file completion deletes.
       await finishPending({ ...pending, localPhoto: guardUri });
+      await phase("canonical_pending_removed");
       ensure((await readPending(owner)) === null);
+      await phase("canonical_photo_removed");
       ensure(!(await FileSystem.getInfoAsync(prepared.localUri)).exists);
+      await phase("canonical_unrelated_files_preserved");
       ensure(
         (await FileSystem.getInfoAsync(guardUri)).exists &&
           (await FileSystem.getInfoAsync(source)).exists,
       );
       await pass("stored_operation_file_only_cleanup");
+      if (query.menu === "1") {
+        value.menu = await probeNativeMenu({
+          client: a,
+          foreign: b,
+          owner,
+          recordId: saved.recordId,
+          revision: saved.revision,
+          phase,
+          pass,
+        });
+      }
       await phase("record_and_binary_delete");
       const detail = await loadRecordDetail(a, owner, {
         recordId: saved.recordId,
@@ -309,7 +329,7 @@ export default function NativeRecordProbe() {
             });
         });
     }
-  }, [runId]);
+  }, [runId, query.menu]);
   useEffect(() => {
     if (query.run === "1" && started.current !== runId && !busy.current) {
       started.current = runId;

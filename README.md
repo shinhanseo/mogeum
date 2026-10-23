@@ -107,3 +107,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 기록 저장·사진 교체 복구에서 작업별 사진 경로와 저장 receipt를 확인하고 손상된 요청을 보존합니다. [파일 경로·복구 회귀](docs/verification/record-draft-paths.md).
 
 **iOS·Android 실제 native + 로컬 서버 저장 검증 통과:** 사진 준비·업로드/RPC·응답 유실 재시도·타인 접근 차단·로컬/서버 사진 삭제를 합성 데이터로 확인했습니다. [검증 보고서와 재현](docs/verification/native-record-backend.md). 관리형 소셜 로그인·실제 계정 UI E2E는 별도입니다.
+
+네이티브 메뉴판 연속 검증: [iOS·Android OCR 2장 → 로컬 Edge 해석 → 수정 복구·세션 저장 → 내 노트 근거 추천](docs/verification/native-menu-backend.md)을 확인했습니다. 관리형 로그인 UI E2E와 실물 메뉴판 정확도 검증은 별도입니다.
