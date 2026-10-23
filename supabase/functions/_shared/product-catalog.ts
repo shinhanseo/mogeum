@@ -1295,6 +1295,7 @@ export const normalizeProductName = (name: string) =>
     .normalize("NFKD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()
+    .replace(/(?<=\d)[.,](?=\d)/g, "decimal")
     .replace(/[^\p{L}\p{N}]/gu, "");
 /** Only full curated aliases qualify. Explicit unsupported vintages/ABV/editions never fall back. */
 export function productCandidates(name: string): Product[] {
