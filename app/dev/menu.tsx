@@ -38,9 +38,10 @@ const snapshot: TasteSnapshot = {
   })),
 };
 export default function DevMenu() {
-  const { picker, catalog } = useLocalSearchParams<{
+  const { picker, catalog, failure } = useLocalSearchParams<{
     picker?: string;
     catalog?: string;
+    failure?: string;
   }>();
   if (!__DEV__) return <Redirect href="/" />;
   return (
@@ -57,11 +58,13 @@ export default function DevMenu() {
       </Text>
       <MenuFlow
         owner={
-          catalog === "1"
-            ? "menu-catalog-fixture"
-            : picker === "1"
-              ? "menu-picker-fixture"
-              : "menu-ocr-fixture"
+          failure === "catalog"
+            ? "menu-catalog-mismatch-fixture"
+            : catalog === "1"
+              ? "menu-catalog-fixture"
+              : picker === "1"
+                ? "menu-picker-fixture"
+                : "menu-ocr-fixture"
         }
         fixtureEvidenceUri={
           Image.resolveAssetSource(
@@ -78,7 +81,10 @@ export default function DevMenu() {
               )!.uri
         }
         adapter={{
-          parse: async (photos) => parseMenu(photos),
+          parse: async (photos) => {
+            if (failure === "catalog") throw new Error("MENU_CATALOG_MISMATCH");
+            return parseMenu(photos);
+          },
           save: async (d) => d.revision + 1,
           recommend: async (_photos, items) => ({
             recommendations: recommendMenu(items, snapshot),

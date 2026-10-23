@@ -1,3 +1,4 @@
+import { validateMenuResult } from "../src/features/menu/result-contract";
 import { createClient } from "@supabase/supabase-js";
 import { tastingRepository } from "../src/features/tasting/repository";
 import { newTastingDraft, setAnswer } from "../src/features/tasting/draft";
@@ -165,6 +166,7 @@ test(
     });
     assert.equal(response.status, 200);
     const result = await response.json();
+    validateMenuResult(result, [item]);
     assert.equal(result.method, "evidence-rules-v1");
     assert.equal(result.recommendations[0].itemId, item.id);
     assert.equal(result.recommendations[0].status, "similar");
@@ -217,6 +219,7 @@ test(
       });
       assert.equal(r.status, 200);
       const body = await r.json();
+      validateMenuResult(body, [{ ...item, name, productId }]);
       assert.equal(body.recommendations[0].status, "similar");
       assert.ok(
         body.recommendations[0].similar.some((f: { recordIds: string[] }) =>

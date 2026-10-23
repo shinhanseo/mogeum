@@ -5,26 +5,13 @@ import {
   validateItems,
   type MenuPhoto,
   type MenuItem,
-  type MenuRecommendation,
 } from "../../../supabase/functions/_shared/menu-domain";
-export type MenuResult = {
-  evidenceRecords: {
-    id: string;
-    name: string | null;
-    date: string;
-    revision: number;
-    category: string | null;
-    revisit: string | null;
-    noteText: string | null;
-  }[];
-  recommendations: MenuRecommendation[];
-  tasteHash: string;
-  recordCount: number;
-  method: string;
-  limitedCatalog: boolean;
-  catalogVersion?: string;
-  catalogSize?: number;
-};
+import {
+  requireCatalogVersion,
+  validateMenuResult,
+  type MenuResult,
+} from "./result-contract";
+export type { MenuResult } from "./result-contract";
 /** Pin the verified owner/token for all calls in this operation. */
 export async function menuClient(client: SupabaseClient, owner: string) {
   const { data } = await client.auth.getSession();
@@ -54,20 +41,8 @@ export async function menuRequest(
     body: { action: items ? "recommend" : "parse", photos, items },
   });
   if (error) throw new Error("MENU_SERVICE_UNAVAILABLE");
-  if (items) {
-    if (
-      !Array.isArray(data?.evidenceRecords) ||
-      !Array.isArray(data?.recommendations) ||
-      typeof data.tasteHash !== "string"
-    )
-      throw new Error("INVALID_RESULT");
-    const ids = new Set(items.map((i) => i.id));
-    if (
-      data.recommendations.some((r: MenuRecommendation) => !ids.has(r.itemId))
-    )
-      throw new Error("INVALID_RESULT");
-    return data as MenuResult;
-  }
+  requireCatalogVersion(data);
+  if (items) return validateMenuResult(data, items);
   return { items: validateItems(data?.items, photos) };
 }
 export async function saveMenuSession(

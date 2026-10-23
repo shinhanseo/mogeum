@@ -42,3 +42,7 @@
 `npm run check`는 조건부 색·향 변화·향 계열 해제/복원, 8개 조합의 전체 skip, 모름/없음/강도 0, draft 소유자/버전 검증, SQL 카탈로그 snapshot 일치와 노트 RPC의 권한·중복·낡은 revision·원문 보존을 확인한다. CI의 disposable Supabase HTTP 테스트는 실제 SDK로 기본 기록→노트 RPC→재시도→타 계정 읽기 차단을 수행한다. 개발 cloud 계정/키를 사용하지 않는다.
 
 iOS 개발 빌드의 `/dev/tasting?category=wine&mode=deep&question=appearance`는 __DEV__에서만 열린다. 개발용 배너를 표시하고 Auth/저장 요청을 보내지 않는다. 실제 사용자 흐름의 로그인 검증을 대체하지 않는다. [네이티브 확인과 남은 항목](verification/tasting-notes.md)을 구분해서 보고한다.
+
+## 메뉴 추천 응답·품질 회귀
+
+`npm run test:menu-quality`는 4주종 × 가볍게/자세히 합성 관측, 취향 근거 제외 조건, 카탈로그 판본 및 조작된 추천 응답 거부를 검사한다. 정상 서버 응답은 실제 HTTP CI에서도 같은 validator로 확인한다. [실측·추정·개발 전용 확인과 남은 범위](verification/menu-quality.md)를 구분한다.

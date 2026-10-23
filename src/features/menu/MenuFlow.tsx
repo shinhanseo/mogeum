@@ -1,3 +1,4 @@
+import { menuFailureMessage } from "./result-contract";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -328,13 +329,8 @@ export function MenuFlow({
         setResult(value);
         setStep("results");
       }
-    } catch {
-      if (valid(version))
-        setError(
-          action === "parse"
-            ? "메뉴를 정리하지 못했어요. 연결을 확인하고 다시 시도해주세요."
-            : "저장 또는 추천을 완료하지 못했어요. 입력은 보관했어요. 다시 시도해주세요.",
-        );
+    } catch (error) {
+      if (valid(version)) setError(menuFailureMessage(error, action));
     } finally {
       if (valid(version)) {
         lock.current = false;
