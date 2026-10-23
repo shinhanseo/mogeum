@@ -111,6 +111,38 @@ const bounds = (l: MenuLine) => ({
     Math.max(...l.polygon.map((p) => p.y)) -
     Math.min(...l.polygon.map((p) => p.y)),
 });
+/** Split only complete name→price columns with a visible gutter. Ambiguous price options stay together. */
+function splitMenuColumns(row: MenuLine[]): MenuLine[][] {
+  const priceOnly =
+    /^(?:₩\s*\d[\d,]*|\d{1,3}(?:,\d{3})+(?:\s*원)?|\d{3,7}\s*원)$/u;
+  const groups: MenuLine[][] = [];
+  let current: MenuLine[] = [];
+  for (const line of row) {
+    current.push(line);
+    if (priceOnly.test(line.text.trim())) {
+      const name = current
+        .slice(0, -1)
+        .map((l) => l.text)
+        .join(" ")
+        .replace(
+          /\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b|한\s*잔|글라스|바틀|보틀|glass|bottle/giu,
+          "",
+        )
+        .trim();
+      if (!/\p{L}/u.test(name) || /\d{1,3}(?:,\d{3})+/.test(name)) return [row];
+      groups.push(current);
+      current = [];
+    }
+  }
+  if (current.length || groups.length < 2) return [row];
+  for (let i = 1; i < groups.length; i++) {
+    const previous = groups[i - 1].at(-1)!;
+    const right = Math.max(...previous.polygon.map((p) => p.x));
+    if (bounds(groups[i][0]).x - right < Math.max(0.02, bounds(previous).h))
+      return [row];
+  }
+  return groups;
+}
 /** Conservative row parser. No cross-row price association and no inferred servings. */
 export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
   validatePhotos(photos);
@@ -131,50 +163,54 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
       if (row) row.push(line);
       else rows.push([line]);
     }
-    for (const row of rows) {
-      row.sort((a, b) => bounds(a).x - bounds(b).x);
-      const text = row
-        .map((l) => l.text)
-        .join(" ")
-        .trim();
-      // Require explicit currency or comma-grouped amount; years and volumes cannot become prices.
-      const prices = [
-        ...text.matchAll(
-          /(?:₩\s*\d[\d,]*|\d{1,3}(?:,\d{3})+(?:\s*원)?|\d{3,7}\s*원)/g,
-        ),
-      ].filter(
-        (m) =>
-          !/^\s*(?:ml|cl|l)\b/iu.test(text.slice((m.index ?? 0) + m[0].length)),
-      );
-      const serving =
-        text.match(
-          /\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b|한\s*잔|글라스|바틀|보틀|glass|bottle/iu,
-        )?.[0] ?? null;
-      const price =
-        prices.length === 1 && !/[$€¥]|\b(?:USD|EUR|JPY)\b/i.test(text)
-          ? Number(prices[0][0].replace(/[^0-9]/g, ""))
-          : null;
-      let name = text;
-      for (const match of prices) name = name.replace(match[0], "");
-      if (serving) name = name.replace(serving, "");
-      name = name.replace(/[·|…]+/g, " ").trim();
-      if (!name || name.length > 150 || !/\p{L}/u.test(name)) continue;
-      // Headings/unpriced descriptions are not safely identifiable as menu items. Raw lines remain available.
-      if (!prices.length) continue;
-      output.push({
-        id: `${p.id}:${p.imageRevision}:item:${row[0].id.split(":").at(-1)}`,
-        photoId: p.id,
-        imageRevision: p.imageRevision,
-        lineIds: row.map((l) => l.id),
-        name,
-        price:
-          price !== null && Number.isSafeInteger(price) && price > 0
-            ? price
-            : null,
-        serving,
-        productId: null,
-        confirmed: false,
-      });
+    for (const unsplit of rows) {
+      unsplit.sort((a, b) => bounds(a).x - bounds(b).x);
+      for (const row of splitMenuColumns(unsplit)) {
+        const text = row
+          .map((l) => l.text)
+          .join(" ")
+          .trim();
+        // Require explicit currency or comma-grouped amount; years and volumes cannot become prices.
+        const prices = [
+          ...text.matchAll(
+            /(?:₩\s*\d[\d,]*|\d{1,3}(?:,\d{3})+(?:\s*원)?|\d{3,7}\s*원)/g,
+          ),
+        ].filter(
+          (m) =>
+            !/^\s*(?:%|％|ml\b|cl\b|l\b)/iu.test(
+              text.slice((m.index ?? 0) + m[0].length),
+            ),
+        );
+        const serving =
+          text.match(
+            /\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b|한\s*잔|글라스|바틀|보틀|glass|bottle/iu,
+          )?.[0] ?? null;
+        const price =
+          prices.length === 1 && !/[$€¥]|\b(?:USD|EUR|JPY)\b/i.test(text)
+            ? Number(prices[0][0].replace(/[^0-9]/g, ""))
+            : null;
+        let name = text;
+        for (const match of prices) name = name.replace(match[0], "");
+        if (serving) name = name.replace(serving, "");
+        name = name.replace(/[·|…]+/g, " ").trim();
+        if (!name || name.length > 150 || !/\p{L}/u.test(name)) continue;
+        // Headings/unpriced descriptions are not safely identifiable as menu items. Raw lines remain available.
+        if (!prices.length) continue;
+        output.push({
+          id: `${p.id}:${p.imageRevision}:item:${row[0].id.split(":").at(-1)}`,
+          photoId: p.id,
+          imageRevision: p.imageRevision,
+          lineIds: row.map((l) => l.id),
+          name,
+          price:
+            price !== null && Number.isSafeInteger(price) && price > 0
+              ? price
+              : null,
+          serving,
+          productId: null,
+          confirmed: false,
+        });
+      }
     }
   }
   if (output.length > 100) throw new Error("MENU_ITEM_LIMIT");

@@ -62,3 +62,11 @@ macOS에서 `swift scripts/generate-ocr-fixtures.swift assets/fixtures/ocr-bench
 이는 기울임 메뉴의 가격 연결 해결을 뜻하지 않는다. 해당 케이스는 이름 6/6이 읽히지만 geometry-v1 가격 연결은 0/6이고 두 열 메뉴도 0/6이다. 후속 파서 개선 대상이다. 실메뉴·물리 iPhone 측정은 남는다. 관리형 menu-recommend에도 v2 엔진 허용 변경을 배포해야 새 네이티브 입력을 받을 수 있다. 아직 관리형 서버 배포를 완료하지 않았다.
 
 재실행 중 legacy background download가 unknown error로 실패해, 개발용 fixture 다운로드에 foreground session을 지정하고 앱을 완전히 재시작했다. iOS는 localhost, Android는 reverse된 127.0.0.1을 사용한다. 실패 실행은 OCR 성공으로 집계하지 않았고 공개 보고서는 완료된 v2e 실행만 보관했다. 운영 사진 다운로드나 ATS 설정은 바꾸지 않았다.
+
+## geometry-v2: 두 열 분리와 잘못 읽힌 통화 제외
+
+양 플랫폼에서 같은 14종을 실제 native OCR부터 다시 실행했다. [iOS](ocr-benchmark/ios-geometry-v2.json), [Android](ocr-benchmark/android-geometry-v2.json). 두 열 메뉴 가격 연결은 iOS 0→6/6, Android 0→2/6이다. 분리는 각 이름 다음에 명시적인 가격 줄이 있고 열 사이 여백이 있는 완결된 경우에 한정한다. 각 항목은 자기 열의 source line ID만 갖고, 같은 술의 잔/병 복수 가격은 한 항목의 모호한 가격으로 유지한다.
+
+Android의 %/l 오독을 원화로 해석하지 않도록 보수적으로 처리해, 새 실행의 밝은 배경 연결은 2/6·어두운 배경 3/6·작은 글씨 2/6이다. 숫자만 정답과 같아 기존 지표가 성공으로 세던 잘못된 통화 인식은 더 이상 가격으로 사용하지 않는다. 이름·통화를 복원해 만들어 채우지 않으며 원문은 수정 화면에 남는다. 이 수치를 엔진 정확도 향상으로 해석하지 않는다.
+
+기울임과 다음 줄 가격은 양 플랫폼 모두 가격 확정 0개로 남는다. 가격 없음·잔/병 복수 가격도 확정 0개를 유지했다. Android dense는 이번 실행에서는 오류 없이 12항목 중 가격 연결 7개였다(이전 baseline에는 준비 파일 copy 오류가 있어 그대로 보관). 실메뉴·물리 기기 검증은 남는다. geometry-v2는 함수 배포 후 서버 경로에도 적용된다.
