@@ -61,4 +61,6 @@ OCR 성능은 엔진명이 아니라 실제 20–30장 테스트의 이름 인�
 
 ## 현재 구현된 메뉴 세로 흐름
 
-초기 연결은 Vision/ML Kit 로컬 Expo adapter → geometry-v1 보수적 파싱 → 사용자 확인 → 출처 카탈로그 4제품 → evidence-rules-v1 기록 비교다. LLM 호출을 흉내 내지 않으며 Gemini 키 없이 작동한다. 자동 다단 파싱·중복 병합·전 주종 카탈로그·LLM 설명은 남은 범위다. [실행한 검증 및 제약](verification/menu-ocr.md).
+초기 연결은 Vision/ML Kit 로컬 Expo adapter → geometry-v1 보수적 파싱 → 사용자 확인 → 출처 카탈로그 32제품(4주종별 8개 판본) → evidence-rules-v1 기록 비교다. LLM 호출을 흉내 내지 않으며 Gemini 키 없이 작동한다. 자동 다단 파싱·중복 병합·카탈로그 추가 확장·LLM 설명은 남은 범위다. [실행한 검증 및 제약](verification/menu-ocr.md).
+
+제품 출처·판본 범위와 확장 검증은 [카탈로그 명세](product-catalog.md)를 따른다. 이름이 없는 제품 특징을 생성하지 않으며 빈티지 없는 와인은 사용자가 실제 연도를 확인한다.

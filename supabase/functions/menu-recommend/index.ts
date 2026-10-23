@@ -1,6 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import {
   parseMenu,
+  PRODUCT_CATALOG_VERSION,
+  products,
   validatePhotos,
   validateItems,
   recommendMenu,
@@ -79,6 +81,8 @@ Deno.serve(async (request) => {
       recordCount: snapshot.totalRecords,
       method: "evidence-rules-v1",
       limitedCatalog: true,
+      catalogVersion: PRODUCT_CATALOG_VERSION,
+      catalogSize: products.length,
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";

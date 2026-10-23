@@ -171,7 +171,65 @@ test(
     assert.deepEqual(result.recommendations[0].similar[0].recordIds, [
       recordId,
     ]);
-    assert.equal(result.evidenceRecords[0].id, recordId);assert.equal(result.evidenceRecords[0].category,"whisky");assert.equal(result.evidenceRecords[0].revisit,"again");assert.equal(typeof result.evidenceRecords[0].noteText,"string");
+    assert.equal(result.evidenceRecords[0].id, recordId);
+    assert.equal(result.evidenceRecords[0].category, "whisky");
+    assert.equal(result.evidenceRecords[0].revisit, "again");
+    assert.equal(typeof result.evidenceRecords[0].noteText, "string");
+    assert.equal(result.catalogSize, 32);
+    assert.equal(result.catalogVersion, "2026-10-23.1");
+    for (const [category, code, name, productId] of [
+      [
+        "wine",
+        "citrus",
+        "클라우디 베이 소비뇽 블랑 2024",
+        "cloudy-bay-sb-2024",
+      ],
+      ["beer", "citrus", "시에라 네바다 페일 에일", "sierra-nevada-pale-ale"],
+      ["traditional", "rice_grain", "화요 25", "hwayo-25"],
+    ] as const) {
+      const c = await sdk.rpc("create_tasting_record", {
+        p_operation_id: randomUUID(),
+        p_record: {
+          enteredName: `합성 ${category}`,
+          category,
+          revisit: "again",
+        },
+      });
+      assert.equal(c.error, null);
+      let d = newTastingDraft(a.user.id, c.data.recordId, category, "light");
+      d = setAnswer(d, "nose", {
+        status: "answered",
+        descriptors: [code],
+        intensity: null,
+        freeText: "",
+      });
+      await tastingRepository(sdk).save(
+        d,
+        randomUUID(),
+        c.data.revision,
+        composeNote(d),
+        false,
+      );
+      const r = await request(endpoint, a.access_token, {
+        action: "recommend",
+        photos,
+        items: [{ ...item, name, productId }],
+      });
+      assert.equal(r.status, 200);
+      const body = await r.json();
+      assert.equal(body.recommendations[0].status, "similar");
+      assert.ok(
+        body.recommendations[0].similar.some((f: { recordIds: string[] }) =>
+          f.recordIds.includes(c.data.recordId),
+        ),
+      );
+    }
+    const mismatched = await request(endpoint, a.access_token, {
+      action: "recommend",
+      photos,
+      items: [{ ...item, name: "화요 25", productId: "hwayo-41" }],
+    });
+    assert.equal(mismatched.status, 400);
     const foreignResult = await request(endpoint, b.access_token, {
       action: "recommend",
       photos,

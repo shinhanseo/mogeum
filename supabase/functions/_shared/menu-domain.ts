@@ -26,95 +26,17 @@ export type MenuItem = {
   productId: string | null;
   confirmed: boolean;
 };
-export type Product = {
-  id: string;
-  name: string;
-  category: "whisky" | "beer" | "wine" | "traditional";
-  aliases: string[];
-  features: { id: string; label: string; dimension: string }[];
-  source: { url: string; title: string; checkedAt: string };
-  description: string;
-};
-/** Deliberately narrow verified catalog. Aliases propose candidates; users confirm the edition. */
-export const products: Product[] = [
-  {
-    id: "glenlivet-12",
-    name: "글렌리벳 12년",
-    category: "whisky",
-    aliases: [
-      "글렌리벳12년",
-      "글렌리벳12",
-      "theglenlivet12",
-      "glenlivet12",
-      "glenlivet12yearold",
-    ],
-    features: [{ id: "향:과일 향", label: "과일 향", dimension: "향" }],
-    source: {
-      url: "https://www.theglenlivet.com/en-us/product/12-year-old-single-malt-scotch/",
-      title: "The Glenlivet · 12 Year Old",
-      checkedAt: "2026-10-23",
-    },
-    description:
-      "공식 설명에는 과일 향과 파인애플 맛, 크리미한 마무리가 있어요.",
-  },
-  {
-    id: "guinness-draught",
-    name: "기네스 드래프트",
-    category: "beer",
-    aliases: [
-      "기네스드래프트",
-      "기네스드래프트생맥주",
-      "guinnessdraught",
-      "guinnessdraft",
-    ],
-    features: [
-      { id: "질감:크리미한 질감", label: "크리미한 질감", dimension: "질감" },
-    ],
-    source: {
-      url: "https://www.diageobaracademy.com/en-us/home/our-brands/guinness-draught",
-      title: "Diageo Bar Academy · Guinness Draught",
-      checkedAt: "2026-10-23",
-    },
-    description:
-      "공식 설명에는 커피·맥아 향과 부드럽고 크리미한 질감이 있어요.",
-  },
-  {
-    id: "makers-mark",
-    name: "메이커스 마크",
-    category: "whisky",
-    aliases: ["메이커스마크", "makersmark"],
-    features: [
-      { id: "향:과일 향", label: "과일 향", dimension: "향" },
-      { id: "향:나무 향", label: "나무 향", dimension: "향" },
-    ],
-    source: {
-      url: "https://www.makersmark.com/en-us/bourbons/makers-mark",
-      title: "Maker’s Mark · Kentucky Straight Bourbon",
-      checkedAt: "2026-10-23",
-    },
-    description:
-      "제조사 설명에는 과일·바닐라·오크 향과 부드러운 질감이 있어요.",
-  },
-  {
-    id: "cloudy-bay-sb-2022",
-    name: "클라우디 베이 소비뇽 블랑 2022",
-    category: "wine",
-    aliases: ["클라우디베이소비뇽블랑2022", "cloudybaysauvignonblanc2022"],
-    features: [{ id: "향:과일 향", label: "과일 향", dimension: "향" }],
-    source: {
-      url: "https://www.cloudybay.com/en-us/our-wines/sauvignon-blanc/sauvignon-blanc-2022/",
-      title: "Cloudy Bay · Sauvignon Blanc 2022",
-      checkedAt: "2026-10-23",
-    },
-    description:
-      "2022 빈티지 공식 설명에는 감귤·라임·백도·패션프루트 향이 있어요. 다른 빈티지에는 적용하지 않아요.",
-  },
-];
-const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
-export function productCandidate(name: string) {
-  const n = norm(name);
-  return products.find((p) => p.aliases.includes(n)) ?? null;
-}
+export {
+  products,
+  productCandidate,
+  productCandidates,
+  PRODUCT_CATALOG_VERSION,
+  type Product,
+} from "./product-catalog.ts";
+import {
+  productCandidates,
+  normalizeProductName as norm,
+} from "./product-catalog.ts";
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function validatePhotos(input: unknown): MenuPhoto[] {
@@ -282,7 +204,7 @@ export function validateItems(input: unknown, photos: MenuPhoto[]): MenuItem[] {
       item.lineIds.length > 20 ||
       item.lineIds.some((id: unknown) => !p.lines.some((l) => l.id === id)) ||
       (item.productId !== null &&
-        !products.some((p) => p.id === item.productId))
+        !productCandidates(item.name).some((p) => p.id === item.productId))
     )
       throw new Error("INVALID_ITEM");
     seen.add(item.id);
@@ -311,7 +233,9 @@ export function recommendMenu(
   return items
     .filter((i) => i.confirmed)
     .map((item) => {
-      const product = products.find((p) => p.id === item.productId);
+      const product = productCandidates(item.name).find(
+        (p) => p.id === item.productId,
+      );
       const known = snapshot.records.filter(
         (r) => r.name && norm(r.name) === norm(item.name),
       );
@@ -351,11 +275,17 @@ export function recommendMenu(
         similar,
         other,
         knownRecordIds: knownPositive.map((r) => r.id),
-        score:
-          similar.reduce(
-            (s, f) => s + f.recordIds.length - f.negativeIds.length,
-            0,
-          ) + knownPositive.length,
+        score: (() => {
+          const support = new Set<string>();
+          const opposition = new Set<string>();
+          for (const f of similar) {
+            const dimension = f.factId.split(":")[0];
+            for (const id of f.recordIds) support.add(`${dimension}:${id}`);
+            for (const id of f.negativeIds)
+              opposition.add(`${dimension}:${id}`);
+          }
+          return support.size - opposition.size + knownPositive.length;
+        })(),
       };
     })
     .sort((a, b) => b.score - a.score || a.itemId.localeCompare(b.itemId));

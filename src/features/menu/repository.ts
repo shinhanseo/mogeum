@@ -22,6 +22,8 @@ export type MenuResult = {
   recordCount: number;
   method: string;
   limitedCatalog: boolean;
+  catalogVersion?: string;
+  catalogSize?: number;
 };
 /** Pin the verified owner/token for all calls in this operation. */
 export async function menuClient(client: SupabaseClient, owner: string) {
