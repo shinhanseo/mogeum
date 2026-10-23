@@ -12,6 +12,7 @@ import type { BenchmarkCase } from "../../src/features/menu/benchmark-metrics";
 const ocrBenchmarkFixtures = manifest as BenchmarkCase[];
 import { benchmarkMetrics } from "../../src/features/menu/benchmark-metrics";
 import {
+  MENU_PHOTO_PIPELINE,
   prepareMenuPhoto,
   readMenuPhoto,
 } from "../../src/features/menu/device";
@@ -20,6 +21,8 @@ type Result = {
   id: string;
   engine?: string;
   prepareMs?: number;
+  sourcePreserved?: boolean;
+  newTemporaryFiles?: number;
   ocrMs?: number;
   parseMs?: number;
   metrics?: ReturnType<typeof benchmarkMetrics>;
@@ -37,6 +40,7 @@ type Result = {
 type Report = {
   version: 1;
   synthetic: true;
+  photoPipeline: string;
   platform: string;
   osVersion: string;
   runId: string;
@@ -67,6 +71,7 @@ export default function OcrBenchmark() {
     const value: Report = {
       version: 1,
       synthetic: true,
+      photoPipeline: MENU_PHOTO_PIPELINE,
       platform: Platform.OS,
       osVersion: String(Platform.Version),
       runId,
@@ -102,12 +107,28 @@ export default function OcrBenchmark() {
             });
             local = cache;
           }
+          const temporaryDirectory = `${FileSystem.cacheDirectory}ImageManipulator/`;
+          const before = new Set(
+            await FileSystem.readDirectoryAsync(temporaryDirectory).catch(
+              () => [],
+            ),
+          );
           const prepared = await prepareMenuPhoto(
             "ocr-benchmark-fixture",
             session,
             local,
           );
           result.prepareMs = elapsed(prepareStart);
+          result.sourcePreserved = (
+            await FileSystem.getInfoAsync(local)
+          ).exists;
+          const after = await FileSystem.readDirectoryAsync(
+            temporaryDirectory,
+          ).catch(() => null);
+          if (after)
+            result.newTemporaryFiles = after.filter(
+              (file) => !before.has(file),
+            ).length;
           const ocrStart = performance.now(),
             read = await readMenuPhoto(prepared, (raw) => {
               result.rawNative = raw;

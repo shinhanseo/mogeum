@@ -28,6 +28,7 @@ export type MenuDraft = {
   exclusions?: MenuExclusion[];
   pendingSave?: { revision: number; photos: MenuPhoto[]; items: MenuItem[] };
 };
+export const MENU_PHOTO_PIPELINE = "jpeg-cache-cleanup-v1";
 const key = (owner: string) => `mogeum:menu:v1:${owner}`;
 export function newMenu(): MenuDraft {
   return { id: randomUUID(), revision: 0, photos: [], items: [] };
@@ -39,39 +40,58 @@ export async function prepareMenuPhoto(
   id = randomUUID(),
   imageRevision = 1,
 ): Promise<DevicePhoto> {
-  const image = await ImageManipulator.manipulateAsync(uri, [], {
-    compress: 0.9,
-    format: ImageManipulator.SaveFormat.JPEG,
-  });
-  const longest = Math.max(image.width, image.height);
-  const sized =
-    longest > 2200
-      ? await ImageManipulator.manipulateAsync(
-          image.uri,
-          [
-            {
-              resize:
-                image.width >= image.height
-                  ? { width: 2200 }
-                  : { height: 2200 },
-            },
-          ],
-          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+  const temporary = new Set<string>();
+  try {
+    const image = await ImageManipulator.manipulateAsync(uri, [], {
+      compress: 0.9,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+    temporary.add(image.uri);
+    const longest = Math.max(image.width, image.height);
+    const sized =
+      longest > 2200
+        ? await ImageManipulator.manipulateAsync(
+            image.uri,
+            [
+              {
+                resize:
+                  image.width >= image.height
+                    ? { width: 2200 }
+                    : { height: 2200 },
+              },
+            ],
+            { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+          )
+        : image;
+    temporary.add(sized.uri);
+    const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/`;
+    await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+    const target = `${directory}${id}-${imageRevision}.jpg`;
+    await FileSystem.copyAsync({ from: sized.uri, to: target });
+    return {
+      id,
+      imageRevision,
+      uri: target,
+      width: sized.width,
+      height: sized.height,
+      state: "waiting",
+      ocr: null,
+    };
+  } finally {
+    // Only these manipulation results are ours; preserve the selected source and durable drafts.
+    await Promise.all(
+      [...temporary]
+        .filter(
+          (file) =>
+            file !== uri &&
+            !!FileSystem.cacheDirectory &&
+            file.startsWith(FileSystem.cacheDirectory),
         )
-      : image;
-  const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/`;
-  await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-  const target = `${directory}${id}-${imageRevision}.jpg`;
-  await FileSystem.copyAsync({ from: sized.uri, to: target });
-  return {
-    id,
-    imageRevision,
-    uri: target,
-    width: sized.width,
-    height: sized.height,
-    state: "waiting",
-    ocr: null,
-  };
+        .map((file) =>
+          FileSystem.deleteAsync(file, { idempotent: true }).catch(() => {}),
+        ),
+    );
+  }
 }
 export async function readMenuPhoto(
   photo: DevicePhoto,
