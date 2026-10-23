@@ -18,9 +18,40 @@ export async function generateTasteSummary(client:SupabaseClient,owner:string){
  if(error){let code='ANALYSIS_FAILED';try{const response=(error as {context?:Response}).context;if(response){const body=await response.json();if(typeof body.code==='string')code=body.code;}}catch{/* Only map safe machine codes. */}throw Object.assign(new Error('취향 요약을 완료하지 못했어요.'),{code});}
  if(!data||!['ready','running','insufficient'].includes(data.state))throw new Error('Invalid generation response');return data as {state:'ready'|'running'|'insufficient';hash:string};
 }
-export async function tastePhotoUrls(client:SupabaseClient,owner:string,recordIds:string[]){
- if(!recordIds.length)return {} as Record<string,string>;
- const {data,error}=await client.from('record_photos').select('record_id,storage_path,sort_order').eq('user_id',owner).eq('upload_status','ready').in('record_id',recordIds.slice(0,200)).order('sort_order');if(error)throw error;
- const first=new Map<string,string>();for(const photo of data??[])if(!first.has(photo.record_id))first.set(photo.record_id,photo.storage_path);
- const urls=await Promise.all([...first].map(async([id,path])=>{const {data:signed}=await client.storage.from('record-photos').createSignedUrl(path,300);return [id,signed?.signedUrl??null] as const;}));return Object.fromEntries(urls.filter((v):v is readonly[string,string]=>v[1]!==null));
+export async function tastePhotoUrls(client: SupabaseClient, owner: string, recordIds: string[]) {
+  const ids = [...new Set(recordIds)].slice(0, 200);
+  if (!ids.length) return {} as Record<string, string>;
+  const { data, error } = await client.from('record_photos').select('record_id,storage_path,sort_order')
+    .eq('user_id', owner).eq('upload_status', 'ready').in('record_id', ids).order('sort_order').abortSignal(AbortSignal.timeout(20000));
+  if (error) throw error;
+  const first = new Map<string, string>();
+  for (const photo of data ?? []) {
+    if (ids.includes(photo.record_id) && typeof photo.storage_path === 'string' &&
+        photo.storage_path.startsWith(`${owner}/records/`) && !first.has(photo.record_id))
+      first.set(photo.record_id, photo.storage_path);
+  }
+  if (!first.size) return {} as Record<string, string>;
+  const paths = [...new Set(first.values())];
+  // Storage batch signing has no per-request abort option in this SDK. Bound the UI wait and ignore late results.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let response: Awaited<ReturnType<ReturnType<typeof client.storage.from>['createSignedUrls']>>;
+  try {
+    response = await Promise.race([
+      client.storage.from('record-photos').createSignedUrls(paths, 300),
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('PHOTO_LINK_TIMEOUT')), 10000); }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+  const {data: signed, error: signingError} = response;
+  if (signingError) throw signingError;
+  const byPath = new Map<string, string>();
+  for (const row of signed ?? []) {
+    if (!row.error && typeof row.path === 'string' && paths.includes(row.path) && typeof row.signedUrl === 'string' && row.signedUrl)
+      byPath.set(row.path, row.signedUrl);
+  }
+  return Object.fromEntries([...first].flatMap(([id,path]) => {
+    const url = byPath.get(path);
+    return url ? [[id,url]] : [];
+  })) as Record<string, string>;
 }

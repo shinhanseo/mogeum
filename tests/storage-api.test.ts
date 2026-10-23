@@ -1,4 +1,4 @@
-import { loadTasteContext } from '../src/features/taste/repository';
+import { loadTasteContext, tastePhotoUrls } from '../src/features/taste/repository';
 import { applyAttachment, type PendingAttachment } from '../src/features/records/attachment';
 import { findEntryCandidates } from '../src/features/records/candidates';
 import { loadRecordDetail } from '../src/features/records/detail';
@@ -84,6 +84,9 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.ok((await fetch(await repository.photoUrl(storagePath))).ok);
   const ownRows = await json<{ id: string; record_count: number; photo_path: string }[]>(await request(`/rest/v1/cellar_overview?id=eq.${saved.cellarEntryId}`, a.token), 'Own cellar read');
   assert.equal(ownRows.length, 1); assert.equal(Number(ownRows[0].record_count), 1); assert.equal(ownRows[0].photo_path, storagePath);
+  const batchLinks = await tastePhotoUrls(sdk,a.id,[saved.recordId,saved.recordId]);
+  assert.equal(Object.keys(batchLinks).length,1);
+  assert.ok((await fetch(batchLinks[saved.recordId])).ok,'Batch-signed own photo is readable');
   const foreignRows = await json<unknown[]>(await request(`/rest/v1/tasting_records?id=eq.${saved.recordId}`, b.token), 'Foreign record read');
   assert.equal(foreignRows.length, 0);
   const signed = await json<{ signedURL: string }>(await request(`/storage/v1/object/sign/record-photos/${storagePath}`, a.token, {
@@ -112,6 +115,8 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   const candidates=await findEntryCandidates(sdk,a.id,'Edited synthetic');
   assert.equal(candidates[0].id,saved.cellarEntryId);
   const sdkB=createClient(base,apiKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{headers:{Authorization:`Bearer ${b.token}`}}});
+  assert.deepEqual(await tastePhotoUrls(sdkB,b.id,[saved.recordId]),{},'B cannot obtain A evidence photos through batch signing');
+  assert.deepEqual(await tastePhotoUrls(sdkB,a.id,[saved.recordId]),{},'Wrong owner argument cannot bypass photo RLS');
   assert.equal((await findEntryCandidates(sdkB,b.id,'Edited synthetic')).length,0);
   const repeat=await repository.save(randomUUID(),{enteredName:'Edited synthetic whisky',category:'whisky'},candidates[0].id);
   assert.notEqual(repeat.recordId,saved.recordId);
