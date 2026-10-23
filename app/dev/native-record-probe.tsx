@@ -29,6 +29,7 @@ import {
   loadTasteContext,
   analyzeTaste,
 } from "../../src/features/taste/repository";
+import { loadCellar } from "../../src/features/cellar/load";
 import { probeNativeMenu } from "../../src/dev/menu-backend-probe";
 type Report = {
   version: 1;
@@ -263,6 +264,17 @@ export default function NativeRecordProbe() {
         .download(pending.input.photo!.storagePath);
       ensure(denied.error && !denied.data);
       await pass("real_binary_read_and_foreign_owner_denied");
+      await phase("native_cellar_batch_read");
+      const cellar = await loadCellar(owner, {
+        page: (from, size) => repo.listCellar(from, size),
+        photos: (paths) => repo.photoUrls(owner, paths),
+        active: () => alive.current,
+      });
+      const cellarItem = cellar?.find(
+        (item) => item.id === saved.cellarEntryId,
+      );
+      ensure(cellarItem?.photoUri && (await fetch(cellarItem.photoUri)).ok);
+      await pass("native_cellar_batch_read_binary");
       const context = await loadTasteContext(a);
       ensure(analyzeTaste(context.snapshot).facts.length === 0);
       await pass("photo_only_has_no_sensory_evidence");

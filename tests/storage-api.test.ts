@@ -81,6 +81,10 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.equal(storedNotes[0].confirmed_note,noteText);
   assert.equal((await json<unknown[]>(await request(`/rest/v1/record_notes?record_id=eq.${saved.recordId}`,b.token),'Foreign note read')).length,0);
   assert.ok((await repository.listCellar()).some(row => row.id === saved.cellarEntryId));
+  const batchUrls = await repository.photoUrls(a.id, [storagePath, storagePath, "foreign/records/secret/photo.jpg"]);
+  assert.equal(batchUrls.size, 1);
+  assert.ok((await fetch(batchUrls.get(storagePath)!)).ok);
+
   assert.ok((await fetch(await repository.photoUrl(storagePath))).ok);
   const ownRows = await json<{ id: string; record_count: number; photo_path: string }[]>(await request(`/rest/v1/cellar_overview?id=eq.${saved.cellarEntryId}`, a.token), 'Own cellar read');
   assert.equal(ownRows.length, 1); assert.equal(Number(ownRows[0].record_count), 1); assert.equal(ownRows[0].photo_path, storagePath);

@@ -7,7 +7,8 @@ import { BottomTabBar, type MainTab } from '../src/components/BottomTabBar';
 import { Button } from '../src/components/Button';
 import { TastePanel } from '../src/features/taste/TastePanel';
 import { CellarScreen } from '../src/features/cellar/CellarScreen';
-import type { Category, CellarItem } from '../src/features/cellar/model';
+import { loadCellar } from '../src/features/cellar/load';
+import type { CellarItem } from '../src/features/cellar/model';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { getSupabase } from '../src/lib/supabase';
 import { drainPhotoDeletions } from '../src/features/records/edit';
@@ -34,21 +35,12 @@ export default function HomeScreen() {
     const repository = createRecordRepository(client);
     void drainPhotoDeletions(client,owner).catch(()=>{});
     void (async () => {
-      const rows = [];
-      // Load all pages for the initial cellar; each server request has a bounded page size.
-      for (let from = 0; ; from += 100) {
-        const page = await repository.listCellar(from, 100);
-        if (!active) return;
-        rows.push(...page);
-        if (page.length < 100) break;
-      }
-      const kinds: Record<string, Category> = { whisky:'위스키', wine:'와인', beer:'맥주', traditional:'전통주', other:'기타' };
-      const items = await Promise.all(rows.map(async row => ({
-        id: String(row.id), name: row.display_name as string | null,
-        category: kinds[row.category] ?? null, recordCount: Number(row.record_count),
-        photoUri: row.photo_path ? await repository.photoUrl(String(row.photo_path)).catch(() => null) : null,
-      })));
-      if (active) setData({ owner, items });
+      const items = await loadCellar(owner, {
+        page: (from, size) => repository.listCellar(from, size),
+        photos: paths => repository.photoUrls(owner, paths),
+        active: () => active,
+      });
+      if (active && items) setData({ owner, items });
     })().catch(() => { if (active) setError('술장을 불러오지 못했어요. 다시 시도해주세요.'); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [owner, reload]));

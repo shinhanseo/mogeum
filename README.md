@@ -111,3 +111,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 네이티브 메뉴판 연속 검증: [iOS·Android OCR 2장 → 로컬 Edge 해석 → 수정 복구·세션 저장 → 내 노트 근거 추천](docs/verification/native-menu-backend.md)을 확인했습니다. 관리형 로그인 UI E2E와 실물 메뉴판 정확도 검증은 별도입니다.
 
 메뉴 해석 geometry-v3는 잘못 읽힌 금액 셀의 술 후보와 카탈로그에 있는 가격 없는 이름을 가격 null·미확정 상태로 보존합니다. [양 플랫폼 연속 검증·남은 배포](docs/verification/menu-price-review.md).
+
+술장 사진 링크는 100개 단위로 묶어 발급하고 계정 전환 후 늦은 결과를 버립니다. [요청 수·양 플랫폼 검증·남은 대용량 범위](docs/verification/cellar-batch.md).
