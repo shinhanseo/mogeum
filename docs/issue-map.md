@@ -27,3 +27,7 @@
 | M3 | [#21 [통합] 권한·오프라인·실패·재시도와 두 플랫폼 검증](https://github.com/shinhanseo/mogeum/issues/21) | #8, #9, #13, #19 |
 | M3 | [#22 [베타] 테스터 빌드·피드백·핵심 행동 관측](https://github.com/shinhanseo/mogeum/issues/22) | #21, #20 |
 | M3 | [#23 [출시 준비] 계정·권한·스토어 자료·운영 점검](https://github.com/shinhanseo/mogeum/issues/23) | #22 |
+
+## 다음 한 잔 · 추가 사용자 요청
+
+- #64 [다음 한 잔] 42–46·4주종 기록 기반 발견·추천 근거·북마크·기록 시작. 현재 domain/API/DB 선행 구현과 42/43/45/46 원본 보관을 진행했으며 화면/로컬 mutation 복구는 아직 미연결이다. 44 상세 원본은 MCP Starter 한도로 대기 중이다.

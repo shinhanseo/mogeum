@@ -141,3 +141,9 @@ parse 응답의 parser는 geometry-v3다. 가격이 손상된 독립 OCR 셀은 
 ## 술장 cursor 조회
 
 홈의 Data API 조회는 cellar_overview에 owner 필터·검색/주종 필터를 적용하고 last_consumed_at DESC NULLS LAST, id ASC로 31개를 읽어 30개를 노출한다. 다음 cursor는 마지막 노출 항목의 원본 timestamp(최대 소수점 6자리)와 UUID다. timestamp를 Date.toISOString으로 재생성하지 않는다. 전체 술장 수는 최초 페이지에서 별도의 owner-scoped HEAD count로 읽고 필터 결과 수와 구분한다. 사진 링크는 노출할 30개만 발급한다. cursor 입력은 UUID/ISO timestamp 형태를 검사하고, 실제 접근 권한은 verified Auth의 RLS/Storage 정책이 결정한다. 스크롤 사이 DB 변경에 대한 snapshot 고정 계약은 아니며 focus 재진입 시 첫 페이지부터 갱신한다.
+
+## 다음 한 잔 · next-drinks / 북마크
+
+POST next-drinks body는 `{ category?: 'whisky'|'beer'|'wine'|'traditional'|null }`만 받는다. owner는 검증된 JWT에서만 얻고 client 근거/owner override는 거절한다. recommendations에 product/source·similar·cautions·unconfirmedFeatures·kind·score를 반환하며, score는 내부 정렬용이다. 과대 body는 413, 인증 누락/거절은 401, 잘못된 category/field는 400, 데이터 호출 실패는 안전한 503 코드다. method=evidence-rules-v1/modelUsed=false와 catalogVersion/size를 포함한다.
+
+wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아니다. set_drink_wishlist(operation UUID, product ID, saved boolean, expected revision)는 현재 owner의 상태만 변경한다. 최초 expected revision은 0, 해제 후에도 revision은 남는다. 정확한 operation replay는 과거 receipt를 반환하고 원래 요청 변경/낡은 revision을 거절한다. receipt와 현재 상태는 다를 수 있으므로 클라이언트는 receipt 후 최신 목록을 재조회한다. 반영 전까지 operation/payload를 바꾸거나 후속 토글을 임의 전송하지 않는다. 후속 UI/pending queue 연결은 docs/verification/next-drinks-foundation.md를 따른다.

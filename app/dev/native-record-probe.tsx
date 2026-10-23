@@ -328,6 +328,45 @@ export default function NativeRecordProbe() {
           pass,
         });
       }
+      await phase("native_next_drinks");
+      const discovered = await a.functions.invoke("next-drinks", {
+        body: {},
+        timeout: 30000,
+      });
+      ensure(
+        !discovered.error &&
+          discovered.data.catalogSize === 32 &&
+          discovered.data.modelUsed === false,
+      );
+      if (query.menu === "1")
+        ensure(
+          discovered.data.evidenceRecords.some(
+            (r: { id: string }) => r.id === saved.recordId,
+          ),
+        );
+      await pass("native_next_drinks_authenticated_evidence");
+      const wishOperation = randomUUID();
+      const wish = () =>
+        a.rpc("set_drink_wishlist", {
+          p_operation_id: wishOperation,
+          p_product_id: "glenlivet-12",
+          p_saved: true,
+          p_expected_revision: 0,
+        });
+      const wished = await wish();
+      ensure(!wished.error && wished.data.revision === 1);
+      const replayedWish = await wish();
+      ensure(!replayedWish.error && replayedWish.data.replayed);
+      const foreignDiscovery = await b.functions.invoke("next-drinks", {
+        body: {},
+        timeout: 30000,
+      });
+      ensure(
+        !foreignDiscovery.error &&
+          foreignDiscovery.data.wishlist.length === 0 &&
+          foreignDiscovery.data.evidenceRecords.length === 0,
+      );
+      await pass("native_wishlist_replay_foreign_isolation");
       await phase("record_and_binary_delete");
       const detail = await loadRecordDetail(a, owner, {
         recordId: saved.recordId,

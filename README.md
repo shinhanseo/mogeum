@@ -117,3 +117,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 술장 홈은 30개씩 cursor로 읽고 검색·주종 필터를 서버 전체에 적용합니다. [실제 35개 DB·양 플랫폼 native·61개 합성 UI 검증](docs/verification/cellar-cursor.md).
 
 술장 이미지 오류 시 현재 계정의 대표 사진 링크를 한 번 갱신합니다. [실제 만료·양 플랫폼 복원·반복 요청 차단](docs/verification/cellar-photo-renewal.md).
+
+다음 한 잔의 기록 기반 추천/북마크 서버·DB를 준비했습니다. 앱 화면은 아직 미연결입니다. [구현·양 플랫폼 API 검증·원본 확보·남은 UI](docs/verification/next-drinks-foundation.md).

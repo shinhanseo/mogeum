@@ -7,6 +7,7 @@ on:
       - 'src/features/taste/**'
       - 'src/features/cellar/**'
       - 'tests/cellar-api.test.ts'
+      - 'tests/next-drinks-api.test.ts'
       - 'tests/taste-summary.test.ts'
       - 'tests/database.test.ts'
       - 'tests/storage-api.test.ts'
@@ -54,6 +55,8 @@ jobs:
           exit 1
       - name: Typecheck the original menu function
         run: npx -y deno check supabase/functions/menu-recommend/index.ts
+      - name: Typecheck the next-drinks endpoint
+        run: npx -y deno check supabase/functions/next-drinks/index.ts
       - name: Verify generated deployment through real Auth, Storage binary and Data API
         run: npm run test:menu-deploy
         env:
