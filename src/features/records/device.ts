@@ -1,3 +1,5 @@
+import { decodePendingRecord } from './pending-restore';
+import { isPreparedRecordPhoto } from './draft-photo';
 import { createClient } from '@supabase/supabase-js';
 import { getBackendState } from '../../lib/env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,10 +12,8 @@ import { submitPending, type PendingRecord } from './pending';
 const key = (owner: string) => `mogeum-pending-v1-${owner}`;
 export async function readPending(owner: string): Promise<PendingRecord | null> {
   const raw = await AsyncStorage.getItem(key(owner));
-  if (!raw) return null;
-  const value = JSON.parse(raw) as PendingRecord;
-  if (value.version !== 1 || value.ownerId !== owner || typeof value.operationId !== 'string' || !value.input || (value.entryId !== undefined && (typeof value.entryId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.entryId)))) throw new Error('저장 중인 기록을 읽지 못했어요.');
-  return value;
+  if (raw === null) return null;
+  return decodePendingRecord(raw, owner, FileSystem.documentDirectory, Platform.OS === 'web');
 }
 export async function preparePhoto(uri: string, width: number, height: number, operationId: string) {
   const ratio = Math.min(1, 1600 / Math.max(width, height));
@@ -33,9 +33,10 @@ export async function finishPending(pending: PendingRecord) {
   const current = await readPending(pending.ownerId);
   if (current?.operationId !== pending.operationId) return;
   await AsyncStorage.removeItem(key(pending.ownerId));
-  if (Platform.OS !== 'web' && pending.localPhoto?.startsWith(`${FileSystem.documentDirectory}record-drafts/`)) await FileSystem.deleteAsync(pending.localPhoto, { idempotent: true }).catch(() => {});
+  if (Platform.OS !== 'web' && isPreparedRecordPhoto(current.localPhoto,current.operationId,FileSystem.documentDirectory)) await FileSystem.deleteAsync(current.localPhoto, { idempotent: true }).catch(() => {});
 }
 export async function savePending(pending: PendingRecord, ownerId: () => string | null) {
+  decodePendingRecord(JSON.stringify(pending),pending.ownerId,FileSystem.documentDirectory,Platform.OS === 'web');
   const client = getSupabase();
   if (!client) throw new Error('서버 설정을 확인해주세요.');
   const session = (await client.auth.getSession()).data.session;

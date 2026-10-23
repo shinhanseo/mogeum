@@ -1,3 +1,4 @@
+import { isPreparedRecordPhoto } from './draft-photo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -7,13 +8,15 @@ import { getBackendState } from '../../lib/env';
 import { createRecordRepository } from './repository';
 import { applyAttachment, decodePendingAttachment, submitAttachment, type PendingAttachment } from './attachment';
 const key=(owner:string,id:string)=>`mogeum-attachment-v1-${owner}-${id}`;
-export async function readAttachment(owner:string,id:string){const raw=await AsyncStorage.getItem(key(owner,id));return raw?decodePendingAttachment(raw,owner,id):null;}
+export async function readAttachment(owner:string,id:string){const raw=await AsyncStorage.getItem(key(owner,id));if(raw===null)return null;if(raw.length>16000000)throw new Error('보관한 변경 요청을 읽지 못했어요.');const value=decodePendingAttachment(raw,owner,id);
+ if(value.change.kind==='photo'&&!isPreparedRecordPhoto(value.localPhoto,value.operationId,FileSystem.documentDirectory,Platform.OS==='web'))throw new Error('보관한 사진을 확인해주세요.');return value;}
 export async function finishAttachment(value:PendingAttachment){
  const current=await readAttachment(value.owner,value.recordId);if(current?.operationId!==value.operationId)return;
  await AsyncStorage.removeItem(key(value.owner,value.recordId));
- if(Platform.OS!=='web'&&value.localPhoto?.startsWith(`${FileSystem.documentDirectory}record-drafts/`))await FileSystem.deleteAsync(value.localPhoto,{idempotent:true}).catch(()=>{});
+ if(Platform.OS!=='web'&&isPreparedRecordPhoto(current.localPhoto,current.operationId,FileSystem.documentDirectory))await FileSystem.deleteAsync(current.localPhoto,{idempotent:true}).catch(()=>{});
 }
 export async function saveAttachment(value:PendingAttachment,owner:()=>string|null){
+ if(value.change.kind==='photo'&&!isPreparedRecordPhoto(value.localPhoto,value.operationId,FileSystem.documentDirectory,Platform.OS==='web'))throw new Error('보관한 사진을 확인해주세요.');
  const client=getSupabase();const config=getBackendState();const session=client?(await client.auth.getSession()).data.session:null;
  if(!session||session.user.id!==value.owner||owner()!==value.owner||!config.configured)throw new Error('로그인 계정을 확인해주세요.');
  const scoped=createClient(config.config.url,config.config.publishableKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{headers:{Authorization:`Bearer ${session.access_token}`}}});
