@@ -1,6 +1,6 @@
 # 기술 구조
 
-현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 8개와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정과 관리형 최신 함수 배포는 남아 있다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
+현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 8개와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정은 남아 있다. 메뉴 함수 최신 번들은 개발 프로젝트에 배포했으며, 실제 관리형 계정의 인증 후 추천 검증은 별도다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
 
 ## 구성
 

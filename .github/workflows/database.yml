@@ -11,6 +11,8 @@ on:
       - 'tests/menu-api.test.ts'
       - 'tests/native-probe-cleanup.test.ts'
       - 'scripts/cleanup-native-probe.ts'
+      - 'scripts/build-menu-function.ts'
+      - 'scripts/verify-menu-function.ts'
       - 'tests/fixtures/supabase-platform.sql'
       - 'package*.json'
       - '.github/workflows/database.yml'
@@ -48,8 +50,10 @@ jobs:
           done
           cat /tmp/mogeum-edge.log
           exit 1
-      - name: Exercise real Auth, Storage binary and Data API
-        run: npm run test:storage
+      - name: Typecheck the original menu function
+        run: npx -y deno check supabase/functions/menu-recommend/index.ts
+      - name: Verify generated deployment through real Auth, Storage binary and Data API
+        run: npm run test:menu-deploy
         env:
           MOGEUM_TEST_SUPABASE_HTTP: '1'
       - name: Stop ephemeral containers
