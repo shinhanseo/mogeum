@@ -1,3 +1,5 @@
+import { refreshMenuEvidence } from "./evidence";
+import { tastePhotoUrls } from "../taste/repository";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getBackendState } from "../../lib/env";
 import {
@@ -65,4 +67,27 @@ export async function saveMenuSession(
   if (error) throw error;
   if (!Number.isInteger(data)) throw new Error("INVALID_REVISION");
   return data as number;
+}
+
+export async function loadMenuEvidence(
+  client: SupabaseClient,
+  owner: string,
+  result: MenuResult,
+  active: () => boolean,
+) {
+  const scoped = await menuClient(client, owner);
+  return refreshMenuEvidence(result.tasteHash, {
+    active,
+    async hash() {
+      const { data, error } = await scoped.rpc("taste_summary_context");
+      if (error) throw error;
+      return data?.snapshot?.hash;
+    },
+    photos: () =>
+      tastePhotoUrls(
+        scoped,
+        owner,
+        result.evidenceRecords.map((r) => r.id),
+      ),
+  });
 }

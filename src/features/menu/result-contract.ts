@@ -187,6 +187,8 @@ export function menuFailureMessage(
   error: unknown,
   action: "parse" | "recommend",
 ) {
+  if (error instanceof Error && error.message === "MENU_EVIDENCE_STALE")
+    return "추천 중 기록이 바뀌었어요. 입력은 보관했어요. 최신 기록으로 다시 추천받아 주세요.";
   if (error instanceof Error && error.message === "MENU_CATALOG_MISMATCH")
     return "앱과 서버의 술 정보 버전이 달라요. 입력은 보관했어요. 업데이트 후 다시 시도해주세요.";
   if (error instanceof Error && error.message === "INVALID_MENU_RESULT")

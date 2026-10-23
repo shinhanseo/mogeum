@@ -14,7 +14,6 @@ import {
   type MenuDraft,
   type DevicePhoto,
 } from "./device";
-import { tastePhotoUrls } from "../taste/repository";
 import {
   mergeMenuReview,
   activeExclusions,
@@ -22,7 +21,12 @@ import {
   menuSource,
 } from "./review";
 import { submitMenu } from "./submission";
-import { menuRequest, saveMenuSession, type MenuResult } from "./repository";
+import {
+  menuRequest,
+  saveMenuSession,
+  loadMenuEvidence,
+  type MenuResult,
+} from "./repository";
 import { getSupabase } from "../../lib/supabase";
 import { usePhotoPicker } from "../records/usePhotoPicker";
 import { PhotoAccessSheet } from "../records/PhotoAccessSheet";
@@ -70,6 +74,8 @@ export function MenuFlow({
   const restoreLoader = useRef(adapter?.restore ?? restoreMenu);
   const writes = useRef(Promise.resolve());
   const latestResult = useRef<MenuResult | null>(null);
+  const evidenceRefresh = useRef(0);
+  const evidenceFocused = useRef(false);
   const demo = !!adapter;
   const commit = (d: MenuDraft) => {
     d = { ...d, exclusions: activeExclusions(d.exclusions, d.photos) };
@@ -133,34 +139,52 @@ export function MenuFlow({
   }, [result]);
   const checkEvidence = useCallback(async () => {
     const previous = latestResult.current;
-    if (!previous || demo) return;
+    if (
+      !previous ||
+      demo ||
+      !evidenceFocused.current ||
+      AppState.currentState !== "active"
+    )
+      return;
     const client = getSupabase();
     if (!client) return;
+    const request = ++evidenceRefresh.current;
+    const active = () =>
+      alive.current &&
+      evidenceFocused.current &&
+      AppState.currentState === "active" &&
+      latestResult.current === previous &&
+      request === evidenceRefresh.current;
     try {
-      const { data, error } = await client.rpc("taste_summary_context");
-      if (error) throw error;
-      if (
-        alive.current &&
-        latestResult.current === previous &&
-        data.snapshot.hash !== previous.tasteHash
-      ) {
+      const value = await loadMenuEvidence(client, owner, previous, active);
+      if (!active() || value.status === "cancelled") return;
+      if (value.status === "stale") {
         setResult(null);
+        setEvidencePhotos({});
         setStep("review");
         setError("내 기록이 바뀌었어요. 최신 기록으로 다시 추천받아 주세요.");
-      }
+      } else setEvidencePhotos(value.photos);
     } catch {
-      if (alive.current && latestResult.current === previous) {
+      if (active()) {
         setResult(null);
+        setEvidencePhotos({});
         setStep("review");
         setError(
           "최신 취향을 확인하지 못했어요. 연결 후 다시 추천받아 주세요.",
         );
       }
     }
-  }, [demo]);
+  }, [demo, owner]);
   useFocusEffect(
     useCallback(() => {
+      evidenceFocused.current = true;
       void checkEvidence();
+      const timer = setInterval(() => void checkEvidence(), 240000);
+      return () => {
+        clearInterval(timer);
+        evidenceFocused.current = false;
+        evidenceRefresh.current++;
+      };
     }, [checkEvidence]),
   );
   useEffect(() => {
@@ -356,20 +380,21 @@ export function MenuFlow({
         const value = await backend.recommend(photos, d.items);
         if (!valid(version)) return;
         const client = getSupabase();
-        const urls = adapter
-          ? Object.fromEntries(
-              value.evidenceRecords.map((r) => [
-                r.id,
-                fixtureEvidenceUri ?? "",
-              ]),
-            )
-          : client
-            ? await tastePhotoUrls(
-                client,
-                owner,
-                value.evidenceRecords.map((r) => r.id),
-              ).catch(() => ({}))
-            : {};
+        let urls: Record<string, string> = {};
+        if (adapter)
+          urls = Object.fromEntries(
+            value.evidenceRecords.map((r) => [r.id, fixtureEvidenceUri ?? ""]),
+          );
+        else {
+          if (!client) throw new Error("NO_BACKEND");
+          const evidence = await loadMenuEvidence(client, owner, value, () =>
+            valid(version),
+          );
+          if (evidence.status === "cancelled") return;
+          if (evidence.status === "stale")
+            throw new Error("MENU_EVIDENCE_STALE");
+          urls = evidence.photos;
+        }
         if (!valid(version)) return;
         setEvidencePhotos(urls);
         setResult(value);

@@ -1,3 +1,5 @@
+import { refreshMenuEvidence } from "../src/features/menu/evidence";
+import { tastePhotoUrls } from "../src/features/taste/repository";
 import { validateMenuResult } from "../src/features/menu/result-contract";
 import { createClient } from "@supabase/supabase-js";
 import { tastingRepository } from "../src/features/tasting/repository";
@@ -173,6 +175,21 @@ test(
     assert.deepEqual(result.recommendations[0].similar[0].recordIds, [
       recordId,
     ]);
+    const refreshed = await refreshMenuEvidence(result.tasteHash, {
+      active: () => true,
+      async hash() {
+        const context = await sdk.rpc("taste_summary_context");
+        assert.equal(context.error, null);
+        return context.data.snapshot.hash;
+      },
+      photos: () =>
+        tastePhotoUrls(
+          sdk,
+          a.user.id,
+          result.evidenceRecords.map((r: { id: string }) => r.id),
+        ),
+    });
+    assert.equal(refreshed.status, "fresh");
     assert.equal(result.evidenceRecords[0].id, recordId);
     assert.equal(result.evidenceRecords[0].category, "whisky");
     assert.equal(result.evidenceRecords[0].revisit, "again");
@@ -227,6 +244,21 @@ test(
         ),
       );
     }
+    let stalePhotoCalls = 0;
+    const staleEvidence = await refreshMenuEvidence(result.tasteHash, {
+      active: () => true,
+      async hash() {
+        const context = await sdk.rpc("taste_summary_context");
+        assert.equal(context.error, null);
+        return context.data.snapshot.hash;
+      },
+      async photos() {
+        stalePhotoCalls++;
+        return {};
+      },
+    });
+    assert.equal(staleEvidence.status, "stale");
+    assert.equal(stalePhotoCalls, 0);
     const archivedItem = { ...item, productId: "retired-product-id" };
     const archivedPayload = {
       p_id: randomUUID(),

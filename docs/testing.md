@@ -50,3 +50,5 @@ iOS 개발 빌드의 `/dev/tasting?category=wine&mode=deep&question=appearance`�
 메뉴 제외 회귀는 `tests/menu-review.test.ts`에서 재분석·사진 추가·원문 변경·재촬영·수동 입력·일시적 OCR 실패·JSON 복구를 검사한다. iOS 실제 종료/재실행 확인과 기기별 동기화 한계는 메뉴 검증 문서를 참조한다.
 
 메뉴 복구 회귀는 `tests/menu-restore.test.ts`에서 실제 빈 저장과 읽기 실패, JSON/계정 경로/원문 참조, 카탈로그 변경 뒤 pendingSave 보존을 검사한다. 저장 transport의 opaque ID가 추천 권한으로 사용되지 않는지는 실제 HTTP CI에서 저장/재전송 성공·추천 거부로 검증한다. iOS 읽기 실패→재시도와 Android 도구 제약은 [메뉴 복구](verification/menu-recovery.md)에 구분했다.
+
+추천 근거 링크/최신 상태는 `tests/menu-evidence.test.ts`와 실제 HTTP CI에서 확인한다. 주기·재진입 갱신과 미검증된 실제 장시간 기기 시나리오는 [근거 갱신](verification/menu-evidence-freshness.md)에 구분한다.
