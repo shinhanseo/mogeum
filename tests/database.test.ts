@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import postgres from 'postgres';
 
 type JsonObject = { [key: string]: postgres.JSONValue };
-type Params = (string | number | null | JsonObject)[];
+type Params = (string | number | null | JsonObject | postgres.JSONValue[])[];
 type Row = Record<string, unknown>;
 interface Db { query<T extends Row = Row>(sql: string, params?: Params): Promise<{ rows: T[] }>; exec(sql: string): Promise<unknown>; close(): Promise<void>; }
 const a = '10000000-0000-4000-8000-000000000001';
@@ -62,7 +62,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
     });
     await t.test('menu drafts enforce owner, five pages, optimistic revision and retry', async()=>{
       await as(a);const id=operation(180);
-      const write=(revision:number,photos:unknown[]=[],items:unknown[]=[])=>db.query('select public.save_menu_session($1,$2,$3::jsonb,$4::jsonb) revision',[id,revision,JSON.stringify(photos),JSON.stringify(items)]);
+      const write=(revision:number,photos:postgres.JSONValue[]=[],items:postgres.JSONValue[]=[])=>db.query('select public.save_menu_session($1,$2,$3::jsonb,$4::jsonb) revision',[id,revision,photos,items]);
       assert.equal((await write(0)).rows[0].revision,1);
       assert.equal((await write(0)).rows[0].revision,1);
       assert.equal((await write(1,[{id:'page'}])).rows[0].revision,2);
