@@ -90,6 +90,7 @@ export default function NativeRecordProbe() {
     const source = `${FileSystem.cacheDirectory}native-record-probe-${runId}.png`;
     const users: string[] = [];
     let guardUri: string | null = null;
+    let ownsSource = false;
     const publish = async () => {
       await FileSystem.writeAsStringAsync(
         output,
@@ -159,6 +160,7 @@ export default function NativeRecordProbe() {
       ensure(owner !== other);
       await pass("real_local_auth_two_owners");
       await phase("native_photo_prepare");
+      ownsSource = true;
       await FileSystem.downloadAsync(
         "http://127.0.0.1:8765/light.png",
         source,
@@ -277,6 +279,26 @@ export default function NativeRecordProbe() {
       ensure(cellarItem?.photoUri && (await fetch(cellarItem.photoUri)).ok);
       await pass("native_cellar_cursor_page");
       await pass("native_cellar_batch_read_binary");
+      await phase("native_cellar_photo_expiry");
+      const expiring = await a.storage
+        .from("record-photos")
+        .createSignedUrl(pending.input.photo!.storagePath, 1);
+      ensure(!expiring.error && expiring.data?.signedUrl);
+      await new Promise((resolve) => setTimeout(resolve, 2100));
+      ensure(!(await fetch(expiring.data!.signedUrl)).ok);
+      const renewed = await createCellarRepository(a, owner).refreshPhoto(
+        saved.cellarEntryId,
+        () => alive.current,
+      );
+      ensure(renewed && (await fetch(renewed)).ok);
+      ensure(
+        (await createCellarRepository(b, owner).refreshPhoto(
+          saved.cellarEntryId,
+          () => alive.current,
+        )) === null,
+      );
+      await pass("native_expired_photo_renewal_and_foreign_owner_denied");
+
       const context = await loadTasteContext(a);
       ensure(analyzeTaste(context.snapshot).facts.length === 0);
       await pass("photo_only_has_no_sensory_evidence");
@@ -324,9 +346,10 @@ export default function NativeRecordProbe() {
       value.status = "failed";
       value.finishedAt = new Date().toISOString();
     } finally {
-      await FileSystem.deleteAsync(source, { idempotent: true }).catch(
-        () => {},
-      );
+      if (ownsSource)
+        await FileSystem.deleteAsync(source, { idempotent: true }).catch(
+          () => {},
+        );
       if (guardUri)
         await FileSystem.deleteAsync(guardUri, { idempotent: true }).catch(
           () => {},

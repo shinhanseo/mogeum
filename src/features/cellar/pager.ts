@@ -23,11 +23,13 @@ export function createCellarPager(
   ) => Promise<CellarPage>,
   publish: (state: CellarPageState) => void,
   initialTotal = 0,
+  refreshPhoto?: (id: string, active: () => boolean) => Promise<string | null>,
 ) {
   let generation = 0,
     filter: CellarFilter = { query: "", category: "전체" },
     cursor: CellarCursor | null = null,
     state = { ...emptyCellarState(), total: initialTotal };
+  const attemptedPhotos = new Set<string>();
   const emit = () => publish({ ...state, items: [...state.items] });
   async function next(retry = false) {
     if (state.loading || !state.hasMore || (state.error && !retry)) return;
@@ -63,8 +65,36 @@ export function createCellarPager(
     }
   }
   return {
+    async refreshPhoto(id: string, failedUri: string) {
+      const current = state.items.find((item) => item.id === id);
+      if (
+        !refreshPhoto ||
+        !current ||
+        current.photoUri !== failedUri ||
+        attemptedPhotos.has(id)
+      )
+        return;
+      attemptedPhotos.add(id);
+      const token = generation;
+      try {
+        const uri = await refreshPhoto(id, () => token === generation);
+        if (token !== generation || !uri) return;
+        state = {
+          ...state,
+          items: state.items.map((item) =>
+            item.id === id && item.photoUri === failedUri
+              ? { ...item, photoUri: uri }
+              : item,
+          ),
+        };
+        emit();
+      } catch {
+        /* Keep the existing photo fallback and never loop retries. */
+      }
+    },
     async reset(value: CellarFilter) {
       generation++;
+      attemptedPhotos.clear();
       filter = { ...value };
       cursor = null;
       state = { ...emptyCellarState(), total: state.total, hasMore: true };

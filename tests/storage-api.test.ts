@@ -1,3 +1,4 @@
+import { createCellarRepository } from "../src/features/cellar/repository";
 import { loadTasteContext, tastePhotoUrls } from '../src/features/taste/repository';
 import { applyAttachment, type PendingAttachment } from '../src/features/records/attachment';
 import { findEntryCandidates } from '../src/features/records/candidates';
@@ -84,6 +85,13 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   const batchUrls = await repository.photoUrls(a.id, [storagePath, storagePath, "foreign/records/secret/photo.jpg"]);
   assert.equal(batchUrls.size, 1);
   assert.ok((await fetch(batchUrls.get(storagePath)!)).ok);
+  const expiredLink = await sdk.storage.from('record-photos').createSignedUrl(storagePath, 1);
+  assert.equal(expiredLink.error, null);
+  await new Promise(resolve => setTimeout(resolve, 2100));
+  assert.ok(!(await fetch(expiredLink.data!.signedUrl)).ok, 'Expired photo link is rejected');
+  const renewed = await createCellarRepository(sdk, a.id).refreshPhoto(saved.cellarEntryId, () => true);
+  assert.ok(renewed && (await fetch(renewed)).ok, 'Owner-scoped renewal reads real binary');
+
 
   assert.ok((await fetch(await repository.photoUrl(storagePath))).ok);
   const ownRows = await json<{ id: string; record_count: number; photo_path: string }[]>(await request(`/rest/v1/cellar_overview?id=eq.${saved.cellarEntryId}`, a.token), 'Own cellar read');

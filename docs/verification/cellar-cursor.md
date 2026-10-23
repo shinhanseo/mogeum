@@ -25,3 +25,5 @@
 실제 관리형 로그인 전체 UI, iOS 화면의 터치 스크롤, 물리 기기 대용량 성능과 URL 만료 후 갱신은 별도다. 여러 페이지 사이에 DB가 편집되면 서버 snapshot 트랜잭션으로 고정되는 것은 아니며 화면 재진입으로 최신 정렬을 다시 읽는다. 기존 record repository의 offset 조회는 별도 회귀용으로 남지만 홈은 cursor repository만 사용한다.
 
 최종 전체 검사: 216개 중 211 통과, 실제 HTTP/DB 환경 전용 5 skip. 실제 HTTP suite는 별도 4/4 통과·skip 0이다. 기존 전체 일괄 loader와 그 전용 테스트는 제거하고 cursor/pager 계약 및 실제 서버 회귀로 대체했다.
+
+후속 검증 갱신: [사진 링크 만료 복구 및 probe 원본 정리 소유권 수정](cellar-photo-renewal.md)을 참고한다. 위의 당시 검증 결과와 새 검증 범위는 구분한다.

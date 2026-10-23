@@ -115,3 +115,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 술장 사진 링크는 100개 단위로 묶어 발급하고 계정 전환 후 늦은 결과를 버립니다. [요청 수·양 플랫폼 검증·남은 대용량 범위](docs/verification/cellar-batch.md).
 
 술장 홈은 30개씩 cursor로 읽고 검색·주종 필터를 서버 전체에 적용합니다. [실제 35개 DB·양 플랫폼 native·61개 합성 UI 검증](docs/verification/cellar-cursor.md).
+
+술장 이미지 오류 시 현재 계정의 대표 사진 링크를 한 번 갱신합니다. [실제 만료·양 플랫폼 복원·반복 요청 차단](docs/verification/cellar-photo-renewal.md).
