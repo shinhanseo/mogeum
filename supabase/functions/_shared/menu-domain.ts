@@ -181,6 +181,7 @@ export function validateItems(
   input: unknown,
   photos: MenuPhoto[],
   productMode: "catalog" | "stored" = "catalog",
+  incompleteDraft = false,
 ): MenuItem[] {
   if (!Array.isArray(input) || input.length > 100)
     throw new Error("INVALID_ITEMS");
@@ -196,7 +197,7 @@ export function validateItems(
       seen.has(item.id) ||
       !item.id.startsWith(`${p.id}:${p.imageRevision}:`) ||
       typeof item.name !== "string" ||
-      !item.name.trim() ||
+      (!item.name.trim() && (!incompleteDraft || item.confirmed)) ||
       item.name.length > 150 ||
       (item.price !== null &&
         (!Number.isSafeInteger(item.price) ||

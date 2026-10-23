@@ -95,6 +95,7 @@ export function parseStoredMenu(
       [photo.ocr ? item : { ...item, lineIds: [] }],
       [context],
       "stored",
+      true,
     );
     if (
       item.productId !== null &&

@@ -1,9 +1,5 @@
-import {
-  parseStoredMenu,
-  readStoredMenu,
-  MAX_MENU_DRAFT_CHARS,
-  type MenuRestoreResult,
-} from "./restore";
+import { type MenuRestoreResult } from "./restore";
+import { createMenuStore } from "./storage";
 import { type MenuExclusion } from "./review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
@@ -98,38 +94,27 @@ export async function readMenuPhoto(photo: DevicePhoto): Promise<DevicePhoto> {
   if (!ocr.lines.length) throw new Error("OCR_EMPTY");
   return { ...photo, state: "ready", ocr };
 }
-export async function persistMenu(owner: string, draft: MenuDraft) {
-  const raw = JSON.stringify(draft);
-  if (raw.length > MAX_MENU_DRAFT_CHARS)
-    throw new Error("MENU_DRAFT_TOO_LARGE");
-  await AsyncStorage.setItem(key(owner), raw);
-  // Prune superseded local image revisions only after the new draft is durable.
-  const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${draft.id}/`;
-  const keep = new Set(draft.photos.map((p) => p.uri));
-  try {
-    for (const name of await FileSystem.readDirectoryAsync(directory)) {
-      const uri = directory + name;
-      if (/^[0-9a-f-]+-\d+\.jpg$/i.test(name) && !keep.has(uri))
-        await FileSystem.deleteAsync(uri, { idempotent: true });
+const menuStore = createMenuStore({
+  directory: FileSystem.documentDirectory!,
+  read: (owner) => AsyncStorage.getItem(key(owner)),
+  write: (owner, raw) => AsyncStorage.setItem(key(owner), raw),
+  list: (directory) => FileSystem.readDirectoryAsync(directory),
+  remove: (uri) => FileSystem.deleteAsync(uri, { idempotent: true }),
+  async hydrate(d) {
+    for (const p of d.photos) {
+      const exists = await FileSystem.getInfoAsync(p.uri);
+      if (!exists.exists) {
+        p.state = "failed";
+        p.ocr = null;
+      } else if (p.state === "reading") p.state = "waiting";
+      else if (p.state === "ready" && !p.ocr) p.state = "failed";
     }
-  } catch {
-    /* Storage cleanup does not discard a successfully written draft. */
-  }
+    return d;
+  },
+});
+export function persistMenu(owner: string, draft: MenuDraft): Promise<void> {
+  return menuStore.save(owner, draft);
 }
-export async function restoreMenu(owner: string): Promise<MenuRestoreResult> {
-  return readStoredMenu(
-    () => AsyncStorage.getItem(key(owner)),
-    async (raw) => {
-      const d = parseStoredMenu(raw, owner, FileSystem.documentDirectory!);
-      for (const p of d.photos) {
-        const exists = await FileSystem.getInfoAsync(p.uri);
-        if (!exists.exists) {
-          p.state = "failed";
-          p.ocr = null;
-        } else if (p.state === "reading") p.state = "waiting";
-        else if (p.state === "ready" && !p.ocr) p.state = "failed";
-      }
-      return d;
-    },
-  );
+export function restoreMenu(owner: string): Promise<MenuRestoreResult> {
+  return menuStore.load(owner);
 }

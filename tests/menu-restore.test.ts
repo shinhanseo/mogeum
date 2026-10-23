@@ -222,3 +222,25 @@ test("corrupt exclusion metadata does not discard otherwise valid photos or user
   assert.equal(r.items.length, 1);
   assert.deepEqual(r.exclusions, []);
 });
+
+test("unfinished manual entry restores as editable input but cannot be sent as a confirmed menu", () => {
+  const d = fixture();
+  d.items = [
+    {
+      ...d.items[0],
+      id: `${pid}:1:manual:one`,
+      lineIds: [],
+      name: "",
+      confirmed: false,
+    },
+  ];
+  const r = restore(d);
+  assert.equal(r.items[0].name, "");
+  assert.equal(r.items[0].confirmed, false);
+  assert.throws(
+    () => validateItems(r.items, [d.photos[0].ocr!]),
+    /INVALID_ITEM/,
+  );
+  d.items[0].confirmed = true;
+  assert.throws(() => restore(d), /INVALID_ITEM/);
+});

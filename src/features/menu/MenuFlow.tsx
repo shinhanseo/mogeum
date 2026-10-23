@@ -79,9 +79,7 @@ export function MenuFlow({
       setResult(null);
     }
     if (restored.current) {
-      const write = writes.current
-        .catch(() => {})
-        .then(() => persistMenu(owner, d));
+      const write = persistMenu(owner, d);
       writes.current = write;
       void write.catch(() => {
         if (alive.current)
