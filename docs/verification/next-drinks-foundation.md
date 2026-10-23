@@ -28,3 +28,9 @@
 [Figma 원본/에셋](figma-reference/next-drinks/README.md)에 42/43/45/46 고해상도 코드·렌더와 원본 SVG 26개를 저장했다. 44 이유 화면은 Figma Starter MCP 호출 한도로 상세 원본/렌더를 확보하지 못했다. 파일 04 자체는 확인했으며 이전 보관 페이지를 가져오지 않았다.
 
 UI 42–46·bookmark pending queue·기록 작성 prefill·이유 화면·앱 응답 검증을 연결해야 한다. 관리형 DB migration/새 function 배포는 아직 수행하지 않았다. 로컬 native API 확인은 관리형 로그인 UI E2E를 대신하지 않는다. 기존 클라이언트의 비활성 CTA를 완료된 기능으로 보고하지 않는다.
+
+## 앱 응답 계약 후속
+
+`src/features/discovery/contract.ts`는 catalog version/method/모델 미사용 여부와 실제 제품 전체 속성을 대조한다. 반환된 URL을 그대로 UI에 넘기지 않고 검증 후 로컬 카탈로그를 복제한다. 제품·북마크·근거의 중복, 누락된 근거 ID, 다른 주종의 비향 감각 연결, 반대 평가 연결, 상충/미확인 특징 및 score 불일치를 거절한다. JSON 객체의 키 순서 변화는 허용한다. 감각 답변 자체의 진위는 인증된 서버 분석 책임이며, 클라이언트가 소유권이나 원 답변을 재검증했다고 주장하지 않는다.
+
+`loadDiscovery`는 기존 owner 고정 JWT client와 30초 요청 제한을 사용하며 응답 검증을 통과한 결과만 반환한다. 실제 HTTP 테스트가 빈 탐색 및 201개 기록의 실제 endpoint 응답을 이 계약에 통과시킨다. DB의 consumed_at은 날짜 전용 문자열이 아닌 timezone 포함 timestamp로 올 수 있어 둘 다 수용한다. 화면 및 durable bookmark 연결은 아직 미완료다.

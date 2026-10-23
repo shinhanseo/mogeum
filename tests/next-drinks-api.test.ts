@@ -1,3 +1,4 @@
+import { parseDiscoveryResult } from "../src/features/discovery/contract";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
@@ -66,6 +67,7 @@ test(
       const initial = await request({}, token);
       assert.equal(initial.status, 200);
       const empty = await initial.json();
+      parseDiscoveryResult(empty);
       assert.equal(empty.recommendations.length, 32);
       assert.ok(
         empty.recommendations.every(
@@ -82,9 +84,12 @@ test(
           p_expected_revision: 0,
         });
       const [first, concurrent] = await Promise.all([bookmark(), bookmark()]);
-    assert.equal(concurrent.error, null);
-    assert.equal(concurrent.data.revision, 1);
-    assert.equal(Number(first.data.replayed) + Number(concurrent.data.replayed), 1);
+      assert.equal(concurrent.error, null);
+      assert.equal(concurrent.data.revision, 1);
+      assert.equal(
+        Number(first.data.replayed) + Number(concurrent.data.replayed),
+        1,
+      );
       assert.equal(first.error, null);
       assert.equal(first.data.revision, 1);
       assert.equal((await bookmark()).data.replayed, true);
@@ -133,6 +138,7 @@ test(
       const response = await request({}, token);
       assert.equal(response.status, 200);
       const value = await response.json();
+      parseDiscoveryResult(value);
       assert.equal(value.recordCount, 201);
       assert.equal(value.omittedSensoryRecords, 1);
       assert.equal(value.modelUsed, false);
