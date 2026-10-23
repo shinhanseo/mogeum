@@ -37,7 +37,7 @@ Chrome에서 04 원본을 확인했다: 32(9:7760), 40(9:8329), 33(9:7820), 37(9
 ## 실행한 검증
 - `npm run check`: 타입·린트·질문 계약·메뉴 도메인·DB/PGlite 테스트. 실제 관리형 HTTP 서비스가 없는 로컬에서 HTTP 테스트는 명시적으로 skip.
 - 서버 Deno 2.9.6 check, `expo export --platform all` 빌드. 웹 브라우저로 앱 검증하지 않았다.
-- iOS iPhone 17 Pro/iOS26.5 네이티브 빌드, 합성 메뉴판을 실제 Vision으로 읽어 한글 이름 3개·30ml/500ml·가격 3개 확인. 두 장 처리와 한 장 삭제 후 나머지 유지·앱 재실행 draft 복구 확인. 추천→제품 설명과 내 기록 비교→근거 목록, 원본의 실제 OCR polygon 강조→추천 이유 복귀도 확인했다.
+- iOS iPhone 17 Pro/iOS26.5 네이티브 빌드, 합성 메뉴판을 실제 Vision으로 읽어 한글 이름 3개·30ml/500ml·가격 3개 확인. 두 장 처리와 한 장 삭제 후 나머지 유지·앱 재실행 draft 복구 확인. 추천→제품 설명과 내 기록 비교→근거 목록, 원본의 실제 OCR polygon 강조→추천 이유 복귀도 확인했다. 시스템 PHPicker에서 합성 메뉴 사진과 기존 저장소의 술병 fixture 두 장을 실제 복수 선택했다. 메뉴 OCR 성공·술병 OCR 실패 시 성공한 사진/결과가 유지되고 개별 재시도·직접 입력 행동이 노출됨을 확인했다.
 - Android ML Kit 모듈 compileDebugKotlin 및 앱 arm64-v8a assembleDebug 성공. Android OCR 실제 메뉴/화면·권한 E2E는 별도 검증이 남는다.
 - CI는 일회용 실제 Supabase에서 migration→Auth→메뉴 해석→수정 저장/재시도→타 사용자 차단→확정 노트 근거 추천을 실행한다. 실행 링크/결과는 PR에 기록한다.
 - 개발 프로젝트에 20261023030000 메뉴 DB migration 및 menu-recommend 함수 적용. 무인증/잘못된 JWT 401 응답 확인. CLI migration history 수동 적용 이력 정리는 기존 작업과 함께 남는다.
@@ -52,4 +52,9 @@ Chrome에서 04 원본을 확인했다: 32(9:7760), 40(9:8329), 33(9:7820), 37(9
 ![근거 기록](menu/ios-evidence.png)
 ![실제 OCR 줄 강조](menu/ios-original-location.png)
 
-`mogeum-dev://dev/menu?picker=1`은 서버 미호출의 합성 취향을 유지하면서 실제 시스템 사진 선택기를 사용하는 개발 검증 경로다. 사진 선택/OCR 결과를 고정 응답으로 대체하지 않는다. 합성 메뉴 이미지 두 장만 시뮬레이터에 넣어 검증한다.
+`mogeum-dev://dev/menu?picker=1`은 서버 미호출의 합성 취향을 유지하면서 실제 시스템 사진 선택기를 사용하는 개발 검증 경로다. 사진 선택/OCR 결과를 고정 응답으로 대체하지 않는다. 저장소의 합성 메뉴와 술병 fixture만 선택하며 개인 사진은 테스트에 사용하지 않았다.
+
+![실제 시스템 복수 선택](menu/ios-system-picker.png)
+![부분 실패와 결과 보존](menu/ios-partial-failure.png)
+
+CI: [앱 검사/양 플랫폼 export](https://github.com/shinhanseo/mogeum/actions/runs/39883061757), [실제 PostgreSQL/Auth/메뉴 추천 통합](https://github.com/shinhanseo/mogeum/actions/runs/39883061792) 통과. 이후 로컬 임시 저장 실패 차단·picker 검증 경로 추가에 대한 최신 검사는 PR Checks에 표시된다.
