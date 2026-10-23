@@ -79,8 +79,11 @@ export function validateMenuResult(
       recordById.has(r.id) ||
       !Number.isSafeInteger(r.revision) ||
       (r.revision as number) < 1 ||
-      !str(r.date, 10) ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(r.date) ||
+      !str(r.date, 40) ||
+      !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2}))?$/.test(
+        r.date,
+      ) ||
+      !Number.isFinite(Date.parse(r.date)) ||
       !optionalString(r.name, 300) ||
       !optionalString(r.noteText, 20000) ||
       !new Set<unknown>([null, "whisky", "wine", "beer", "traditional"]).has(

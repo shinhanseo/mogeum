@@ -267,3 +267,22 @@ test("valid mixed evidence keeps both record identities without treating negativ
   validateMenuResult(r, [f.item]);
   assert.equal(r.recommendations[0].score, 0);
 });
+
+for (const date of [
+  "2026-10-23",
+  "2026-10-23T03:25:31.123456+00:00",
+  "2026-10-23T12:25:31+09:00",
+  "2026-10-23T03:25:31.123Z",
+])
+  test(`result accepts actual consumed_at format: ${date}`, () => {
+    const f = fixture(),
+      r = f.make();
+    r.evidenceRecords[0].date = date;
+    validateMenuResult(r, [f.item]);
+  });
+test("result rejects malformed consumed_at metadata", () => {
+  const f = fixture(),
+    r = f.make();
+  r.evidenceRecords[0].date = "2026-99-99T99:99:99Z";
+  assert.throws(() => validateMenuResult(r, [f.item]), /INVALID_MENU_RESULT/);
+});
