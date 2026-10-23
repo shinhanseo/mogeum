@@ -23,3 +23,17 @@ CI는 실제 PostgreSQL 마이그레이션/정책과 실제 JWT→context→로�
 iOS native /dev/taste?count=0/2/8 및 evidence는 명시적 fixture이며 AI 호출·서버 저장 없음 배너를 표시한다. 사용자 경로에는 예시 기록/분석을 넣지 않는다. 실제 소셜 provider 설정이 없어 실제 사용자 iOS 저장→AI 생성 전체 흐름은 남았다. Android 실기기·글자 확대·실제 Gemini 품질 평가는 별도다. 원본 피그마 28/29/31을 Chrome으로 확인했으며 자동 레이어 추출이 막혀 픽셀 일치 완료로 주장하지 않는다.
 
 공식 근거: [Gemini 모델](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash), [Google SDK](https://ai-sdk.dev/providers/ai-sdk-providers/google), [Supabase 인증](https://supabase.com/docs/guides/functions/auth).
+
+## 최종 검증 증거 · 2026-10-23
+- 코드 commit `68e14d2`: [App checks](https://github.com/shinhanseo/mogeum/actions/runs/39812483772) success. 타입/린트/계약/71 tests(69 pass, 2 local-service skip), 의존성 검사, iOS·Android·web export.
+- 같은 코드의 [Database policies](https://github.com/shinhanseo/mogeum/actions/runs/39812483860) success. 실제 PostgreSQL 마이그레이션/소유권/캐시 lease 및 실제 JWT→Edge Function 키 미설정503/잘못된 JWT401 확인.
+- Deno2.9.6의 실제 서버 index/provider 타입 검사 통과. 개발 프로젝트에 DB 및 최종 함수를 배포했고 익명/잘못된 토큰 요청에서 `UNAUTHENTICATED` HTTP401 응답을 확인했다. CLI 인증 토큰이 없어 Dashboard에 동일 SQL/번들을 입력했고 붙여넣기 코드 일치를 확인했다. 기존 수동 마이그레이션의 CLI history repair는 남아 있다.
+- iPhone17Pro iOS26.5 native: 0/2/8 기록, 원본 모구/버건디·크림/세로 사진/공통 하단 탭, 칩→근거 목록, 전체/맥주 필터, 원문 감상 표시와 줄바꿈 확인. 실제 분석 결과가 아닌 명시적 fixture다. 사진은 허가된 동일 Figma 테스트 사진을 재사용하며 다양한 실제 제품 사진/모델 품질의 증거가 아니다.
+
+![빈 상태](ios-taste-empty.png)
+![초기 기록](ios-taste-early.png)
+![축적 기록](ios-taste-established.png)
+![근거 확인](ios-taste-evidence.png)
+![개발 서버 배포](supabase-taste-summary-function.png)
+
+이 검증 이후 커밋은 문서·스크린샷만 추가한다. 실제 Gemini 응답은 키가 없어 검증하지 않았고 이슈 #13/#11의 전체 완료로 처리하지 않는다.

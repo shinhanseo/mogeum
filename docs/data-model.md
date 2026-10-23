@@ -66,3 +66,6 @@ record_notes의 last_operation_id/last_save_payload는 응답 유실 재시도 �
 기본 수정은 revision을 유지 조건으로 검사하고 새 버전으로 갱신한다. 사진 정리 작업은 Storage 객체 부재를 검증한 뒤 done으로 바꾼다. 삭제 영수증 deleted_record_operations(user_id,operation_id,record_id,deleted_at)은 제거된 감상/사진/생성 payload를 보관하지 않으며, 지연된 생성 요청의 부활을 막는다. 영수증은 본인 읽기만 허용하고 쓰기는 삭제 trigger만 수행한다.
 
 사진·연결 변경의 중복 실행 방지: `private.record_attachment_receipts`는 소유자+operation ID를 키로 immutable payload와 결과를 보관한다. authenticated 직접 접근을 막고 `change_record_attachment`만 활성 JWT 소유자를 확인한 뒤 쓴다. 계정 삭제 시 cascade하며 공개 테이블 수에는 포함하지 않는다.
+
+## 취향 요약 캐시 · 구현 2026-10-23
+`private.taste_summary_jobs`는 사용자당 현재 input hash, lease UUID, running/ready/failed, 획득 시각/생성 시각, 일별 횟수와 검증된 결과를 보관한다. 공개 테이블이 아니며 RLS와 anon/authenticated 직접 접근 철회를 함께 사용한다. service_role 전용 begin/finish RPC만 갱신한다. `taste_summary_context()`는 인증 소유자의 현재 기록 ID/revision hash와 일치하는 결과만 읽게 한다. 삭제된 경험이나 이전 연결의 캐시를 화면에 재사용하지 않는다. 모델 결과는 자유 주장이 아니라 검증된 집계 fact ID 목록이다.
