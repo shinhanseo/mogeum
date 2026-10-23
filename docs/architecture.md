@@ -1,6 +1,6 @@
 # 기술 구조
 
-상태: Expo 58 / RN 0.88 / Router 58 초기화. 아래 서버·상태 관리·OCR 구조는 구현 예정 설계다.
+현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 8개와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정과 관리형 최신 함수 배포는 남아 있다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
 
 ## 구성
 
@@ -11,8 +11,8 @@ React Native + Expo Development Build + TypeScript 앱이 Supabase Auth로 인�
 ## 앱 경계
 
 - Expo Router: 탭·기록 작성·상세·메뉴 추천 스택. +는 composer 진입.
-- TanStack Query: 원격 기록·술장·취향 요약·분석 상태. 키에 사용자·세션·버전 포함.
-- Zustand: 질문 답변·사진 선택·수정 중 draft. 인증 토큰이나 서버 데이터 전체를 중복 저장하지 않는다.
+- 현재 원격 조회는 SDK/repository와 화면의 상태·generation/focus 가드로 처리한다. TanStack Query는 아직 도입하지 않은 목표 도구이며, 도입 시 키에 사용자·세션·버전을 포함한다.
+- 현재 질문·작성 draft는 React 상태와 버전이 있는 AsyncStorage 복구로 처리한다. Zustand는 아직 도입하지 않은 목표 도구다. 인증 토큰이나 서버 데이터 전체를 중복 저장하지 않는다.
 - Repository/service 모듈: 화면과 SDK/AI/OCR 구현 분리.
 - OCR adapter: 사진 ID, canonical 이미지 크기, 텍스트와 정규화 좌표를 반환. ONNX와 ML Kit 교체 가능.
 - 서버 결과 schema validation: 런타임 검증 라이브러리는 부트스트랩에서 고정.

@@ -9,6 +9,8 @@ on:
       - 'tests/database.test.ts'
       - 'tests/storage-api.test.ts'
       - 'tests/menu-api.test.ts'
+      - 'tests/native-probe-cleanup.test.ts'
+      - 'scripts/cleanup-native-probe.ts'
       - 'tests/fixtures/supabase-platform.sql'
       - 'package*.json'
       - '.github/workflows/database.yml'
