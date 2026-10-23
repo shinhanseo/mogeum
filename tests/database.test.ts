@@ -56,9 +56,21 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
 
     await t.test('private tables enable RLS and bucket is private', async () => {
       const { rows } = await db.query("select relname,relrowsecurity from pg_class join pg_namespace n on n.oid=relnamespace where n.nspname='public' and relkind='r'");
-      assert.equal(rows.length, 11);
+      assert.equal(rows.length, 12);
       assert.ok(rows.every(row => row.relrowsecurity === true));
       assert.equal((await db.query("select public from storage.buckets where id='record-photos'")).rows[0].public, false);
+    });
+    await t.test('menu drafts enforce owner, five pages, optimistic revision and retry', async()=>{
+      await as(a);const id=operation(180);
+      const write=(revision:number,photos:unknown[]=[],items:unknown[]=[])=>db.query('select public.save_menu_session($1,$2,$3::jsonb,$4::jsonb) revision',[id,revision,JSON.stringify(photos),JSON.stringify(items)]);
+      assert.equal((await write(0)).rows[0].revision,1);
+      assert.equal((await write(0)).rows[0].revision,1);
+      assert.equal((await write(1,[{id:'page'}])).rows[0].revision,2);
+      await assert.rejects(write(0));await assert.rejects(write(2,Array.from({length:6},()=>({}))));
+      await as(b);assert.equal((await db.query('select * from public.menu_sessions where id=$1',[id])).rows.length,0);
+      await assert.rejects(write(0));await assert.rejects(db.query('update public.menu_sessions set revision=10 where id=$1',[id]),{code:'42501'});
+      await as(null);await assert.rejects(write(0),{code:'42501'});
+      await as(a);
     });
     await t.test('anonymous clients cannot read rows, create records, or upload photos', async () => {
       await as(null);

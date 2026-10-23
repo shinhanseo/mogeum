@@ -21,6 +21,7 @@
   ],
   "exclude": [
     "supabase/functions/taste-summary/index.ts",
-    "supabase/functions/taste-summary/provider.ts"
+    "supabase/functions/taste-summary/provider.ts",
+    "supabase/functions/menu-recommend/index.ts"
   ]
 }

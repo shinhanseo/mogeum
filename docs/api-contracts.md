@@ -113,3 +113,9 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 - service_role만 `begin_taste_summary(owner,hash,lease)`/`finish_taste_summary(owner,hash,lease,result)` 호출 가능. 사용자는 private jobs/결과에 직접 쓰지 못한다. 서버 검증된 owner만 전달한다. 90초 lease, 20초 간격, 사용자별 하루 5회 획득 한도. 모델 자동 재시도 0, 호출 25초 timeout, 최대 출력 512 tokens.
 - 같은 hash 캐시는 재사용한다. 현재 hash와 다른 결과는 반환하지 않고 이전 요약을 숨긴다. 생성 중 수정/삭제/이동되면 완료 결과를 거절한다. 소유자의 계정 삭제 시 cache도 cascade.
 - AI는 코드 집계에서 검증된 feature ID 1–3개를 선정한다. 임의 문장/새 맛/타 기록 ID를 받지 않는다. 앱은 승인된 표현과 근거 기록으로 화면을 구성한다. 모델에 사진·이름·날짜·자유 메모·확정 원문·사용자 ID를 보내지 않고 고정 특징 ID/계열/횟수/다양성만 보낸다.
+
+## 현재 연결된 메뉴 MVP API (evidence-rules-v1)
+
+POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{action:"parse", photos}`는 원본 OCR의 안정적인 photoId/imageRevision/lineId/정규화 polygon과 실제 confidence를 받아 확인 전 MenuItem을 반환한다. `{action:"recommend",photos,items}`는 확인 완료 메뉴만 받으며 현재 사용자 taste context로 비교한다. 응답은 recommendations, evidenceRecords(id/name/date/revision), tasteHash, recordCount, method, limitedCatalog다. 이 구현은 위의 전체 목표 계약 중 초기 연결이며 자동 병합/전체 카탈로그/LLM 설명 생성 완료가 아니다.
+
+앱 입력과 서버 재검증 타입은 `supabase/functions/_shared/menu-domain.ts`가 기준이다. 사진 자체는 기기에 남고 원문 OCR과 수정 값은 별도 배열로 유지한다. 메뉴 저장 RPC `save_menu_session(p_id,p_revision,p_photos,p_items)`는 owner JWT, 5장/100항목 제한, optimistic revision, 동일 요청 재시도를 적용한다. 사진/메뉴 수정 후 결과를 버리고 재추천한다. 원본은 이 기기에서만 확인 가능하다.

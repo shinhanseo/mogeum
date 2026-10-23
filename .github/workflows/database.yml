@@ -8,6 +8,7 @@ on:
       - 'tests/taste-summary.test.ts'
       - 'tests/database.test.ts'
       - 'tests/storage-api.test.ts'
+      - 'tests/menu-api.test.ts'
       - 'tests/fixtures/supabase-platform.sql'
       - 'package*.json'
       - '.github/workflows/database.yml'
@@ -36,10 +37,11 @@ jobs:
           MOGEUM_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - name: Serve the authenticated taste endpoint without a provider key
         run: |
-          npx supabase functions serve taste-summary --no-verify-jwt > /tmp/mogeum-edge.log 2>&1 &
+          npx supabase functions serve --no-verify-jwt > /tmp/mogeum-edge.log 2>&1 &
           for attempt in $(seq 1 40); do
             status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:54321/functions/v1/taste-summary || true)
-            if [ "$status" = "401" ]; then exit 0; fi
+            menu_status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:54321/functions/v1/menu-recommend || true)
+            if [ "$status" = "401" ] && [ "$menu_status" = "401" ]; then exit 0; fi
             sleep 2
           done
           cat /tmp/mogeum-edge.log
