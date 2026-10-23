@@ -15,7 +15,12 @@ import {
   type DevicePhoto,
 } from "./device";
 import { tastePhotoUrls } from "../taste/repository";
-import { mergeMenuReview } from "./review";
+import {
+  mergeMenuReview,
+  activeExclusions,
+  excludeMenuItem,
+  menuSource,
+} from "./review";
 import { submitMenu } from "./submission";
 import { menuRequest, saveMenuSession, type MenuResult } from "./repository";
 import { getSupabase } from "../../lib/supabase";
@@ -61,6 +66,7 @@ export function MenuFlow({
   const latestResult = useRef<MenuResult | null>(null);
   const demo = !!adapter;
   const commit = (d: MenuDraft) => {
+    d = { ...d, exclusions: activeExclusions(d.exclusions, d.photos) };
     current.current = d;
     if (alive.current) {
       setDraft(d);
@@ -163,6 +169,13 @@ export function MenuFlow({
         if (!valid(version)) return;
         commit({
           ...current.current,
+          items: current.current.items.filter(
+            (item) =>
+              item.photoId !== id ||
+              item.id.includes(":manual:") ||
+              menuSource(item, photo.ocr ? [photo.ocr] : []) ===
+                menuSource(item, [read.ocr!]),
+          ),
           photos: current.current.photos.map((p) =>
             p.id === id && p.imageRevision === read.imageRevision ? read : p,
           ),
@@ -293,7 +306,12 @@ export function MenuFlow({
         if (!valid(version)) return;
         commit({
           ...current.current,
-          items: mergeMenuReview(items, current.current.items, photos),
+          items: mergeMenuReview(
+            items,
+            current.current.items,
+            photos,
+            current.current.exclusions,
+          ),
         });
         setStep("review");
       } else {
@@ -418,10 +436,11 @@ export function MenuFlow({
         }}
         onDeleteItem={(id) => {
           cancel();
-          commit({
-            ...current.current,
-            items: current.current.items.filter((i) => i.id !== id),
-          });
+          try {
+            commit(excludeMenuItem(current.current, id));
+          } catch {
+            setError("제외한 메뉴를 보관하지 못했어요. 다시 시도해주세요.");
+          }
         }}
         onEdit={(item) =>
           commit({

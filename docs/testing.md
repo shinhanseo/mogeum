@@ -46,3 +46,5 @@ iOS 개발 빌드의 `/dev/tasting?category=wine&mode=deep&question=appearance`�
 ## 메뉴 추천 응답·품질 회귀
 
 `npm run test:menu-quality`는 4주종 × 가볍게/자세히 합성 관측, 취향 근거 제외 조건, 카탈로그 판본 및 조작된 추천 응답 거부를 검사한다. 정상 서버 응답은 실제 HTTP CI에서도 같은 validator로 확인한다. [실측·추정·개발 전용 확인과 남은 범위](verification/menu-quality.md)를 구분한다.
+
+메뉴 제외 회귀는 `tests/menu-review.test.ts`에서 재분석·사진 추가·원문 변경·재촬영·수동 입력·일시적 OCR 실패·JSON 복구를 검사한다. iOS 실제 종료/재실행 확인과 기기별 동기화 한계는 메뉴 검증 문서를 참조한다.

@@ -1,3 +1,4 @@
+import { activeExclusions, type MenuExclusion } from "./review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -23,6 +24,7 @@ export type MenuDraft = {
   revision: number;
   photos: DevicePhoto[];
   items: MenuItem[];
+  exclusions?: MenuExclusion[];
   pendingSave?: { revision: number; photos: MenuPhoto[]; items: MenuItem[] };
 };
 const key = (owner: string) => `mogeum:menu:v1:${owner}`;
@@ -151,6 +153,7 @@ export async function restoreMenu(owner: string): Promise<MenuDraft | null> {
       )
         return null;
     }
+    d.exclusions = activeExclusions(d.exclusions, d.photos);
     return d;
   } catch {
     return null;
