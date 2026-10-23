@@ -54,6 +54,11 @@ export default function DevMenu() {
       </Text>
       <MenuFlow
         owner="menu-ocr-fixture"
+        fixtureEvidenceUri={
+          Image.resolveAssetSource(
+            require("../../assets/fixtures/figma-whisky.jpg"),
+          )!.uri
+        }
         fixtureUri={
           Image.resolveAssetSource(
             require("../../assets/fixtures/menu-synthetic.png"),
@@ -69,6 +74,9 @@ export default function DevMenu() {
               name: r.name,
               date: r.date,
               revision: r.revision,
+              category: r.category,
+              revisit: r.revisit,
+              noteText: "과일 향이 떠올랐어요.",
             })),
             tasteHash: snapshot.hash,
             recordCount: 1,

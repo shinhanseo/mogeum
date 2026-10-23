@@ -40,6 +40,7 @@ type Props = {
   draft: MenuDraft;
   step: MenuStep;
   result: MenuResult | null;
+  evidencePhotos?: Record<string, string>;
   busy: boolean;
   error: string;
   onStep: (s: MenuStep) => void;
@@ -60,13 +61,14 @@ export function MenuScreen(p: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [editError, setEditError] = useState("");
+  const [originalPhotoId, setOriginalPhotoId] = useState<string | null>(null);
   const [originalReturn, setOriginalReturn] = useState<MenuStep>("review");
   const selectedItem = p.draft.items.find((i) => i.id === selected);
   const selectedRec = p.result?.recommendations.find(
     (r) => r.itemId === selected,
   );
   const selectedPhoto = p.draft.photos.find(
-    (f) => f.id === selectedItem?.photoId,
+    (f) => f.id === (originalPhotoId ?? selectedItem?.photoId),
   );
   const ready = p.draft.photos.filter((f) => f.state === "ready");
   const closeEditor = () => {
@@ -79,6 +81,7 @@ export function MenuScreen(p: Props) {
   };
   const showOriginal = (item: MenuItem) => {
     setSelected(item.id);
+    setOriginalPhotoId(item.photoId);
     setOriginalReturn("review");
     p.onStep("original");
   };
@@ -553,40 +556,128 @@ export function MenuScreen(p: Props) {
               variant="secondary"
               onPress={() => {
                 setOriginalReturn("reason");
+                setOriginalPhotoId(selectedItem.photoId);
                 p.onStep("original");
               }}
             />
           </>
         ) : p.step === "evidence" && selectedRec ? (
           <>
-            <Text style={s.title}>이 기록에서{"\n"}함께 느꼈어요.</Text>
+            <Text style={s.title}>이 기록과{"\n"}비교했어요.</Text>
+            <Text style={s.body}>
+              새로운 술의 제품 설명과 비교한,{"\n"}내가 직접 남긴 느낌이에요.
+            </Text>
             {[
               ...new Set([
-                ...selectedRec.similar.flatMap((f) => f.recordIds),
+                ...selectedRec.similar.flatMap((f) => [...f.recordIds,...f.negativeIds]),
                 ...selectedRec.knownRecordIds,
               ]),
-            ].map((id, n) => (
-              <View key={id} style={s.menuRow}>
-                <Text style={[s.label, { flex: 1 }]}>
-                  {p.result?.evidenceRecords.find((r) => r.id === id)?.name ||
-                    `기록 ${n + 1}`}
-                  {"\n"}
-                  {p.result?.evidenceRecords.find((r) => r.id === id)?.date}
-                </Text>
-                <Button
-                  label="기록 보기 ›"
-                  variant="text"
+            ].map((id, n) => {
+              const record = p.result?.evidenceRecords.find((r) => r.id === id);
+              const facts = selectedRec.similar.filter((f) =>
+                f.recordIds.includes(id),
+              );
+              const category = record?.category
+                ? (
+                    {
+                      whisky: "위스키",
+                      wine: "와인",
+                      beer: "맥주",
+                      traditional: "전통주",
+                    } as Record<string, string>
+                  )[record.category]
+                : "술";
+              return (
+                <Pressable
+                  key={id}
+                  style={s.evidenceCard}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${record?.name || "기록"} 상세 보기`}
                   onPress={() => p.onEvidence(id)}
-                />
-              </View>
-            ))}
-            <Text style={s.caption}>
-              해당 기록에서 선택한 느낌과 평가를 직접 확인해 주세요.
-            </Text>
+                >
+                  {p.evidencePhotos?.[id] ? (
+                    <Image
+                      source={{ uri: p.evidencePhotos[id] }}
+                      resizeMode="contain"
+                      style={s.evidencePhoto}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        s.evidencePhoto,
+                        { alignItems: "center", justifyContent: "center" },
+                      ]}
+                    >
+                      <Icon name="photo" />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <Text style={s.label}>
+                      {record?.name || `기록 ${n + 1}`}
+                    </Text>
+                    <Text style={s.caption}>
+                      {category} · {record?.date} ·{" "}
+                      {record?.revisit === "again"
+                        ? "또 마시고 싶어요"
+                        : record?.revisit === "okay"
+                          ? "괜찮아요"
+                          : record?.revisit === "not_for_me"
+                            ? "내 취향이 아니에요"
+                            : "평가 기록"}
+                    </Text>
+                    <Text style={s.body} numberOfLines={3}>
+                      {record?.noteText ||
+                        "선택한 느낌은 기록에서 확인할 수 있어요."}
+                    </Text>
+                    <Text style={s.primary}>
+                      비교한 느낌 ·{" "}
+                      {facts.map((f) => f.label).join(" · ") ||
+                        "같은 이름의 기록"}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+            <View style={s.notice}>
+              <Text style={s.primary}>내 느낌과 술의 설명은 따로 봐요</Text>
+              <Text style={s.body}>
+                새로운 술의 공식 설명과 이어봤어요.{"\n"}아직 이 술을 좋아한다고
+                단정한 건 아니에요.
+              </Text>
+            </View>
+            <Button
+              label="새로운 술과 다시 비교하기"
+              onPress={() => p.onStep("reason")}
+            />
+            <Button
+              label="내 취향 요약 보기"
+              variant="text"
+              onPress={p.onClose}
+            />
           </>
         ) : p.step === "original" && selectedPhoto ? (
           <>
-            <Text style={s.title}>{selectedItem?.name}</Text>
+            <Text style={s.primary}>
+              {p.draft.photos.findIndex(
+                (photo) => photo.id === selectedPhoto.id,
+              ) + 1}{" "}
+              / {p.draft.photos.length}장 · {selectedItem?.name}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.filters}
+            >
+              {p.draft.photos.map((photo, n) => (
+                <ChoiceChip
+                  compact
+                  key={photo.id}
+                  label={`${n + 1}번`}
+                  selected={selectedPhoto.id === photo.id}
+                  onPress={() => setOriginalPhotoId(photo.id)}
+                />
+              ))}
+            </ScrollView>
             <View
               style={{
                 width: "100%",
@@ -618,6 +709,14 @@ export function MenuScreen(p: Props) {
                   ))}
               </Svg>
             </View>
+            <Button
+              label={
+                originalReturn === "reason"
+                  ? "추천 이유로 돌아가기"
+                  : "메뉴 확인으로 돌아가기"
+              }
+              onPress={() => p.onStep(originalReturn)}
+            />
             <Text style={s.caption}>
               {selectedItem?.lineIds.length
                 ? "메뉴 이름과 가격을 원본에서 확인해 주세요."
@@ -862,6 +961,19 @@ const s = StyleSheet.create({
     gap: 4,
   },
   filters: { gap: 8, paddingVertical: 4 },
+  evidenceCard: {
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    flexDirection: "row",
+    gap: 12,
+  },
+  evidencePhoto: {
+    width: 76,
+    aspectRatio: 3 / 4,
+    borderRadius: 8,
+    backgroundColor: colors.illustration,
+  },
   menuCard: {
     borderRadius: 12,
     backgroundColor: colors.surface,

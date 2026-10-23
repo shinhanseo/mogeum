@@ -116,6 +116,6 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 
 ## 현재 연결된 메뉴 MVP API (evidence-rules-v1)
 
-POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{action:"parse", photos}`는 원본 OCR의 안정적인 photoId/imageRevision/lineId/정규화 polygon과 실제 confidence를 받아 확인 전 MenuItem을 반환한다. `{action:"recommend",photos,items}`는 확인 완료 메뉴만 받으며 현재 사용자 taste context로 비교한다. 응답은 recommendations, evidenceRecords(id/name/date/revision), tasteHash, recordCount, method, limitedCatalog다. 이 구현은 위의 전체 목표 계약 중 초기 연결이며 자동 병합/전체 카탈로그/LLM 설명 생성 완료가 아니다.
+POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{action:"parse", photos}`는 원본 OCR의 안정적인 photoId/imageRevision/lineId/정규화 polygon과 실제 confidence를 받아 확인 전 MenuItem을 반환한다. `{action:"recommend",photos,items}`는 확인 완료 메뉴만 받으며 현재 사용자 taste context로 비교한다. 응답은 recommendations, evidenceRecords(id/name/date/revision/category/revisit/noteText), tasteHash, recordCount, method, limitedCatalog다. 이 구현은 위의 전체 목표 계약 중 초기 연결이며 자동 병합/전체 카탈로그/LLM 설명 생성 완료가 아니다.
 
 앱 입력과 서버 재검증 타입은 `supabase/functions/_shared/menu-domain.ts`가 기준이다. 사진 자체는 기기에 남고 원문 OCR과 수정 값은 별도 배열로 유지한다. 메뉴 저장 RPC `save_menu_session(p_id,p_revision,p_photos,p_items)`는 owner JWT, 5장/100항목 제한, optimistic revision, 동일 요청 재시도를 적용한다. 사진/메뉴 수정 후 결과를 버리고 재추천한다. 원본은 이 기기에서만 확인 가능하다.

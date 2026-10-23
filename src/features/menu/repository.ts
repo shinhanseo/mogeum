@@ -13,6 +13,9 @@ export type MenuResult = {
     name: string | null;
     date: string;
     revision: number;
+    category: string | null;
+    revisit: string | null;
+    noteText: string | null;
   }[];
   recommendations: MenuRecommendation[];
   tasteHash: string;

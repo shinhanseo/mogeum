@@ -171,7 +171,7 @@ test(
     assert.deepEqual(result.recommendations[0].similar[0].recordIds, [
       recordId,
     ]);
-    assert.equal(result.evidenceRecords[0].id, recordId);
+    assert.equal(result.evidenceRecords[0].id, recordId);assert.equal(result.evidenceRecords[0].category,"whisky");assert.equal(result.evidenceRecords[0].revisit,"again");assert.equal(typeof result.evidenceRecords[0].noteText,"string");
     const foreignResult = await request(endpoint, b.access_token, {
       action: "recommend",
       photos,

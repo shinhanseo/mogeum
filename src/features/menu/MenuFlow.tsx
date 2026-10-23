@@ -13,6 +13,7 @@ import {
   type MenuDraft,
   type DevicePhoto,
 } from "./device";
+import { tastePhotoUrls } from "../taste/repository";
 import { mergeMenuReview } from "./review";
 import { submitMenu } from "./submission";
 import { menuRequest, saveMenuSession, type MenuResult } from "./repository";
@@ -33,15 +34,20 @@ export function MenuFlow({
   owner,
   adapter,
   fixtureUri,
+  fixtureEvidenceUri,
 }: {
   owner: string;
   adapter?: Adapter;
   fixtureUri?: string;
+  fixtureEvidenceUri?: string;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<MenuDraft>(newMenu);
   const current = useRef(draft);
   const [step, setStep] = useState<MenuStep>("start");
+  const [evidencePhotos, setEvidencePhotos] = useState<Record<string, string>>(
+    {},
+  );
   const [result, setResult] = useState<MenuResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -300,6 +306,23 @@ export function MenuFlow({
         if (!d) return;
         const value = await backend.recommend(photos, d.items);
         if (!valid(version)) return;
+        const client = getSupabase();
+        const urls = adapter
+          ? Object.fromEntries(
+              value.evidenceRecords.map((r) => [
+                r.id,
+                fixtureEvidenceUri ?? "",
+              ]),
+            )
+          : client
+            ? await tastePhotoUrls(
+                client,
+                owner,
+                value.evidenceRecords.map((r) => r.id),
+              ).catch(() => ({}))
+            : {};
+        if (!valid(version)) return;
+        setEvidencePhotos(urls);
         setResult(value);
         setStep("results");
       }
@@ -368,6 +391,7 @@ export function MenuFlow({
         draft={draft}
         step={step}
         result={result}
+        evidencePhotos={evidencePhotos}
         busy={busy}
         error={error || picker.error}
         onStep={navigate}

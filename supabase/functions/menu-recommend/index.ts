@@ -68,6 +68,9 @@ Deno.serve(async (request) => {
         name: r.name,
         date: r.date,
         revision: r.revision,
+        category: r.category,
+        revisit: r.revisit,
+        noteText: r.note?.text ?? null,
       }));
     return reply({
       recommendations,
