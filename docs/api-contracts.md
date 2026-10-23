@@ -133,3 +133,7 @@ POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{ac
 현재 OCR 엔진 허용 값은 `apple-vision-v1`, `apple-vision-v2`, `mlkit-korean-16.0.1`, `manual`이다. v2는 Vision 좌표를 adapter에서 이미지 경계로 clip하며 서버는 여전히 유한한 [0,1] 사각형 꼭짓점만 받는다. 관리형 함수에 허용 목록 변경을 배포하기 전에는 v2 입력 연결을 완료로 보지 않는다.
 
 메뉴 Edge 요청 본문은 600,000 UTF-16 코드 유닛을 유지하며 stream 수신 중 검사한다. 바이트 상한은 선행 BOM을 포함해 1,800,003이다. 실제 body 한도 초과는 TOO_LARGE/413이고 기존 사진/메뉴 validation 코드는 유지한다. [검증](verification/menu-request-body.md).
+
+## 메뉴 해석 geometry-v3
+
+parse 응답의 parser는 geometry-v3다. 가격이 손상된 독립 OCR 셀은 금액으로 확정하지 않고 이름·lineIds·photoId·imageRevision을 보존한 `price: null`, `confirmed: false`, `productId: null` 후보로 반환한다. 금액 없는 카탈로그 이름 후보도 같은 상태로 남긴다. 제목/설명 등 모든 무가격 줄을 술로 확정하지 않으며 원문은 photos.lines에 유지한다. 클라이언트 수정은 원문을 덮어쓰지 않고, recommend는 사용자가 확정한 항목만 받는다. 버전별 실제 배포 상태는 docs/verification/menu-price-review.md를 따른다.
