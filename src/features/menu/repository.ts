@@ -42,7 +42,20 @@ export async function menuRequest(
   const { data, error } = await scoped.functions.invoke("menu-recommend", {
     body: { action: items ? "recommend" : "parse", photos, items },
   });
-  if (error) throw new Error("MENU_SERVICE_UNAVAILABLE");
+  if (error) {
+    let code: unknown;
+    try {
+      const response = (error as { context?: Response }).context;
+      code = response ? (await response.json())?.code : undefined;
+    } catch {
+      /* Never expose remote exception text. */
+    }
+    throw new Error(
+      code === "MENU_ITEM_LIMIT"
+        ? "MENU_ITEM_LIMIT"
+        : "MENU_SERVICE_UNAVAILABLE",
+    );
+  }
   requireCatalogVersion(data);
   if (items) return validateMenuResult(data, items);
   return { items: validateItems(data?.items, photos) };

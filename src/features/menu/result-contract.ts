@@ -187,6 +187,8 @@ export function menuFailureMessage(
   error: unknown,
   action: "parse" | "recommend",
 ) {
+  if (error instanceof Error && error.message === "MENU_ITEM_LIMIT")
+    return "메뉴는 한 번에 100개까지 확인할 수 있어요. 사진을 나눠서 다시 시도해주세요. 올린 사진과 이전 입력은 보관했어요.";
   if (error instanceof Error && error.message === "MENU_EVIDENCE_STALE")
     return "추천 중 기록이 바뀌었어요. 입력은 보관했어요. 최신 기록으로 다시 추천받아 주세요.";
   if (error instanceof Error && error.message === "MENU_CATALOG_MISMATCH")

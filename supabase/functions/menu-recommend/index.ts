@@ -88,7 +88,12 @@ Deno.serve(async (request) => {
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     return reply(
-      { code: /^(INVALID_|TOO_LARGE)/.test(code) ? code : "MENU_FAILED" },
+      {
+        code:
+          /^(INVALID_|TOO_LARGE)/.test(code) || code === "MENU_ITEM_LIMIT"
+            ? code
+            : "MENU_FAILED",
+      },
       400,
     );
   }

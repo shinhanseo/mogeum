@@ -91,6 +91,7 @@ export default function DevMenu() {
           },
           parse: async (photos) => {
             if (failure === "catalog") throw new Error("MENU_CATALOG_MISMATCH");
+            if (failure === "capacity") throw new Error("MENU_ITEM_LIMIT");
             return parseMenu(photos);
           },
           save: async (d) => d.revision + 1,

@@ -1,3 +1,4 @@
+import { menuWithRows } from "./fixtures/menu-capacity";
 import { refreshMenuEvidence } from "../src/features/menu/evidence";
 import { tastePhotoUrls } from "../src/features/taste/repository";
 import { validateMenuResult } from "../src/features/menu/result-contract";
@@ -52,6 +53,12 @@ test(
     const endpoint = "/functions/v1/menu-recommend";
     assert.equal((await request(endpoint, undefined, {})).status, 401);
     assert.equal((await request(endpoint, "invalid", {})).status, 401);
+    const overCapacity = await request(endpoint, a.access_token, {
+      action: "parse",
+      photos: [menuWithRows(101)],
+    });
+    assert.equal(overCapacity.status, 400);
+    assert.equal((await overCapacity.json()).code, "MENU_ITEM_LIMIT");
     const id = randomUUID();
     const photos = [
       {

@@ -127,3 +127,5 @@ POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{ac
 ### 메뉴 로컬 복구와 저장 재전송
 
 로컬 restore는 empty/ready/failed로 구분하며 failed를 새 세션으로 저장하지 않는다. 현재 메뉴의 낡은 제품 확인은 해제하되 pendingSave는 정확한 내용과 revision을 보존한다. save_menu_session transport의 productId는 bounded opaque ID이며 제품 확인 권한이 아니다. 추천 Edge는 현재 카탈로그/메뉴 이름 후보와 일치하지 않는 ID를 계속 거부한다. [복구 검증과 한계](verification/menu-recovery.md)를 참조한다.
+
+메뉴 parse는 세션 전체에서 100개를 넘는 판매 항목이 나오면 HTTP 400 / MENU_ITEM_LIMIT를 반환한다. 일부 항목만 조용히 잘라 반환하지 않는다. 앱은 사진/OCR/이전 수정 입력을 유지하고 사진을 나눠 처리하도록 안내한다. 정확히 100개는 허용한다.

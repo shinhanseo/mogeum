@@ -174,7 +174,8 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
       });
     }
   }
-  return output.slice(0, 100);
+  if (output.length > 100) throw new Error("MENU_ITEM_LIMIT");
+  return output;
 }
 /** Stored replay is opaque transport, never a product confirmation or recommendation permission. */
 export function validateItems(
