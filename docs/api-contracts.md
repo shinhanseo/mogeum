@@ -131,3 +131,5 @@ POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{ac
 메뉴 parse는 세션 전체에서 100개를 넘는 판매 항목이 나오면 HTTP 400 / MENU_ITEM_LIMIT를 반환한다. 일부 항목만 조용히 잘라 반환하지 않는다. 앱은 사진/OCR/이전 수정 입력을 유지하고 사진을 나눠 처리하도록 안내한다. 정확히 100개는 허용한다.
 
 현재 OCR 엔진 허용 값은 `apple-vision-v1`, `apple-vision-v2`, `mlkit-korean-16.0.1`, `manual`이다. v2는 Vision 좌표를 adapter에서 이미지 경계로 clip하며 서버는 여전히 유한한 [0,1] 사각형 꼭짓점만 받는다. 관리형 함수에 허용 목록 변경을 배포하기 전에는 v2 입력 연결을 완료로 보지 않는다.
+
+메뉴 Edge 요청 본문은 600,000 UTF-16 코드 유닛을 유지하며 stream 수신 중 검사한다. 바이트 상한은 선행 BOM을 포함해 1,800,003이다. 실제 body 한도 초과는 TOO_LARGE/413이고 기존 사진/메뉴 validation 코드는 유지한다. [검증](verification/menu-request-body.md).

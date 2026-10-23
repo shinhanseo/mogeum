@@ -54,6 +54,13 @@ test(
     const endpoint = "/functions/v1/menu-recommend";
     assert.equal((await request(endpoint, undefined, {})).status, 401);
     assert.equal((await request(endpoint, "invalid", {})).status, 401);
+    const tooLarge = await request(
+      endpoint,
+      a.access_token,
+      "x".repeat(600000),
+    );
+    assert.equal(tooLarge.status, 413);
+    assert.equal((await tooLarge.json()).code, "TOO_LARGE");
     const overCapacity = await request(endpoint, a.access_token, {
       action: "parse",
       photos: [menuWithRows(101)],

@@ -1,3 +1,4 @@
+import { readMenuBody, MenuBodyTooLargeError } from "../_shared/menu-body.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import {
   parseMenu,
@@ -38,8 +39,7 @@ Deno.serve(async (request) => {
   const { data: auth, error: authError } = await client.auth.getUser(token);
   if (authError || !auth.user) return reply({ code: "UNAUTHENTICATED" }, 401);
   try {
-    const raw = await request.text();
-    if (raw.length > 600000) return reply({ code: "TOO_LARGE" }, 413);
+    const raw = await readMenuBody(request);
     const body = JSON.parse(raw);
     const photos = validatePhotos(body.photos);
     if (body.action === "parse")
@@ -94,7 +94,7 @@ Deno.serve(async (request) => {
             ? code
             : "MENU_FAILED",
       },
-      400,
+      error instanceof MenuBodyTooLargeError ? 413 : 400,
     );
   }
 });

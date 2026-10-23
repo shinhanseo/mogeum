@@ -101,3 +101,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 메뉴 사진 준비 후 생성된 임시 캐시 파일만 정리합니다. [양 플랫폼 원본 보존·잔여 파일 검증](docs/verification/menu-photo-cache.md).
 
 취향·추천 근거 사진의 비공개 링크를 한 번에 발급하고 부분 실패·지연 응답을 격리합니다. [묶음 발급과 권한 검증](docs/verification/evidence-photo-batch.md).
+
+메뉴 요청 본문을 읽는 도중 한도를 검사해 과대 입력을 중단합니다. [본문 한도·한글 stream 검증](docs/verification/menu-request-body.md).
