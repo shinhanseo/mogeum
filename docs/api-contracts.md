@@ -137,3 +137,7 @@ POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{ac
 ## 메뉴 해석 geometry-v3
 
 parse 응답의 parser는 geometry-v3다. 가격이 손상된 독립 OCR 셀은 금액으로 확정하지 않고 이름·lineIds·photoId·imageRevision을 보존한 `price: null`, `confirmed: false`, `productId: null` 후보로 반환한다. 금액 없는 카탈로그 이름 후보도 같은 상태로 남긴다. 제목/설명 등 모든 무가격 줄을 술로 확정하지 않으며 원문은 photos.lines에 유지한다. 클라이언트 수정은 원문을 덮어쓰지 않고, recommend는 사용자가 확정한 항목만 받는다. 버전별 실제 배포 상태는 docs/verification/menu-price-review.md를 따른다.
+
+## 술장 cursor 조회
+
+홈의 Data API 조회는 cellar_overview에 owner 필터·검색/주종 필터를 적용하고 last_consumed_at DESC NULLS LAST, id ASC로 31개를 읽어 30개를 노출한다. 다음 cursor는 마지막 노출 항목의 원본 timestamp(최대 소수점 6자리)와 UUID다. timestamp를 Date.toISOString으로 재생성하지 않는다. 전체 술장 수는 최초 페이지에서 별도의 owner-scoped HEAD count로 읽고 필터 결과 수와 구분한다. 사진 링크는 노출할 30개만 발급한다. cursor 입력은 UUID/ISO timestamp 형태를 검사하고, 실제 접근 권한은 verified Auth의 RLS/Storage 정책이 결정한다. 스크롤 사이 DB 변경에 대한 snapshot 고정 계약은 아니며 focus 재진입 시 첫 페이지부터 갱신한다.

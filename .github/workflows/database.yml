@@ -5,6 +5,8 @@ on:
       - 'supabase/**'
       - 'src/features/records/**'
       - 'src/features/taste/**'
+      - 'src/features/cellar/**'
+      - 'tests/cellar-api.test.ts'
       - 'tests/taste-summary.test.ts'
       - 'tests/database.test.ts'
       - 'tests/storage-api.test.ts'

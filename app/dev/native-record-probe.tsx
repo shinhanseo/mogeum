@@ -29,7 +29,7 @@ import {
   loadTasteContext,
   analyzeTaste,
 } from "../../src/features/taste/repository";
-import { loadCellar } from "../../src/features/cellar/load";
+import { createCellarRepository } from "../../src/features/cellar/repository";
 import { probeNativeMenu } from "../../src/dev/menu-backend-probe";
 type Report = {
   version: 1;
@@ -265,15 +265,17 @@ export default function NativeRecordProbe() {
       ensure(denied.error && !denied.data);
       await pass("real_binary_read_and_foreign_owner_denied");
       await phase("native_cellar_batch_read");
-      const cellar = await loadCellar(owner, {
-        page: (from, size) => repo.listCellar(from, size),
-        photos: (paths) => repo.photoUrls(owner, paths),
-        active: () => alive.current,
-      });
-      const cellarItem = cellar?.find(
+      const page = await createCellarRepository(a, owner).page(
+        { query: "Native synthetic", category: "위스키" },
+        null,
+        () => alive.current,
+      );
+      ensure(page.total === 1 && page.next === null && page.items.length === 1);
+      const cellarItem = page.items.find(
         (item) => item.id === saved.cellarEntryId,
       );
       ensure(cellarItem?.photoUri && (await fetch(cellarItem.photoUri)).ok);
+      await pass("native_cellar_cursor_page");
       await pass("native_cellar_batch_read_binary");
       const context = await loadTasteContext(a);
       ensure(analyzeTaste(context.snapshot).facts.length === 0);

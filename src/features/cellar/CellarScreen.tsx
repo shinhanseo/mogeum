@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Button } from '../../components/Button';
 import { ChoiceChip } from '../../components/ChoiceChip';
 import { Icon } from '../../components/Icon';
@@ -14,22 +14,25 @@ function PhotoCard({ item, onPress }: { item: CellarItem; onPress: () => void })
     <Text style={styles.category}>{item.category || '종류 미정'}{item.recordCount>1?` · 기록 ${item.recordCount}회`:''}</Text>
   </Pressable>;
 }
-export function CellarScreen({ items, onRecord, onOpen }: { items: CellarItem[]; onRecord: () => void; onOpen: (entryId: string) => void }) {
+export function CellarScreen({ items, totalCount, loading, error, onNext, onRetry, category, onCategory, query, onQuery, onRecord, onOpen }: {
+  items: CellarItem[]; totalCount: number; loading: boolean; error: boolean; onNext: () => void; onRetry: () => void;
+  category: Category | '전체'; onCategory: (value: Category | '전체') => void; query: string; onQuery: (value: string) => void;
+  onRecord: () => void; onOpen: (entryId: string) => void;
+}) {
   const { width } = useWindowDimensions();
   const filterScale = Math.min(1, (width - 48) / 352);
-  const [category, setCategory] = useState<Category | '전체'>('전체');
-  const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const filtered = items.filter(item => (category === '전체' || category === item.category) && (item.name ?? '').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
-  const empty = items.length === 0;
+  const filtered = items;
+  const empty = !items.length && totalCount === 0 && !loading && !error;
+  const status = <View style={styles.noResults}>{loading ? <ActivityIndicator accessibilityLabel="술장 불러오는 중" color={colors.primary} /> : error ? <><Text accessibilityRole="alert" style={styles.emptyBody}>술장을 불러오지 못했어요.</Text><Button label="다시 불러오기" variant="secondary" onPress={onRetry} /></> : null}</View>;
   return <View style={styles.page}>
     <View style={styles.header}>
-      <View style={styles.titleRow}><Text style={styles.title}>나의 술장</Text><Pressable accessibilityRole="button" accessibilityLabel="술 찾기" onPress={() => setSearchOpen(!searchOpen)} style={styles.searchAction}><Icon name="search" color={colors.text} /></Pressable></View><Text style={styles.count}>모아둔 술 {items.length}</Text>
-      {searchOpen && <TextInput accessibilityLabel="술 이름 검색" placeholder="술 이름으로 찾기" placeholderTextColor={colors.muted} value={query} onChangeText={setQuery} style={styles.search} />}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filters}>{(['전체', ...categories] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => setCategory(value)} compact style={{ paddingHorizontal: 15 * filterScale, minWidth: ({ 전체: 49, 위스키: 67, 와인: 53, 맥주: 53, 전통주: 74 })[value] * filterScale }} />)}</ScrollView>
+      <View style={styles.titleRow}><Text style={styles.title}>나의 술장</Text><Pressable accessibilityRole="button" accessibilityLabel="술 찾기" onPress={() => setSearchOpen(!searchOpen)} style={styles.searchAction}><Icon name="search" color={colors.text} /></Pressable></View><Text style={styles.count}>모아둔 술 {totalCount}</Text>
+      {searchOpen && <TextInput maxLength={150} accessibilityLabel="술 이름 검색" placeholder="술 이름으로 찾기" placeholderTextColor={colors.muted} value={query} onChangeText={onQuery} style={styles.search} />}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filters}>{(['전체', ...categories] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => onCategory(value)} compact style={{ paddingHorizontal: 15 * filterScale, minWidth: ({ 전체: 49, 위스키: 67, 와인: 53, 맥주: 53, 전통주: 74 })[value] * filterScale }} />)}</ScrollView>
     </View>
-    {!empty && filtered.length === 0 ? <View style={styles.noResults}><Text style={styles.emptyTitle}>찾는 술이 없어요</Text><Button label="검색 조건 지우기" variant="secondary" onPress={() => { setCategory('전체'); setQuery(''); }} /></View> :
-      <FlatList data={shelfRows(filtered)} keyExtractor={(_, index) => `shelf-${index}`} showsVerticalScrollIndicator={false} contentContainerStyle={styles.list} renderItem={({ item: row, index }) => <View style={styles.shelf}>
+    {(loading || error) && !items.length ? status : !empty && filtered.length === 0 ? <View style={styles.noResults}><Text style={styles.emptyTitle}>찾는 술이 없어요</Text><Button label="검색 조건 지우기" variant="secondary" onPress={() => { onCategory('전체'); onQuery(''); }} /></View> :
+      <FlatList key={`${category}:${query}`} onEndReached={onNext} onEndReachedThreshold={0.5} ListFooterComponent={(loading || error) && items.length ? status : undefined} data={shelfRows(filtered)} keyExtractor={(_, index) => `shelf-${index}`} showsVerticalScrollIndicator={false} contentContainerStyle={styles.list} renderItem={({ item: row, index }) => <View style={styles.shelf}>
         <View style={styles.slots}>{row.map((item, column) => <View key={item?.id ?? `empty-${column}`} style={styles.slot}>{item && <PhotoCard item={item} onPress={() => onOpen(item.id)} />}</View>)}</View>
         {empty && index === 0 && <View style={styles.empty}><Text style={styles.emptyTitle}>아직 비어 있어도 괜찮아.</Text><Text style={styles.emptyBody}>마신 한 잔의 사진부터 모아볼까요?</Text><Button label="첫 사진 남기기" onPress={onRecord} style={{ marginTop: 4, marginHorizontal: 20 }} /></View>}
         <View style={styles.shelfTop} /><View style={styles.shelfFront} />
