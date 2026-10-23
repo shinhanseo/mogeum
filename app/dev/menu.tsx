@@ -1,5 +1,5 @@
 import { Image, Text, View } from "react-native";
-import { Redirect } from "expo-router";
+import { Redirect,useLocalSearchParams } from "expo-router";
 import { MenuFlow } from "../../src/features/menu/MenuFlow";
 import {
   parseMenu,
@@ -39,6 +39,7 @@ const snapshot: TasteSnapshot = {
   ],
 };
 export default function DevMenu() {
+ const {picker}=useLocalSearchParams<{picker?:string}>();
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <View style={{ flex: 1 }}>
@@ -50,16 +51,16 @@ export default function DevMenu() {
           backgroundColor: colors.selected,
         }}
       >
-        개발 검증 · 실제 기기 OCR / 합성 메뉴·취향 / 서버 호출 없음
+        개발 검증 · 실제 기기 OCR / 합성 취향 / 서버 호출 없음
       </Text>
       <MenuFlow
-        owner="menu-ocr-fixture"
+        owner={picker==='1'?'menu-picker-fixture':'menu-ocr-fixture'}
         fixtureEvidenceUri={
           Image.resolveAssetSource(
             require("../../assets/fixtures/figma-whisky.jpg"),
           )!.uri
         }
-        fixtureUri={
+        fixtureUri={picker==='1'?undefined:
           Image.resolveAssetSource(
             require("../../assets/fixtures/menu-synthetic.png"),
           )!.uri

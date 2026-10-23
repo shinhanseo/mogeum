@@ -49,4 +49,7 @@ Chrome에서 04 원본을 확인했다: 32(9:7760), 40(9:8329), 33(9:7820), 37(9
 ![인식 확인과 제품 후보](menu/ios-review.png)
 ![추천](menu/ios-recommendations.png)
 ![비교](menu/ios-comparison.png)
+![근거 기록](menu/ios-evidence.png)
 ![실제 OCR 줄 강조](menu/ios-original-location.png)
+
+`mogeum-dev://dev/menu?picker=1`은 서버 미호출의 합성 취향을 유지하면서 실제 시스템 사진 선택기를 사용하는 개발 검증 경로다. 사진 선택/OCR 결과를 고정 응답으로 대체하지 않는다. 합성 메뉴 이미지 두 장만 시뮬레이터에 넣어 검증한다.

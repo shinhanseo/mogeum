@@ -240,3 +240,22 @@ test("review restoration rejects reused item IDs with different source lines", a
     "직접 고친 이름",
   );
 });
+test("a request is not sent when its recovery payload cannot be persisted", async () => {
+  const { submitMenu } = await import("../src/features/menu/submission");
+  const p = photo(["글렌리벳 12년 15,000원"]);
+  let calls = 0;
+  await assert.rejects(
+    submitMenu([p], {
+      read: () => ({ id, revision: 0, photos: [], items: parseMenu([p]) }),
+      write: async () => {
+        throw new Error("storage full");
+      },
+      save: async () => {
+        calls++;
+        return 1;
+      },
+      active: () => true,
+    }),
+  );
+  assert.equal(calls, 0);
+});

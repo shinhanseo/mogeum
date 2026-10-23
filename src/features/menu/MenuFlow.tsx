@@ -65,16 +65,18 @@ export function MenuFlow({
       setDraft(d);
       setResult(null);
     }
-    if (restored.current)
-      writes.current = writes.current
+    if (restored.current) {
+      const write = writes.current
         .catch(() => {})
-        .then(() => persistMenu(owner, d))
-        .catch(() => {
-          if (alive.current)
-            setError(
-              "이 기기에 임시 저장하지 못했어요. 앱을 닫기 전에 다시 시도해주세요.",
-            );
-        });
+        .then(() => persistMenu(owner, d));
+      writes.current = write;
+      void write.catch(() => {
+        if (alive.current)
+          setError(
+            "이 기기에 임시 저장하지 못했어요. 앱을 닫기 전에 다시 시도해주세요.",
+          );
+      });
+    }
   };
   useEffect(() => {
     alive.current = true;
