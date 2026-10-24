@@ -10,6 +10,22 @@
 
 다음 한 잔의 출처 기반 추천·저장 목록·추천 이유 상세도 연결했습니다. 실제 로컬 인증으로 iOS/Android 저장·기록·해제를 확인했으며 [추천 이유 화면과 검증 범위](docs/verification/discovery-reason/README.md)를 참고하세요.
 
+앱 복귀 시 다음 한 잔을 최신화합니다. 양 플랫폼에서 별도 합성 세션의 북마크 변경이 복귀 직후 반영되는 것을 확인했습니다. [검증과 남은 실패 시나리오](docs/verification/discovery-foreground/README.md).
+
+추천 조회 도중 기록이 바뀌면 이전 근거와 새 이력을 섞어 반환하지 않도록 버전을 재확인합니다. [서버 검증과 관리형 미배포 범위](docs/verification/discovery-snapshot.md).
+
+내 취향의 갱신 실패 시 이전 요약/사진을 숨기고 재시도를 제공합니다. Android의 실제 로컬 API 연결 단절→복구를 확인했습니다. [내 취향 복구 검증](docs/verification/taste-refresh/README.md).
+
+메뉴판 사진 준비 중 취소·부분 실패는 미반영 파일만 정리하고 다음 준비 작업과 순서를 맞춥니다. [사진 준비/교체 검증과 제약](docs/verification/menu-preparation/README.md).
+
+iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메뉴판 사진은 계정·세션·판본을 검사해 복구합니다. [보존된 초안 복구 검증](docs/verification/menu-container-restore/README.md).
+
+노트 초안의 읽기·쓰기·정리를 직렬화하고, 완료 후 더 새롭게 작성된 초안은 보존합니다. [초안 순서·정리 검증](docs/verification/tasting-draft-order.md). Android 작성 단계의 시스템 Back 연결은 추가했으며 네이티브 동작 확인은 남아 있습니다. [미완료 검증 범위](docs/verification/composer-back/README.md).
+
+기록 저장·사진 교체의 동시 요청과 완료 정리를 계정/기록별로 직렬화합니다. [보관 요청 동시 실행 검증](docs/verification/record-request-order.md).
+
+술 상세도 앱 복귀 시 기록·사진·이력을 재확인하고, 만료/실패한 사진 URL은 한 번만 재발급합니다. [iOS 실제 수정·삭제 복귀 검증과 제약](docs/verification/detail-refresh/README.md).
+
 ## 출시 범위
 
 - 사진만으로 기록 → 질문형 테이스팅 노트 → 술장·검색·상세·수정·삭제·재음용 기록
@@ -106,7 +122,7 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 
 메뉴 요청 본문을 읽는 도중 한도를 검사해 과대 입력을 중단합니다. [본문 한도·한글 stream 검증](docs/verification/menu-request-body.md).
 
-기록 저장·사진 교체 복구에서 작업별 사진 경로와 저장 receipt를 확인하고 손상된 요청을 보존합니다. [파일 경로·복구 회귀](docs/verification/record-draft-paths.md).
+기록 저장·사진 교체 복구에서 작업별 사진 경로와 저장 receipt를 확인하고 손상된 요청을 보존합니다. iOS 컨테이너가 바뀌면 동일 작업 사진을 현재 Documents 경로로 복구하며 서버 요청과 receipt는 유지합니다. [파일 경로·복구 회귀](docs/verification/record-draft-paths.md).
 
 **iOS·Android 실제 native + 로컬 서버 저장 검증 통과:** 사진 준비·업로드/RPC·응답 유실 재시도·타인 접근 차단·로컬/서버 사진 삭제를 합성 데이터로 확인했습니다. [검증 보고서와 재현](docs/verification/native-record-backend.md). 관리형 소셜 로그인·실제 계정 UI E2E는 별도입니다.
 

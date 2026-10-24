@@ -48,13 +48,17 @@ async function main() {
     !/^native-[0-9a-f-]+@example\.test$/i.test(identity.data.user.email ?? "")
   )
     throw new Error("Synthetic identity mismatch");
-  const [records, entries, wishlist] = await Promise.all([
+  const [records, entries, visibleEntries, wishlist] = await Promise.all([
     admin
       .from("tasting_records")
       .select("id", { count: "exact", head: true })
       .eq("user_id", owner),
     admin
       .from("cellar_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", owner),
+    admin
+      .from("cellar_overview")
       .select("id", { count: "exact", head: true })
       .eq("user_id", owner),
     admin
@@ -65,11 +69,13 @@ async function main() {
   if (
     records.error ||
     entries.error ||
+    visibleEntries.error ||
     wishlist.error ||
     !wishlist.data ||
     records.count !== expectedRecords ||
     entries.count === null ||
-    entries.count > expectedRecords
+    visibleEntries.count === null ||
+    visibleEntries.count > expectedRecords
   )
     throw new Error("Unexpected persisted state");
   const state = parseWishlist(
@@ -86,6 +92,7 @@ async function main() {
     runId: manifest.runId,
     recordCount: records.count,
     entryCount: entries.count,
+    visibleEntryCount: visibleEntries.count,
     wishlist: state,
     checkedAt: new Date().toISOString(),
   };

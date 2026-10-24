@@ -49,3 +49,7 @@ tests/fixtures/          synthetic OCR and AI fixtures
 ## 아직 고정하지 않는 것
 
 특정 AI 모델명, OCR 모델/변환 방식, 벡터 DB, 큐 제품, 유료 요금제. 도입 시 공식 문서·실기기·의존성 호환성을 확인하고 선정 이유를 docs/decisions.md에 기록한다.
+
+## 네이티브 인증 암호화
+
+Supabase PKCE에서 plain fallback이 관찰돼 native client 생성 전에 expo-crypto 기반 최소 S256 브리지를 적용했다. 기존 crypto 구현과 browser는 보존하고 SHA-256 실패는 전파한다. docs/verification/native-pkce에 native 표준값·SDK 요청 검증이 있다. provider 인증 성공과는 구분한다.
