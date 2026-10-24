@@ -1,3 +1,5 @@
+import { createWishlistQueue } from "../../src/features/discovery/wishlist";
+import { parseDiscoveryResult } from "../../src/features/discovery/contract";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, ScrollView, Text } from "react-native";
 import { Redirect, useLocalSearchParams } from "expo-router";
@@ -91,6 +93,7 @@ export default function NativeRecordProbe() {
     const users: string[] = [];
     let guardUri: string | null = null;
     let ownsSource = false;
+    let wishlistKey: string | null = null;
     const publish = async () => {
       await FileSystem.writeAsStringAsync(
         output,
@@ -328,6 +331,134 @@ export default function NativeRecordProbe() {
           pass,
         });
       }
+      await phase("native_next_drinks");
+      const discovered = await a.functions.invoke("next-drinks", {
+        body: {},
+        timeout: 30000,
+      });
+      ensure(
+        !discovered.error &&
+          discovered.data.catalogSize === 32 &&
+          discovered.data.modelUsed === false,
+      );
+      parseDiscoveryResult(discovered.data);
+      if (query.menu === "1")
+        ensure(
+          discovered.data.evidenceRecords.some(
+            (r: { id: string }) => r.id === saved.recordId,
+          ),
+        );
+      await pass("native_next_drinks_authenticated_evidence");
+      const wishOperation = randomUUID();
+      const wish = () =>
+        a.rpc("set_drink_wishlist", {
+          p_operation_id: wishOperation,
+          p_product_id: "glenlivet-12",
+          p_saved: true,
+          p_expected_revision: 0,
+        });
+      const wished = await wish();
+      ensure(!wished.error && wished.data.revision === 1);
+      const replayedWish = await wish();
+      ensure(!replayedWish.error && replayedWish.data.replayed);
+      const foreignDiscovery = await b.functions.invoke("next-drinks", {
+        body: {},
+        timeout: 30000,
+      });
+      ensure(
+        !foreignDiscovery.error &&
+          foreignDiscovery.data.wishlist.length === 0 &&
+          foreignDiscovery.data.evidenceRecords.length === 0,
+      );
+      await pass("native_wishlist_replay_foreign_isolation");
+      await phase("native_wishlist_durable_recovery");
+      const isolatedWishlistKey = `mogeum:native-wishlist:${runId}:${owner}`;
+      ensure((await AsyncStorage.getItem(isolatedWishlistKey)) === null);
+      wishlistKey = isolatedWishlistKey;
+      let loseWishlistResponse = true,
+        blockWishlistRefresh = true,
+        wishlistCalls = 0;
+      const wishlistPorts = {
+        active: (id: string) => id === owner,
+        read: () => AsyncStorage.getItem(isolatedWishlistKey),
+        write: (_owner: string, raw: string) =>
+          AsyncStorage.setItem(isolatedWishlistKey, raw),
+        remove: () => AsyncStorage.removeItem(isolatedWishlistKey),
+        apply: async (
+          op: import("../../src/features/discovery/wishlist").WishlistOperation,
+        ) => {
+          wishlistCalls++;
+          const applied = await a.rpc("set_drink_wishlist", {
+            p_operation_id: op.operationId,
+            p_product_id: op.productId,
+            p_saved: op.saved,
+            p_expected_revision: op.expectedRevision,
+          });
+          ensure(!applied.error);
+          if (loseWishlistResponse) {
+            loseWishlistResponse = false;
+            throw new Error("SYNTHETIC_RESPONSE_LOSS");
+          }
+          return applied.data;
+        },
+        refresh: async () => {
+          if (blockWishlistRefresh) throw new Error("SYNTHETIC_REFRESH_LOSS");
+          const rows = await a
+            .from("drink_wishlist")
+            .select("product_id,saved,revision");
+          ensure(!rows.error);
+          return rows.data!.map((r) => ({
+            productId: r.product_id,
+            saved: r.saved,
+            revision: r.revision,
+          }));
+        },
+      };
+      await createWishlistQueue(wishlistPorts)
+        .submit({
+          version: 1,
+          owner,
+          operationId: randomUUID(),
+          productId: "makers-mark",
+          saved: true,
+          expectedRevision: 0,
+        })
+        .then(
+          () => {
+            throw new Error("EXPECTED_LOSS");
+          },
+          (e) => ensure(e.message === "SYNTHETIC_RESPONSE_LOSS"),
+        );
+      ensure(await AsyncStorage.getItem(isolatedWishlistKey));
+      await createWishlistQueue(wishlistPorts)
+        .resume(owner)
+        .then(
+          () => {
+            throw new Error("EXPECTED_LOSS");
+          },
+          (e) => ensure(e.message === "SYNTHETIC_REFRESH_LOSS"),
+        );
+      const changedWishlist = await a.rpc("set_drink_wishlist", {
+        p_operation_id: randomUUID(),
+        p_product_id: "makers-mark",
+        p_saved: false,
+        p_expected_revision: 1,
+      });
+      ensure(!changedWishlist.error);
+      blockWishlistRefresh = false;
+      const restoredWishlist =
+        await createWishlistQueue(wishlistPorts).resume(owner);
+      ensure(
+        wishlistCalls === 2 &&
+          restoredWishlist?.state.some(
+            (r) =>
+              r.productId === "makers-mark" && r.revision === 2 && !r.saved,
+          ),
+      );
+      ensure((await AsyncStorage.getItem(isolatedWishlistKey)) === null);
+      await pass(
+        "native_asyncstorage_wishlist_lost_response_receipt_current_state",
+      );
       await phase("record_and_binary_delete");
       const detail = await loadRecordDetail(a, owner, {
         recordId: saved.recordId,
@@ -346,6 +477,8 @@ export default function NativeRecordProbe() {
       value.status = "failed";
       value.finishedAt = new Date().toISOString();
     } finally {
+      if (wishlistKey)
+        await AsyncStorage.removeItem(wishlistKey).catch(() => {});
       if (ownsSource)
         await FileSystem.deleteAsync(source, { idempotent: true }).catch(
           () => {},
