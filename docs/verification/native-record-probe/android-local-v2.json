@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "platform": "android",
+  "runId": "android-native-768e6a32-247a-47bc-8aaa-e0f591a00b32",
+  "startedAt": "2026-10-23T06:49:45.763Z",
+  "status": "completed",
+  "phase": "completed",
+  "passed": [
+    "real_local_auth_two_owners",
+    "native_upload_rpc_durable_replay",
+    "real_binary_read_and_foreign_owner_denied",
+    "photo_only_has_no_sensory_evidence",
+    "stored_operation_file_only_cleanup",
+    "real_record_delete_and_storage_cleanup"
+  ],
+  "finishedAt": "2026-10-23T06:49:47.016Z"
+}

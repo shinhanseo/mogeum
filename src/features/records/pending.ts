@@ -1,11 +1,11 @@
 import type { RecordInput, SavedRecord } from './repository';
-export type PendingRecord = { version: 1; ownerId: string; operationId: string; input: RecordInput; localPhoto?: string; saved?: SavedRecord };
+export type PendingRecord = { version: 1; ownerId: string; operationId: string; input: RecordInput; entryId?: string; localPhoto?: string; saved?: SavedRecord };
 export type SavePorts = {
   ownerId: () => string | null;
   read: () => Promise<PendingRecord | null>;
   write: (pending: PendingRecord) => Promise<void>;
   upload: (path: string, localUri: string) => Promise<void>;
-  save: (operationId: string, input: RecordInput) => Promise<SavedRecord>;
+  save: (operationId: string, input: RecordInput, entryId: string | null) => Promise<SavedRecord>;
 };
 /** Never changes the input/operation when an upload or RPC response is uncertain. */
 export async function submitPending(pending: PendingRecord, ports: SavePorts) {
@@ -15,16 +15,20 @@ export async function submitPending(pending: PendingRecord, ports: SavePorts) {
   checkOwner();
   const existing = await ports.read();
   if (existing && existing.operationId !== pending.operationId) throw new Error('이전에 저장하던 기록을 먼저 완료해주세요.');
+  if (existing && (existing.entryId ?? null) !== (pending.entryId ?? null)) throw new Error('저장 중인 술 연결을 변경할 수 없어요. 원래 기록을 다시 시도해주세요.');
   if (existing && JSON.stringify(existing.input) !== JSON.stringify(pending.input)) throw new Error('저장 중인 원래 기록을 다시 시도해주세요.');
   checkOwner();
+  // A mounted screen may still hold the pre-response draft after a previous attempt
+  // persisted its receipt. Never downgrade that receipt or upload/save again.
+  const receipt = existing?.saved ?? pending.saved;
+  if (receipt) return receipt;
   await ports.write(pending);
-  if (pending.saved) return pending.saved;
   if (pending.input.photo && pending.localPhoto) {
     checkOwner();
     await ports.upload(pending.input.photo.storagePath, pending.localPhoto);
   }
   checkOwner();
-  const result = await ports.save(pending.operationId, pending.input);
+  const result = await ports.save(pending.operationId, pending.input, pending.entryId ?? null);
   // Save receipt even if the active account changed while awaiting the server.
   await ports.write({ ...pending, saved: result });
   checkOwner();

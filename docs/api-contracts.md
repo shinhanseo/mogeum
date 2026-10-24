@@ -6,6 +6,8 @@
 
 Authorization Bearer JWT 검증 필수. 클라이언트가 body의 userId로 타인 데이터를 요청할 수 없다. 요청은 schemaVersion과 operationId/idempotencyKey를 가진다. 오류는 code, 사용자 메시지, retryable, 관련 photoId를 포함한다. 내부 키·stack trace는 응답하지 않는다. 재시도는 같은 입력 버전에서 중복 결과를 만들지 않는다.
 
+`next-drinks`는 취향 snapshot과 전체 이력 조회 전후의 전체 기록 hash/개수를 비교한다. 조회 중 변경은409 `TASTE_CONTEXT_CHANGED`이며 앱에서 이전 개인 추천을 폐기하고 재조회한다. 검증 조회 실패는503이고 오래된 성공 결과로 대체하지 않는다. 현재 소스/로컬 번들에 구현됐으며 관리형 배포 여부는 docs/verification/discovery-snapshot.md를 따른다.
+
 | 작업 | 입력 | 출력 |
 |---|---|---|
 | taste-summary | inputRevision | status, summaryId/jobId, claims와 evidence recordIds |
@@ -81,3 +83,69 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 - 앱은 기기에 저장 시도 ID와 원래 revision을 먼저 보관하고 응답이 불확실한 상태에서 다른 내용으로 덮어쓰지 않는다. 권한/충돌/연결 오류를 모두 성공처럼 처리하지 않는다. 충돌 후 최신 내용과 비교하는 UI는 후속이다.
 
 `supabase/tasting-catalog-v2.json`과 마이그레이션 내 snapshot은 동일해야 한다. v2가 개발 DB에 적용되었으므로 기존 code의 의미를 바꾸려면 새로운 버전과 마이그레이션을 추가한다. `scripts/check-tasting-contract.ts`로 앱 정의·DB snapshot·마이그레이션의 일치를 읽기 전용으로 검증한다. 적용된 마이그레이션을 수정해 재배포하지 않는다.
+
+### 반복 기록 클라이언트 계약
+
+`/record?entryId=<개인 술장 UUID>`는 해당 사용자의 `cellar_entries`에서 id/display_name/category만 읽는다. 전역 drinks ID나 과거 record ID로 대체하지 않는다. 조회 실패는 작성 차단 상태이며 자동으로 새 술장 저장으로 전환하지 않는다.
+
+기존 `create_tasting_record` RPC의 p_entry_id에 확인한 entryId를 전달한다. 로컬 PendingRecord v1에 선택적 entryId를 함께 영속화한다. 기존 v1 데이터의 entryId 미존재는 null(새 항목)로 호환한다. 같은 operation ID의 input뿐 아니라 entryId 변경/누락도 저장 재시도에서 거부한다. 이미 저장 중인 다른 작업이 있으면 그 작업의 payload와 연결을 복구한다. 노트 보충은 이 RPC가 아니라 기존 save_tasting_note 경로를 유지한다.
+
+## 기본 정보 수정·삭제 · 2026-10-22
+
+- `edit_tasting_record(p_record_id,p_expected_revision,p_patch)`는 기존 update RPC의 소유권/버전 검증을 재사용한다. 주종 변경은 답변 이관이 필요하므로 거부한다. 한 번만 기록한 술의 이름 변경은 술장 display_name과 원자 동기화하고, 여러 경험이 있으면 해당 경험 이름만 바꾼다.
+- 앱의 이름/현지 날짜/재음용 의사/선택 별점/와인 빈티지 수정은 새 경험을 만들지 않는다. 40001은 최신 기록을 다시 확인하게 하고 자동 덮어쓰지 않는다. 네트워크 결과 미확인 상태에서는 수정/삭제의 원래 행동으로만 재시도한다.
+- 개별 기록 삭제는 `tasting_records`의 JWT 소유자+id+revision 조건으로 실행한다. 0행 삭제 후 소유 기록이 여전히 있으면 충돌, 없으면 이미 삭제된 응답 유실 재시도로 처리한다. DB cascade는 해당 경험의 자식과 대표 사진 참조를 정리하고 binary 삭제 job을 남긴다.
+- 앱의 사진 정리기는 로그인 사용자의 미완료 job을 최대 20개 읽고 Storage remove 후 `complete_photo_deletion(p_job_id)`를 호출한다. 이 definer 함수는 활성 사용자/작업 소유자/Storage 객체 부재를 다시 확인한 뒤에만 done 처리한다. 파일이 있으면 false, 남의 작업은 42501이다. 실패 job은 다음 술장 focus에서 재시도한다. 앱이 열리지 않거나 계정이 이미 삭제된 경우 처리하는 서버 worker는 후속이다.
+
+삭제된 생성 요청 ID는 deleted_record_operations에 사용자별 ID·삭제 시각만 남긴다. create_tasting_record는 같은 advisory lock 아래 삭제 영수증을 검사하여 P0002를 반환하며 기록을 재생성하지 않는다. 앱은 그 오류의 기존 pending을 정리한다. 계정 제거 시 영수증도 cascade 정리한다. 이는 위 v1 설명의 tombstone 후속 항목을 구현한 것이다.
+
+## 사진 교체·기록 이동 · 2026-10-23
+
+- `change_record_attachment(p_record_id,p_operation_id,p_expected_revision,p_change)` → `{recordId,cellarEntryId,revision,replayed}`. 활성 JWT 소유자만 호출. private receipt로 동일 요청 재실행을 반환하며 operation 재사용/다른 payload는 23505, 최신 revision 충돌은 40001, 삭제는 P0002.
+- photo: `{kind:'photo',storagePath,width,height}`. 먼저 소유자/records/operationId/photo.jpg에 새 파일을 업로드한다. 트랜잭션에서 첫 사진 metadata만 교체하고 대표 사진을 갱신한다. 기존 사진은 deletion job으로 정리하며 다른 첨부는 보존한다. 파일/입력 오류면 원래 사진을 포함해 rollback.
+- move: `{kind:'move',entryId}`. 소유한 다른 술장으로 경험 한 건만 이동. split: `{kind:'split',name:null|string}`. 새 술장을 만들어 분리. 날짜/사진 경로/주종/평가/빈티지/확정 노트/답변은 변경하지 않는다. 다른 주종의 술장 선택 시 경고하고 원래 주종을 보존한다.
+- 앱은 계정+기록별 immutable pending을 저장한다. 응답 유실 시 같은 업로드 경로/operation/expectedRevision으로 복구한다. 계정 변경 시 중단. 충돌이면 최신 내용 재조회 후 새로운 요청으로 진행한다. 정상 완료 뒤 상세를 재조회한다.
+- record revision은 변경된다. AI 요약 증거 무효화 UI/서버는 AI 기능 구현 단계이며 이 RPC만으로 완료되었다고 보지 않는다.
+
+## 내 기록 기반 취향 요약 v1 · 2026-10-23
+
+- `taste_summary_context()`는 활성 JWT 소유자의 `{snapshot:{hash,records,totalRecords,omittedCount},cached,stale,running}`를 반환한다. hash는 모든 경험 ID/revision + taste-v1이며 상세 분석 입력은 최근 200개로 제한한다. 클라이언트는 사용자 ID/근거/완성 주장을 입력하지 않는다.
+- `POST /functions/v1/taste-summary` body `{}`. 서명된 사용자 JWT를 `Auth.getUser(token)`로 검증한 뒤 자신의 context만 읽는다. 새 asymmetric JWT를 위해 legacy-secret gateway 검사를 사용하지 않으며 handler 인증은 필수다.
+- 200 ready/insufficient, 202 running, 401 UNAUTHENTICATED, 409 STALE_INPUT, 429 RATE_LIMITED, 503 AI_NOT_CONFIGURED, 502 ANALYSIS_FAILED. 실패 응답에 provider 상세/메모/키를 포함하지 않는다.
+- service_role만 `begin_taste_summary(owner,hash,lease)`/`finish_taste_summary(owner,hash,lease,result)` 호출 가능. 사용자는 private jobs/결과에 직접 쓰지 못한다. 서버 검증된 owner만 전달한다. 90초 lease, 20초 간격, 사용자별 하루 5회 획득 한도. 모델 자동 재시도 0, 호출 25초 timeout, 최대 출력 512 tokens.
+- 같은 hash 캐시는 재사용한다. 현재 hash와 다른 결과는 반환하지 않고 이전 요약을 숨긴다. 생성 중 수정/삭제/이동되면 완료 결과를 거절한다. 소유자의 계정 삭제 시 cache도 cascade.
+- AI는 코드 집계에서 검증된 feature ID 1–3개를 선정한다. 임의 문장/새 맛/타 기록 ID를 받지 않는다. 앱은 승인된 표현과 근거 기록으로 화면을 구성한다. 모델에 사진·이름·날짜·자유 메모·확정 원문·사용자 ID를 보내지 않고 고정 특징 ID/계열/횟수/다양성만 보낸다.
+
+## 현재 연결된 메뉴 MVP API (evidence-rules-v1)
+
+POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{action:"parse", photos}`는 원본 OCR의 안정적인 photoId/imageRevision/lineId/정규화 polygon과 실제 confidence를 받아 확인 전 MenuItem을 반환한다. `{action:"recommend",photos,items}`는 확인 완료 메뉴만 받으며 현재 사용자 taste context로 비교한다. 응답은 recommendations, evidenceRecords(id/name/date/revision/category/revisit/noteText), tasteHash, recordCount, method, limitedCatalog다. 이 구현은 위의 전체 목표 계약 중 초기 연결이며 자동 병합/전체 카탈로그/LLM 설명 생성 완료가 아니다.
+
+앱 입력과 서버 재검증 타입은 `supabase/functions/_shared/menu-domain.ts`가 기준이다. 사진 자체는 기기에 남고 원문 OCR과 수정 값은 별도 배열로 유지한다. 메뉴 저장 RPC `save_menu_session(p_id,p_revision,p_photos,p_items)`는 owner JWT, 5장/100항목 제한, optimistic revision, 동일 요청 재시도를 적용한다. 사진/메뉴 수정 후 결과를 버리고 재추천한다. 원본은 이 기기에서만 확인 가능하다.
+
+### 메뉴 카탈로그 응답 호환성
+
+`menu-recommend`의 parse와 recommend 응답에는 `catalogVersion`을 포함한다. recommend는 `catalogSize`도 포함한다. 앱의 PRODUCT_CATALOG_VERSION과 다르거나 필드가 없는 예전 서버이면 MENU_CATALOG_MISMATCH로 결과 노출을 중단한다. 기존 사진/수정 입력을 보관한다. 추천은 메뉴 집합·제품 후보·출처 특징·근거 ID·상태·점수의 교차 참조를 검사하고 잘못된 응답은 INVALID_MENU_RESULT로 거부한다. 소유권 판단은 계속 서버의 verified JWT/RLS에서 수행한다.
+
+### 메뉴 로컬 복구와 저장 재전송
+
+로컬 restore는 empty/ready/failed로 구분하며 failed를 새 세션으로 저장하지 않는다. 현재 메뉴의 낡은 제품 확인은 해제하되 pendingSave는 정확한 내용과 revision을 보존한다. save_menu_session transport의 productId는 bounded opaque ID이며 제품 확인 권한이 아니다. 추천 Edge는 현재 카탈로그/메뉴 이름 후보와 일치하지 않는 ID를 계속 거부한다. [복구 검증과 한계](verification/menu-recovery.md)를 참조한다.
+
+메뉴 parse는 세션 전체에서 100개를 넘는 판매 항목이 나오면 HTTP 400 / MENU_ITEM_LIMIT를 반환한다. 일부 항목만 조용히 잘라 반환하지 않는다. 앱은 사진/OCR/이전 수정 입력을 유지하고 사진을 나눠 처리하도록 안내한다. 정확히 100개는 허용한다.
+
+현재 OCR 엔진 허용 값은 `apple-vision-v1`, `apple-vision-v2`, `mlkit-korean-16.0.1`, `manual`이다. v2는 Vision 좌표를 adapter에서 이미지 경계로 clip하며 서버는 여전히 유한한 [0,1] 사각형 꼭짓점만 받는다. 관리형 함수에 허용 목록 변경을 배포하기 전에는 v2 입력 연결을 완료로 보지 않는다.
+
+메뉴 Edge 요청 본문은 600,000 UTF-16 코드 유닛을 유지하며 stream 수신 중 검사한다. 바이트 상한은 선행 BOM을 포함해 1,800,003이다. 실제 body 한도 초과는 TOO_LARGE/413이고 기존 사진/메뉴 validation 코드는 유지한다. [검증](verification/menu-request-body.md).
+
+## 메뉴 해석 geometry-v3
+
+parse 응답의 parser는 geometry-v3다. 가격이 손상된 독립 OCR 셀은 금액으로 확정하지 않고 이름·lineIds·photoId·imageRevision을 보존한 `price: null`, `confirmed: false`, `productId: null` 후보로 반환한다. 금액 없는 카탈로그 이름 후보도 같은 상태로 남긴다. 제목/설명 등 모든 무가격 줄을 술로 확정하지 않으며 원문은 photos.lines에 유지한다. 클라이언트 수정은 원문을 덮어쓰지 않고, recommend는 사용자가 확정한 항목만 받는다. 버전별 실제 배포 상태는 docs/verification/menu-price-review.md를 따른다.
+
+## 술장 cursor 조회
+
+홈의 Data API 조회는 cellar_overview에 owner 필터·검색/주종 필터를 적용하고 last_consumed_at DESC NULLS LAST, id ASC로 31개를 읽어 30개를 노출한다. 다음 cursor는 마지막 노출 항목의 원본 timestamp(최대 소수점 6자리)와 UUID다. timestamp를 Date.toISOString으로 재생성하지 않는다. 전체 술장 수는 최초 페이지에서 별도의 owner-scoped HEAD count로 읽고 필터 결과 수와 구분한다. 사진 링크는 노출할 30개만 발급한다. cursor 입력은 UUID/ISO timestamp 형태를 검사하고, 실제 접근 권한은 verified Auth의 RLS/Storage 정책이 결정한다. 스크롤 사이 DB 변경에 대한 snapshot 고정 계약은 아니며 focus 재진입 시 첫 페이지부터 갱신한다.
+
+## 다음 한 잔 · next-drinks / 북마크
+
+POST next-drinks body는 `{ category?: 'whisky'|'beer'|'wine'|'traditional'|null }`만 받는다. owner는 검증된 JWT에서만 얻고 client 근거/owner override는 거절한다. recommendations에 product/source·similar·cautions·unconfirmedFeatures·kind·score를 반환하며, score는 내부 정렬용이다. 과대 body는 413, 인증 누락/거절은 401, 잘못된 category/field는 400, 데이터 호출 실패는 안전한 503 코드다. method=evidence-rules-v1/modelUsed=false와 catalogVersion/size를 포함한다.
+
+wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아니다. set_drink_wishlist(operation UUID, product ID, saved boolean, expected revision)는 현재 owner의 상태만 변경한다. 최초 expected revision은 0, 해제 후에도 revision은 남는다. 정확한 operation replay는 과거 receipt를 반환하고 원래 요청 변경/낡은 revision을 거절한다. receipt와 현재 상태는 다를 수 있으므로 클라이언트는 receipt 후 최신 목록을 재조회한다. 반영 전까지 operation/payload를 바꾸거나 후속 토글을 임의 전송하지 않는다. 후속 UI/pending queue 연결은 docs/verification/next-drinks-foundation.md를 따른다.

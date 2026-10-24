@@ -41,3 +41,5 @@ npm start
 식별자를 바꿀 때는 두 값을 모두 설정하고 `npx expo prebuild --clean`으로 재생성한다. ios/android는 생성 출력이므로 Git에서 제외한다. 실제 출시용 bundle ID와 서명은 소유자 확인 후 설정한다. Apple Developer 로그인이나 클라우드 프로젝트 생성은 이 초기화에 포함하지 않는다.
 
 EAS 설정에는 development/개발 simulator/preview profile만 준비했다. 실제 Expo 소유 프로젝트 연결·로그인·빌드는 아직 하지 않았다. SDK 58 선택 근거: [공식 생성 가이드](https://docs.expo.dev/get-started/create-a-project/), [Development Build 가이드](https://docs.expo.dev/develop/development-builds/introduction/).
+
+2026-10-23 기준 기본 수정·사진 완료 확인(20261022160000) 및 삭제 영수증(20261022161000)까지 mogeum-dev에 수동 적용했다. 기존 3개와 합쳐 총 5개 migration의 CLI history 정합성 복구가 필요하다. 이전 SQL을 db push로 중복 실행하지 않는다. [적용 증거와 검증](verification/record-edit.md)을 참고한다.

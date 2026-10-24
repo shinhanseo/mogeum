@@ -58,3 +58,18 @@
 ## 노트 v2 확정 상태 · 2026-10-22
 
 record_notes의 last_operation_id/last_save_payload는 응답 유실 재시도 식별자다. confirmed_input_revision은 확정 문장에 대응하는 답변 revision이다. generated_draft는 서버 AI 출력 전용으로 유지하고, 현재 결정적 템플릿은 사용자가 확인한 confirmed_note에 저장한다. record_answers/record_notes의 일반 클라이언트 직접 쓰기는 철회하고 save_tasting_note RPC로 원자 확정한다. 기존 답변을 앱으로 읽을 때 question ID/모드/카탈로그 버전을 사용한다.
+
+### 반복 경험 연결 구현
+
+개인 cellar_entries의 소유권 조회 후 새 operation ID/새 tasting_records ID를 생성하면서 기존 cellar_entry_id를 전달한다. 이름 일치 자동 병합이나 공통 drinks 등록은 필요 없다. 과거 record_photos/record_notes/record_answers를 새 record ID로 복제하지 않는다. DB 변경 없이 기존 소유권 검사·복합 FK·operation payload 비교를 사용한다.
+
+기본 수정은 revision을 유지 조건으로 검사하고 새 버전으로 갱신한다. 사진 정리 작업은 Storage 객체 부재를 검증한 뒤 done으로 바꾼다. 삭제 영수증 deleted_record_operations(user_id,operation_id,record_id,deleted_at)은 제거된 감상/사진/생성 payload를 보관하지 않으며, 지연된 생성 요청의 부활을 막는다. 영수증은 본인 읽기만 허용하고 쓰기는 삭제 trigger만 수행한다.
+
+사진·연결 변경의 중복 실행 방지: `private.record_attachment_receipts`는 소유자+operation ID를 키로 immutable payload와 결과를 보관한다. authenticated 직접 접근을 막고 `change_record_attachment`만 활성 JWT 소유자를 확인한 뒤 쓴다. 계정 삭제 시 cascade하며 공개 테이블 수에는 포함하지 않는다.
+
+## 취향 요약 캐시 · 구현 2026-10-23
+`private.taste_summary_jobs`는 사용자당 현재 input hash, lease UUID, running/ready/failed, 획득 시각/생성 시각, 일별 횟수와 검증된 결과를 보관한다. 공개 테이블이 아니며 RLS와 anon/authenticated 직접 접근 철회를 함께 사용한다. service_role 전용 begin/finish RPC만 갱신한다. `taste_summary_context()`는 인증 소유자의 현재 기록 ID/revision hash와 일치하는 결과만 읽게 한다. 삭제된 경험이나 이전 연결의 캐시를 화면에 재사용하지 않는다. 모델 결과는 자유 주장이 아니라 검증된 집계 fact ID 목록이다.
+
+## 마셔보고 싶은 술 · 9번째 migration
+
+public.drink_wishlist는 (user_id, product_id) 복합 키와 saved/revision/updated_at을 저장한다. known product ID는 현재 출처 카탈로그 32개 whitelist와 일치하는지 회귀 검증한다. private.wishlist_operations는 (user_id, operation_id)와 immutable request/result receipt를 저장하고 일반 사용자가 직접 읽거나 쓰지 못한다. Auth 사용자 삭제 시 둘 다 cascade된다. 북마크는 consumed_at/테이스팅 답변을 만들거나 AI 선호 근거에 넣지 않는다. false tombstone으로 해제 이후에도 오래된 요청의 revision을 구별한다. 로컬에만 migration up을 적용했고 관리형 DB 적용은 남아 있다.

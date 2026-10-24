@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@ai-sdk/google": "4.0.102",
+    "ai": "7.0.148",
+    "zod": "4.6.7"
+  },
+  "name": "mogeum-edge-functions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "deno check --node-modules-dir=auto taste-summary/index.ts",
+    "bundle": "esbuild taste-summary/index.ts --bundle --platform=neutral --format=esm --external:npm:* --outfile=/tmp/mogeum-taste-summary.ts"
+  }
+}

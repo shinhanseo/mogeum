@@ -57,7 +57,7 @@ function ConnectedTasting({ owner, recordId }: {owner:string;recordId:string}) {
     })().catch(()=>{if(mounted)setError('노트를 열지 못했어요. 기본 기록은 저장되어 있어요. 술 종류와 연결 상태를 확인해주세요.');}).finally(()=>{if(mounted)setLoading(false);});
     return()=>{mounted=false;};
   },[owner,recordId]);
-  const close=()=>router.replace('/');
+  const close=()=>router.replace({pathname:'/detail',params:{recordId}});
   function chooseMode(mode:NoteMode){if(!category)return;const value={...newTastingDraft(owner,recordId,category,mode),baseRecordRevision:revision.current};setDraft(value);setModeSheet(false);void persistDraft(value).catch(()=>setError('임시 저장에 실패했어요. 앱을 닫기 전에 다시 시도해주세요.'));}
   async function save(value:TastingDraft,note:string,edited:boolean){
     const client=getSupabase();if(!client)throw new Error('Missing backend');
@@ -68,8 +68,8 @@ function ConnectedTasting({ owner, recordId }: {owner:string;recordId:string}) {
     const frozen={...value,composition:{text:note,edited,sourceRevision:value.revision},pendingSave:{operationId,expectedRevision:revision.current}};
     await persistDraft(frozen);
     await tastingRepository(client).save(frozen,operationId,revision.current,note,edited);
-    await clearDraft(owner,recordId);
-    if(active.current)router.replace('/');
+    if (!await clearDraft(owner,recordId,frozen)) throw new Error('A newer draft was preserved');
+    if(active.current)router.replace({pathname:'/detail',params:{recordId}});
   }
   if(draft)return <><TastingComposer initial={draft} onChange={value=>{void persistDraft(value).catch(()=>setError('임시 저장에 실패했어요.'));}} onSave={save} onClose={close}/>{!!error&&<Text accessibilityRole="alert" style={{...typography.caption,color:colors.primary,padding:12}}>{error}</Text>}</>;
   return <View style={{flex:1,backgroundColor:colors.background,justifyContent:'center',padding:24,gap:16}}>{loading?<ActivityIndicator color={colors.primary}/>:<><Text style={{...typography.body,color:colors.text}}>{error||'기본 기록을 저장했어요.'}</Text><Button label="술장으로 돌아가기" onPress={close}/></>}{category&&<ModeSheet visible={modeSheet} category={category} onChoose={chooseMode} onClose={close}/>}</View>;
