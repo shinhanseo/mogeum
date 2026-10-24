@@ -18,6 +18,8 @@
 
 메뉴판 사진 준비 중 취소·부분 실패는 미반영 파일만 정리하고 다음 준비 작업과 순서를 맞춥니다. [사진 준비/교체 검증과 제약](docs/verification/menu-preparation/README.md).
 
+iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메뉴판 사진은 계정·세션·판본을 검사해 복구합니다. [보존된 초안 복구 검증](docs/verification/menu-container-restore/README.md).
+
 ## 출시 범위
 
 - 사진만으로 기록 → 질문형 테이스팅 노트 → 술장·검색·상세·수정·삭제·재음용 기록
