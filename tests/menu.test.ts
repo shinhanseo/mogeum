@@ -90,12 +90,14 @@ test("parser preserves editions, servings and prices without treating years or v
     "글렌리벳 12년 20,000원 150,000원",
   ]);
   const items = parseMenu([p]);
-  assert.equal(items.length, 3);
+  assert.equal(items.length, 4);
   assert.equal(items[0].name, "글렌리벳 12년");
   assert.equal(items[0].price, 15000);
   assert.equal(items[0].serving, "30ml");
   assert.equal(items[1].price, 150000);
   assert.equal(items[2].price, null);
+  assert.equal(items[2].name, "Glenlivet 12");
+  assert.equal(items[3].price, null);
   assert.ok(items.every((i) => !i.confirmed && i.productId === null));
 });
 test("geometry pairs same row only and preserves source line references", () => {
