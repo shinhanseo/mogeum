@@ -27,6 +27,7 @@ export default function RecordRestoreProbe() {
         const asset = Image.resolveAssetSource(
           require("../../assets/fixtures/figma-whisky.jpg"),
         );
+        if (!asset) throw new Error('PROBE_ASSET');
         const photo = await preparePhoto(asset.uri, 900, 1200, operation);
         ensure(photo.localUri === uri);
         // iOS changes only the application container segment. Android intentionally keeps its exact path.
