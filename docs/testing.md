@@ -54,3 +54,7 @@ iOS 개발 빌드의 `/dev/tasting?category=wine&mode=deep&question=appearance`�
 추천 근거 링크/최신 상태는 `tests/menu-evidence.test.ts`와 실제 HTTP CI에서 확인한다. 주기·재진입 갱신과 미검증된 실제 장시간 기기 시나리오는 [근거 갱신](verification/menu-evidence-freshness.md)에 구분한다.
 
 네이티브 OCR 검증 경로와 합성 14종 원문/좌표 baseline은 [실행 보고서](verification/native-ocr-benchmark.md)에 있다. `tests/ocr-benchmark.test.ts`는 지표 계산과 fixture 연결만 검증하며 네이티브 엔진을 mock 성공으로 대체하지 않는다. 실제 실행은 개발 빌드/로컬 fixture 서버가 필요하다.
+
+## 실제 native + 로컬 서버 검증
+
+[개발 전용 native record probe](verification/native-record-backend.md)는 iOS/Android의 실제 사진 준비·Storage 업로드·RPC 저장·응답 유실 replay·RLS·native 파일 정리·서버 삭제를 검증한다. Web mock이나 UI 탭 조작 검증으로 표현하지 않는다. 합성 계정 정리 도구의 다른 run 차단은 test:storage의 실제 HTTP 회귀에도 포함한다.

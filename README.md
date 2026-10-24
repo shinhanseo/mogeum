@@ -8,6 +8,24 @@
 
 **실제 Supabase 개발 프로젝트에 기록 DB를 적용하고 앱 연결을 구현 중입니다.** Figma 기준 로그인·술장·기록 UI, 공통 컴포넌트와 사진/주종/날짜/평가/빈티지 입력이 있습니다. 기본 저장 버튼은 인증 세션의 사진 업로드→기록 RPC→술장 재조회로 연결했고 저장 요청 재시도를 보관합니다. Apple·카카오 provider 등록이 아직 없어 실제 소셜 로그인 및 사용자 프로젝트에서 앱 저장 성공 검증은 남아 있습니다. 4주종의 가볍게 5문항·심화 9/11/10/8문항, 문장 미리보기·직접 수정과 동일 기록에 노트를 보충하는 RPC도 연결했습니다. 저장 후 상세와 재음용·기본 수정/삭제를 연결했습니다. 내 취향 요약·근거 UI와 집계/캐시/AI 서버 호출부를 연결했습니다. 실제 모델 호출은 Gemini 서버 키 설정 후 검증해야 하며 여러 장 메뉴판의 기기 OCR·확인/수정·제한된 출처 카탈로그와 기록 비교 추천도 연결했습니다. [메뉴판 구현과 현재 지원 범위](docs/verification/menu-ocr.md)를 참고하세요. [노트 구현·iOS 검증과 남은 범위](docs/verification/tasting-notes.md)를 참고하세요. [현재 연결·검증과 제약](docs/verification/live-records.md), [개발 로드맵](docs/milestones.md), [이슈 지도](docs/issue-map.md)를 참고하세요.
 
+다음 한 잔의 출처 기반 추천·저장 목록·추천 이유 상세도 연결했습니다. 실제 로컬 인증으로 iOS/Android 저장·기록·해제를 확인했으며 [추천 이유 화면과 검증 범위](docs/verification/discovery-reason/README.md)를 참고하세요.
+
+앱 복귀 시 다음 한 잔을 최신화합니다. 양 플랫폼에서 별도 합성 세션의 북마크 변경이 복귀 직후 반영되는 것을 확인했습니다. [검증과 남은 실패 시나리오](docs/verification/discovery-foreground/README.md).
+
+추천 조회 도중 기록이 바뀌면 이전 근거와 새 이력을 섞어 반환하지 않도록 버전을 재확인합니다. [서버 검증과 관리형 미배포 범위](docs/verification/discovery-snapshot.md).
+
+내 취향의 갱신 실패 시 이전 요약/사진을 숨기고 재시도를 제공합니다. Android의 실제 로컬 API 연결 단절→복구를 확인했습니다. [내 취향 복구 검증](docs/verification/taste-refresh/README.md).
+
+메뉴판 사진 준비 중 취소·부분 실패는 미반영 파일만 정리하고 다음 준비 작업과 순서를 맞춥니다. [사진 준비/교체 검증과 제약](docs/verification/menu-preparation/README.md).
+
+iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메뉴판 사진은 계정·세션·판본을 검사해 복구합니다. [보존된 초안 복구 검증](docs/verification/menu-container-restore/README.md).
+
+노트 초안의 읽기·쓰기·정리를 직렬화하고, 완료 후 더 새롭게 작성된 초안은 보존합니다. [초안 순서·정리 검증](docs/verification/tasting-draft-order.md). Android 작성 단계의 시스템 Back 연결은 추가했으며 네이티브 동작 확인은 남아 있습니다. [미완료 검증 범위](docs/verification/composer-back/README.md).
+
+기록 저장·사진 교체의 동시 요청과 완료 정리를 계정/기록별로 직렬화합니다. [보관 요청 동시 실행 검증](docs/verification/record-request-order.md).
+
+술 상세도 앱 복귀 시 기록·사진·이력을 재확인하고, 만료/실패한 사진 URL은 한 번만 재발급합니다. [iOS 실제 수정·삭제 복귀 검증과 제약](docs/verification/detail-refresh/README.md).
+
 ## 출시 범위
 
 - 사진만으로 기록 → 질문형 테이스팅 노트 → 술장·검색·상세·수정·삭제·재음용 기록
@@ -63,7 +81,7 @@
 
 ## 실행 안내
 
-Node **24.22.0**, npm **11.12.1**, Expo **58.0.17**, React Native **0.88.0**, React **19.3.0** 기준입니다. 실제 의존성은 package-lock.json에 고정합니다.
+Node **24.22.0**, npm **11.12.1**, Expo **58.0.19**, React Native **0.88.0**, React **19.3.0** 기준입니다. 실제 의존성은 package-lock.json에 고정합니다.
 
 ```sh
 nvm use
@@ -92,8 +110,32 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 
 메뉴판 추천: 내 취향 → 메뉴판 최대 5장 → 기기 OCR → 확인/수정·제품 판본 확인 → 기록 기반 비교·근거·원본 위치. 현재 출처 카탈로그는 주종별 8개씩 32제품(빈티지·판본 포함)이며 미확인 제품은 맛을 생성하지 않습니다. [구현·네이티브 검증·제약](docs/verification/menu-ocr.md).
 
-네이티브 OCR 검증: [14종 합성 메뉴와 양 플랫폼 한계](docs/verification/native-ocr-benchmark.md). iOS Vision 경계 좌표 수정 후 14종 계약 통과를 확인했으며 다단·기울임 가격 연결과 관리형 함수 배포는 진행 중입니다.
+네이티브 OCR 검증: [14종 합성 메뉴와 양 플랫폼 한계](docs/verification/native-ocr-benchmark.md). iOS Vision 경계 좌표 수정 후 14종 계약 통과를 확인했으며 다단·기울임 가격 연결의 한계는 남아 있습니다. 최신 메뉴 함수는 개발 프로젝트에 배포했습니다. [배포 빌드·검증 범위](docs/verification/menu-deployment.md).
 
 메뉴 해석 geometry-v2: 완결된 두 열 메뉴는 출처를 나눠 연결하고 % 오독은 원화로 쓰지 않습니다. 실제 합성 네이티브 재실행에서 두 열 가격 연결 iOS 6/6·Android 2/6이며 기울임·다음 줄 가격은 직접 확인이 필요합니다.
 
 분석 요청 대기 제한: [메뉴·취향 요약 timeout과 저장 응답 유실 처리](docs/verification/analysis-timeouts.md). 입력을 보존하고 재시도하며 관리형 연결·실기기 네트워크 단절 검증은 별도입니다.
+
+메뉴 사진 준비 후 생성된 임시 캐시 파일만 정리합니다. [양 플랫폼 원본 보존·잔여 파일 검증](docs/verification/menu-photo-cache.md).
+
+취향·추천 근거 사진의 비공개 링크를 한 번에 발급하고 부분 실패·지연 응답을 격리합니다. [묶음 발급과 권한 검증](docs/verification/evidence-photo-batch.md).
+
+메뉴 요청 본문을 읽는 도중 한도를 검사해 과대 입력을 중단합니다. [본문 한도·한글 stream 검증](docs/verification/menu-request-body.md).
+
+기록 저장·사진 교체 복구에서 작업별 사진 경로와 저장 receipt를 확인하고 손상된 요청을 보존합니다. iOS 컨테이너가 바뀌면 동일 작업 사진을 현재 Documents 경로로 복구하며 서버 요청과 receipt는 유지합니다. [파일 경로·복구 회귀](docs/verification/record-draft-paths.md).
+
+**iOS·Android 실제 native + 로컬 서버 저장 검증 통과:** 사진 준비·업로드/RPC·응답 유실 재시도·타인 접근 차단·로컬/서버 사진 삭제를 합성 데이터로 확인했습니다. [검증 보고서와 재현](docs/verification/native-record-backend.md). 관리형 소셜 로그인·실제 계정 UI E2E는 별도입니다.
+
+네이티브 메뉴판 연속 검증: [iOS·Android OCR 2장 → 로컬 Edge 해석 → 수정 복구·세션 저장 → 내 노트 근거 추천](docs/verification/native-menu-backend.md)을 확인했습니다. 관리형 로그인 UI E2E와 실물 메뉴판 정확도 검증은 별도입니다.
+
+메뉴 해석 geometry-v3는 잘못 읽힌 금액 셀의 술 후보와 카탈로그에 있는 가격 없는 이름을 가격 null·미확정 상태로 보존합니다. [양 플랫폼 연속 검증·남은 배포](docs/verification/menu-price-review.md).
+
+술장 사진 링크는 100개 단위로 묶어 발급하고 계정 전환 후 늦은 결과를 버립니다. [요청 수·양 플랫폼 검증·남은 대용량 범위](docs/verification/cellar-batch.md).
+
+술장 홈은 30개씩 cursor로 읽고 검색·주종 필터를 서버 전체에 적용합니다. [실제 35개 DB·양 플랫폼 native·61개 합성 UI 검증](docs/verification/cellar-cursor.md).
+
+술장 이미지 오류 시 현재 계정의 대표 사진 링크를 한 번 갱신합니다. [실제 만료·양 플랫폼 복원·반복 요청 차단](docs/verification/cellar-photo-renewal.md).
+
+다음 한 잔의 기록 기반 추천/북마크 서버·DB와 앱 목록·저장 복구·기록 prefill을 연결했습니다. 개발 프로젝트 배포도 적용했고 전체 로그인 E2E는 남아 있습니다. [서버 기반](docs/verification/next-drinks-foundation.md), [앱 연결·양 플랫폼 17단계·UI 검증과 남은 범위](docs/verification/discovery-ui/README.md).
+
+개발 서버 최신화: [geometry-v3·다음 한 잔 함수·북마크 DB 배포 및 인증 경계 검증](docs/verification/discovery-deployment/README.md).
