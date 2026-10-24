@@ -23,3 +23,8 @@ modules/**/.gradle/
 modules/**/.cxx/
 *.tsbuildinfo
 expo-env.d.ts
+
+# Native probe identities are local cleanup inputs, never public verification reports.
+**/native-record-probe-private-*.json
+__pycache__/
+*.py[cod]
