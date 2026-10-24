@@ -82,12 +82,14 @@ function DiscoveryPanel({ owner }: { owner: string }) {
           revision: r.revision,
         })),
       );
-    } catch {
+    } catch (error) {
       if (active()) {
         // A failed refresh cannot leave old personal comparisons available as current evidence.
         setResult(null);
         setError(
-          "술을 불러오지 못했어요. 남아 있는 저장 요청도 함께 다시 확인할게요.",
+          (error as { code?: string })?.code === "TASTE_CONTEXT_CHANGED"
+            ? "내 기록이 바뀌었어요. 최신 기록으로 다시 불러와 주세요."
+            : "술을 불러오지 못했어요. 남아 있는 저장 요청도 함께 다시 확인할게요.",
         );
       }
     } finally {
