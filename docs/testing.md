@@ -42,3 +42,19 @@
 `npm run check`는 조건부 색·향 변화·향 계열 해제/복원, 8개 조합의 전체 skip, 모름/없음/강도 0, draft 소유자/버전 검증, SQL 카탈로그 snapshot 일치와 노트 RPC의 권한·중복·낡은 revision·원문 보존을 확인한다. CI의 disposable Supabase HTTP 테스트는 실제 SDK로 기본 기록→노트 RPC→재시도→타 계정 읽기 차단을 수행한다. 개발 cloud 계정/키를 사용하지 않는다.
 
 iOS 개발 빌드의 `/dev/tasting?category=wine&mode=deep&question=appearance`는 __DEV__에서만 열린다. 개발용 배너를 표시하고 Auth/저장 요청을 보내지 않는다. 실제 사용자 흐름의 로그인 검증을 대체하지 않는다. [네이티브 확인과 남은 항목](verification/tasting-notes.md)을 구분해서 보고한다.
+
+## 메뉴 추천 응답·품질 회귀
+
+`npm run test:menu-quality`는 4주종 × 가볍게/자세히 합성 관측, 취향 근거 제외 조건, 카탈로그 판본 및 조작된 추천 응답 거부를 검사한다. 정상 서버 응답은 실제 HTTP CI에서도 같은 validator로 확인한다. [실측·추정·개발 전용 확인과 남은 범위](verification/menu-quality.md)를 구분한다.
+
+메뉴 제외 회귀는 `tests/menu-review.test.ts`에서 재분석·사진 추가·원문 변경·재촬영·수동 입력·일시적 OCR 실패·JSON 복구를 검사한다. iOS 실제 종료/재실행 확인과 기기별 동기화 한계는 메뉴 검증 문서를 참조한다.
+
+메뉴 복구 회귀는 `tests/menu-restore.test.ts`에서 실제 빈 저장과 읽기 실패, JSON/계정 경로/원문 참조, 카탈로그 변경 뒤 pendingSave 보존을 검사한다. 저장 transport의 opaque ID가 추천 권한으로 사용되지 않는지는 실제 HTTP CI에서 저장/재전송 성공·추천 거부로 검증한다. iOS 읽기 실패→재시도와 Android 도구 제약은 [메뉴 복구](verification/menu-recovery.md)에 구분했다.
+
+추천 근거 링크/최신 상태는 `tests/menu-evidence.test.ts`와 실제 HTTP CI에서 확인한다. 주기·재진입 갱신과 미검증된 실제 장시간 기기 시나리오는 [근거 갱신](verification/menu-evidence-freshness.md)에 구분한다.
+
+네이티브 OCR 검증 경로와 합성 14종 원문/좌표 baseline은 [실행 보고서](verification/native-ocr-benchmark.md)에 있다. `tests/ocr-benchmark.test.ts`는 지표 계산과 fixture 연결만 검증하며 네이티브 엔진을 mock 성공으로 대체하지 않는다. 실제 실행은 개발 빌드/로컬 fixture 서버가 필요하다.
+
+## 실제 native + 로컬 서버 검증
+
+[개발 전용 native record probe](verification/native-record-backend.md)는 iOS/Android의 실제 사진 준비·Storage 업로드·RPC 저장·응답 유실 replay·RLS·native 파일 정리·서버 삭제를 검증한다. Web mock이나 UI 탭 조작 검증으로 표현하지 않는다. 합성 계정 정리 도구의 다른 run 차단은 test:storage의 실제 HTTP 회귀에도 포함한다.

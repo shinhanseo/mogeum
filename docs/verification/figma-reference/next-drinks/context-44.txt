@@ -1,0 +1,129 @@
+const imgDrinkIllustration = "https://www.figma.com/api/mcp/asset/c94878e4-560a-47f1-9dbb-f0030c585579.svg";
+
+type ButtonProps = {
+  className?: string;
+  label?: string;
+  state?: "Default";
+  type?: "Primary" | "Text";
+};
+
+function Button({ className, label = "다음", state = "Default", type = "Primary" }: ButtonProps) {
+  const isTextAndDefault = type === "Text" && state === "Default";
+  return (
+    <div className={className || `${String.raw`content-stretch flex items-center justify-center relative rounded-[var(--radius\/16,16px)] `}${isTextAndDefault ? "h-[var(--size-text-action,44px)] w-[180px]" : String.raw`bg-[var(--action\/primary,#783f4b)] h-[var(--size\/button,52px)] overflow-clip px-[24px] w-[352px]`}`} id={isTextAndDefault ? "node-4_4967" : "node-6_5320"}>
+      {type === "Primary" && state === "Default" && (
+        <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--text\/on-primary,#fffdfa)] text-center whitespace-nowrap" data-node-id="4:5212">
+          {label}
+        </p>
+      )}
+      {isTextAndDefault && (
+        <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--action\/primary,#783f4b)] text-center whitespace-nowrap" data-node-id="4:5219">
+          {label}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function Component44() {
+  return (
+    <div className="bg-[var(--background\/default,#faf7f2)] content-stretch flex flex-col items-start overflow-clip relative rounded-[30px] size-full" data-node-id="19:926" data-name="44 · 다음 한 잔 — 추천 이유">
+      <div className="[word-break:break-word] content-stretch flex font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal h-[44px] items-center justify-between leading-[var(--font\/line\/caption,18px)] px-[24px] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] w-[400px]" data-node-id="19:927" data-name="Status bar">
+        <p className="relative shrink-0 text-[length:var(--font\/size\/caption,12px)] w-[90px]" data-node-id="19:928">
+          9:41
+        </p>
+        <p className="relative shrink-0 text-[12px] text-right w-[70px]" data-node-id="19:929">
+          ​
+        </p>
+      </div>
+      <div className="content-stretch flex flex-col h-[700px] items-start overflow-x-clip overflow-y-auto relative shrink-0 w-[400px]" data-node-id="19:930" data-name="스크롤 영역">
+        <div className="content-stretch flex flex-col gap-[var(--space\/16,16px)] items-start overflow-clip p-[var(--space\/24,24px)] relative shrink-0 w-[400px]" data-node-id="19:931" data-name="Content · Auto layout">
+          <Button className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[144px]" label="‹  다음 한 잔" type="Text" />
+          <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold leading-[var(--font\/line\/heading2,36px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/heading2,24px)] w-[352px]" data-node-id="19:936">
+            왜 나와 잘 맞을까요?
+          </p>
+          <div className="content-stretch flex gap-[var(--space\/16,16px)] items-start overflow-clip relative shrink-0 w-[352px]" data-node-id="19:937" data-name="술의 정체성">
+            <div className="relative shrink-0 size-[88px]" data-node-id="19:938" data-name="모금/DrinkIllustration">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDrinkIllustration} />
+            </div>
+            <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--space\/4,4px)] items-start overflow-clip relative shrink-0 w-[248px]" data-node-id="19:950" data-name="제품명과 분류">
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold leading-[var(--font\/line\/heading3,30px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/heading3,20px)] w-[248px]" data-node-id="19:951">
+                글렌리벳 12년
+              </p>
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[248px]" data-node-id="19:952">
+                위스키 · 싱글몰트
+              </p>
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[var(--font\/line\/bodysmall,22px)] relative shrink-0 text-[color:var(--text\/brand,#783f4b)] text-[length:var(--font\/size\/bodysmall,14px)] w-[248px]" data-node-id="19:953">
+                파인애플 같은 과일 향 · 바닐라
+              </p>
+            </div>
+          </div>
+          <div className="bg-[var(--surface\/selected,#f2e5e8)] content-stretch flex flex-col gap-[var(--space\/8,8px)] items-start overflow-clip p-[var(--space\/16,16px)] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" data-node-id="19:954" data-name="내 기록과 닮은 점">
+            <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Medium')] font-medium leading-[var(--font\/line\/label,20px)] relative shrink-0 text-[color:var(--text\/brand,#783f4b)] text-[length:var(--font\/size\/label,14px)] w-[320px]" data-node-id="19:955">
+              닮은 점 · 과일 향
+            </p>
+            <div className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[0] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/bodysmall,14px)] w-[320px]" data-node-id="19:956">
+              <p className="leading-[var(--font\/line\/bodysmall,22px)] mb-0">좋게 남긴 위스키 기록 2개에 과일 향이 있어요.</p>
+              <p className="leading-[var(--font\/line\/bodysmall,22px)]">이 술의 제품 설명에도 과일 향이 나와요.</p>
+            </div>
+            <Button className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[320px]" label="비교에 쓰인 내 기록 보기  ›" type="Text" />
+          </div>
+          <div className="[word-break:break-word] bg-[var(--surface\/card,#fffdfa)] content-stretch flex flex-col gap-[var(--space\/8,8px)] items-start overflow-clip p-[var(--space\/16,16px)] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" data-node-id="19:959" data-name="다를 수 있는 점">
+            <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Medium')] font-medium leading-[var(--font\/line\/label,20px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/label,14px)] w-[320px]" data-node-id="19:960">
+              다른 점 · 바닐라 향
+            </p>
+            <div className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[0] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/bodysmall,14px)] w-[320px]" data-node-id="19:961">
+              <p className="leading-[var(--font\/line\/bodysmall,22px)] mb-0">제품 설명에는 부드러운 바닐라 향도 있어요.</p>
+              <p className="leading-[var(--font\/line\/bodysmall,22px)]">내 기록에는 이 향의 선호가 아직 없어요.</p>
+            </div>
+          </div>
+          <div className="bg-[var(--surface\/card,#fffdfa)] content-stretch flex flex-col gap-[var(--space\/8,8px)] items-start overflow-clip p-[var(--space\/16,16px)] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" data-node-id="19:962" data-name="제품 정보 출처">
+            <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Medium')] font-medium leading-[var(--font\/line\/label,20px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/label,14px)] w-[320px]" data-node-id="19:963">
+              제품 정보의 근거
+            </p>
+            <div className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[0] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[320px]" data-node-id="19:964">
+              <p className="leading-[var(--font\/line\/caption,18px)] mb-0">Pernod Ricard · The Glenlivet 12YO</p>
+              <p className="leading-[var(--font\/line\/caption,18px)]">생산자 설명을 쉬운 말로 정리했어요.</p>
+            </div>
+            <Button className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[320px]" label="생산자 설명 확인  ↗" type="Text" />
+          </div>
+          <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[352px]" data-node-id="19:969">
+            취향 적합도를 확률이나 점수로 단정하지 않아요.
+          </p>
+        </div>
+      </div>
+      <div className="content-stretch flex flex-col h-[84px] items-center overflow-clip px-[24px] py-[16px] relative shrink-0 w-[400px]" data-node-id="21:1137" data-name="고정 저장 행동">
+        <Button className="bg-[var(--action\/primary,#783f4b)] content-stretch cursor-pointer flex h-[52px] items-center justify-center overflow-clip px-[24px] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" label="+ 마셔보고 싶은 술에 저장" />
+      </div>
+      <div className="content-stretch flex flex-col h-[40px] items-center justify-end pb-[8px] relative shrink-0 w-[400px]" data-node-id="19:932" data-name="Bottom safe area">
+        <div className="bg-[var(--text\/primary,#332d2b)] h-[4px] relative rounded-[99px] shrink-0 w-[114px]" data-node-id="19:933" data-name="Rectangle" />
+      </div>
+    </div>
+  );
+}
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+These styles are contained in the design: 모금/Caption: Font(family: "font/family", style: Regular, size: font/size/Caption, weight: 400, lineHeight: font/line/Caption, letterSpacing: 0), 모금/Label/Button 15: Font(family: "Noto Sans KR", style: Bold, size: 15, weight: 700, lineHeight: 24, letterSpacing: 0), 모금/Heading2: Font(family: "font/family", style: Bold, size: font/size/Heading2, weight: 700, lineHeight: font/line/Heading2, letterSpacing: 0), 모금/Heading3: Font(family: "font/family", style: Bold, size: font/size/Heading3, weight: 700, lineHeight: font/line/Heading3, letterSpacing: 0), 모금/BodySmall: Font(family: "font/family", style: Regular, size: font/size/BodySmall, weight: 400, lineHeight: font/line/BodySmall, letterSpacing: 0), 모금/Label: Font(family: "font/family", style: Medium, size: font/size/Label, weight: 500, lineHeight: font/line/Label, letterSpacing: 0).
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## 모금/Button
+**Node ID:** 6:5521
+
+공통 버튼. Label 텍스트 속성. Primary/Secondary/Text와 Default/Pressed/Disabled. 오토레이아웃 두 축 중앙 정렬. 주요 버튼 높이 52, 텍스트 행동 높이 44.
+
+## 모금/DrinkIllustration
+**Node ID:** 9:8083
+
+사진 없는 술의 주종별 고정 SVG. Whisky/Wine/Beer/Traditional. 프론트의 로컬 에셋과 1:1 대응. 술의 실제 라벨이나 병을 생성하지 않음.
+
+The generated code contains image and SVG URL constants, e.g. const image = 'https://www.figma.com/api/mcp/asset/550e8400-e29b-41d4-a716-446655440000.png'. These URLs are temporary download sources and expire after 7 days. Download each asset into the project with curl -L, then replace its URL in the generated code with a reference to the downloaded asset. Never use the temporary URLs as runtime image sources.
