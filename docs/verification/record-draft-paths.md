@@ -12,4 +12,4 @@ npm 도메인 검증에 정상 draft/receipt/이름만 기록, 다른 파일/경
 
 읽기만으로 원본 JSON을 다시 저장하지 않는다. 저장 직전에도 정규화된 반환값을 사용하므로 업로드와 재시도 identity 비교에 이전 경로가 남지 않는다. operation ID, owner, remote storagePath, 서버 요청 내용, expectedRevision 및 저장 receipt는 변경하지 않는다. 완료 정리는 현재 저장 요청의 검증된 현재 경로만 사용한다.
 
-`tests/record-container-restore.test.ts`의 3개 회귀는 원본/receipt 보존, 경로·소유자 격리, 사진 교체 재시도의 단일 업로드·단일 mutation을 검증한다. `npm run check`: 264개 중 258 통과, 환경 의존 6개 skip. 이번 변경은 순수 복구·재시도 경로 테스트이며 기록 저장/교체의 iOS·Android 네이티브 E2E를 새로 실행한 것은 아니다. 메뉴판의 실제 보존된 iOS 초안 복구는 [별도 검증](menu-container-restore/README.md)에 있다.
+`tests/record-container-restore.test.ts`의 3개 회귀는 원본/receipt 보존, 경로·소유자 격리, 사진 교체 재시도의 단일 업로드·단일 mutation을 검증한다. `npm run check`: 264개 중 258 통과, 환경 의존 6개 skip. iOS·Android 네이티브에서 합성 사진의 preparePhoto → AsyncStorage 보관 → 기록/교체 decoder → 현재 파일 읽기와 원본 JSON 보존을 추가 확인했다. iOS의 이전 컨테이너 URI는 합성한 값이며 실제 재설치 시험은 아니다. 인증 후 서버 저장 E2E는 이번에 새로 실행하지 않았다. [네이티브 결과](record-container-restore/README.md). 메뉴판의 실제 보존된 iOS 초안 복구는 [별도 검증](menu-container-restore/README.md)에 있다.
