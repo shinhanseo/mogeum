@@ -4,8 +4,21 @@ on:
     paths:
       - 'supabase/**'
       - 'src/features/records/**'
+      - 'src/features/taste/**'
+      - 'src/features/cellar/**'
+      - 'tests/cellar-api.test.ts'
+      - 'tests/next-drinks-api.test.ts'
+      - 'tests/taste-summary.test.ts'
       - 'tests/database.test.ts'
       - 'tests/storage-api.test.ts'
+      - 'tests/menu-api.test.ts'
+      - 'tests/native-probe-cleanup.test.ts'
+      - 'scripts/cleanup-native-probe.ts'
+      - 'scripts/build-menu-function.ts'
+      - 'scripts/verify-menu-function.ts'
+      - 'scripts/build-next-drinks-function.ts'
+      - 'scripts/verify-next-drinks-function.ts'
+      - 'src/features/discovery/**'
       - 'tests/fixtures/supabase-platform.sql'
       - 'package*.json'
       - '.github/workflows/database.yml'
@@ -25,17 +38,39 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Start isolated Supabase with real managed schemas
-        run: npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,mailpit
+        run: npx supabase start -x studio,imgproxy,logflare,vector,supavisor,realtime,mailpit
       - name: Replay migrations on a fresh local database
         run: npx supabase db reset --local
       - name: Exercise policies, transactions and concurrent requests on PostgreSQL
         run: npm run test:db
         env:
           MOGEUM_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      - name: Exercise real Auth, Storage binary and Data API
-        run: npm run test:storage
+      - name: Serve the authenticated taste endpoint without a provider key
+        run: |
+          npx supabase functions serve --no-verify-jwt > /tmp/mogeum-edge.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:54321/functions/v1/taste-summary || true)
+            menu_status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:54321/functions/v1/menu-recommend || true)
+            if [ "$status" = "401" ] && [ "$menu_status" = "401" ]; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/mogeum-edge.log
+          exit 1
+      - name: Typecheck the original menu function
+        run: npx -y deno check supabase/functions/menu-recommend/index.ts
+      - name: Typecheck the next-drinks endpoint
+        run: npx -y deno check supabase/functions/next-drinks/index.ts
+      - name: Verify generated deployment through real Auth, Storage binary and Data API
+        run: npm run test:menu-deploy
+        env:
+          MOGEUM_TEST_SUPABASE_HTTP: '1'
+      - name: Verify the next-drinks deployment artifact through real HTTP
+        run: npm run test:discovery-deploy
         env:
           MOGEUM_TEST_SUPABASE_HTTP: '1'
       - name: Stop ephemeral containers
         if: always()
-        run: npx supabase stop --no-backup
+        run: |
+          if ! npx supabase stop --no-backup; then
+            npx supabase stop --no-backup
+          fi
