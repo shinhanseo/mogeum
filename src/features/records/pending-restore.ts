@@ -1,3 +1,4 @@
+import { currentDocumentUri } from "../../lib/document-uri";
 import type { PendingRecord } from "./pending";
 import { isPreparedRecordPhoto } from "./draft-photo";
 const uuid = (value: unknown): value is string =>
@@ -53,6 +54,15 @@ export function decodePendingRecord(
       photo.height > 20000
     )
       fail();
+    if (!web && value.localPhoto !== undefined) {
+      const uri = currentDocumentUri(
+        value.localPhoto,
+        directory,
+        `record-drafts/${value.operationId}.jpg`,
+      );
+      if (!uri) fail();
+      value.localPhoto = uri!;
+    }
     if (
       value.localPhoto === undefined
         ? !saved
