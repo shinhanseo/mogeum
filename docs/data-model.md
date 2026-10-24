@@ -73,3 +73,7 @@ record_notes의 last_operation_id/last_save_payload는 응답 유실 재시도 �
 ## 마셔보고 싶은 술 · 9번째 migration
 
 public.drink_wishlist는 (user_id, product_id) 복합 키와 saved/revision/updated_at을 저장한다. known product ID는 현재 출처 카탈로그 32개 whitelist와 일치하는지 회귀 검증한다. private.wishlist_operations는 (user_id, operation_id)와 immutable request/result receipt를 저장하고 일반 사용자가 직접 읽거나 쓰지 못한다. Auth 사용자 삭제 시 둘 다 cascade된다. 북마크는 consumed_at/테이스팅 답변을 만들거나 AI 선호 근거에 넣지 않는다. false tombstone으로 해제 이후에도 오래된 요청의 revision을 구별한다. 로컬에만 migration up을 적용했고 관리형 DB 적용은 남아 있다.
+
+## 술장 대표 사진 가용성 · 10번째 migration
+
+`20261025090000_cellar_ready_photos.sql`은 `cellar_overview`에서 같은 소유자·술장에 연결된 `ready` 사진만 선택한다. 지정 대표가 `missing`이면 최근 유효 사진으로 대체하고, 모두 없으면 `photo_path=null`로 중립 표시한다. 기록 수와 술장 항목은 유지하며 지정 대표 ID를 지우지 않아 상태 복구 시 원래 선택을 다시 사용한다. 사용자 사진을 삭제하거나 누락 상태를 자동 추정하지 않는다. 관리형 DB 적용은 별도 확인이 필요하다.
