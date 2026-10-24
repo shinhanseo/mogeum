@@ -1,3 +1,4 @@
+import { signPhotoBatch } from "./photo-links";
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type RecordInput = {
@@ -27,9 +28,13 @@ export function createRecordRepository(client: SupabaseClient) {
     },
     async listCellar(from = 0, pageSize = 30) {
       if (!Number.isInteger(from) || from < 0 || !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) throw new Error('Invalid page');
-      const { data, error } = await client.from('cellar_overview').select('*').order('last_consumed_at', { ascending: false, nullsFirst: false }).order('id').range(from, from + pageSize - 1);
+      const { data, error } = await client.from('cellar_overview').select('*').order('last_consumed_at', { ascending: false, nullsFirst: false }).order('id').range(from, from + pageSize - 1).abortSignal(AbortSignal.timeout(20000));
       if (error) throw error;
       return data;
+    },
+    async photoUrls(owner: string, input: string[]) {
+      const paths = [...new Set(input)].filter(path => path.startsWith(`${owner}/records/`) && !path.split('/').some(part => part === '..' || part === '.'));
+      return signPhotoBatch(client, paths);
     },
     async photoUrl(path: string) {
       const { data, error } = await client.storage.from('record-photos').createSignedUrl(path, 300);
