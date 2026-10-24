@@ -81,3 +81,7 @@ Chrome에서 최신 28(9:7442), 29(9:7517), 31 첫 근거 화면을 확인했다
 ## 다음 한 잔 연결 · 2026-10-24
 
 43(19:784)/45(19:972)의 보관한 고해상도 context와 렌더를 기반으로 추천 목록·저장 목록을 연결했다. 원본 SVG, 공통 Button/outlined ChoiceChip/BottomTabBar를 사용한다. 좁은 화면·긴 이름은 고정 canvas 폭 대신 flex/가로 필터 스크롤을 사용한다. bookmark 선택·목록 내 근거 펼침·실패 상태는 확장 상태이며 44 독립 상세 화면의 구현/픽셀 일치를 주장하지 않는다. 검증은 docs/verification/discovery-ui/README.md에 있다.
+
+### 다음 한 잔 추천 이유 · 2026-10-24
+
+44(19:926)의 고해상도 context와 렌더를 새로 확보해 독립 상세를 구현했다. 목록 펼침을 대체하고 공통 Button·원본88px DrinkIllustration·24/16/8 토큰·고정 저장 CTA를 사용한다. 이 상세에는 바텀탭이 없다. 실제 출처/근거에 맞춘 문구와 기록 없음·반대 평가·근거 펼침·오류는 확장 상태다. docs/verification/discovery-reason/README.md에 원본과 검증 범위를 분리했다.

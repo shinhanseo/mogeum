@@ -31,12 +31,13 @@ test(
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const users: string[] = [];
-    const make = () =>
-      createClient(status.API_URL, status.ANON_KEY, {
+    const make = (key = status.ANON_KEY) =>
+      createClient(status.API_URL, key, {
         auth: { persistSession: false, autoRefreshToken: false },
       });
     try {
-      const a = make(),
+      assert.match(status.PUBLISHABLE_KEY, /^sb_publishable_/);
+      const a = make(status.PUBLISHABLE_KEY),
         b = make();
       for (const sdk of [a, b]) {
         const { data, error } = await sdk.auth.signUp({

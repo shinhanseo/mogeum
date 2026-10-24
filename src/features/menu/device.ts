@@ -1,5 +1,6 @@
 import { type MenuRestoreResult } from "./restore";
 import { createMenuStore } from "./storage";
+import { createPhotoPreparationQueue } from "./preparation";
 import { type MenuExclusion } from "./review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
@@ -32,6 +33,27 @@ export const MENU_PHOTO_PIPELINE = "jpeg-cache-cleanup-v1";
 const key = (owner: string) => `mogeum:menu:v1:${owner}`;
 export function newMenu(): MenuDraft {
   return { id: randomUUID(), revision: 0, photos: [], items: [] };
+}
+const preparationQueue = createPhotoPreparationQueue();
+/** Keep the queue until cancelled files are removed, so a remounted screen cannot reuse a revision path too early. */
+export function prepareMenuPhotoBatch(
+  owner: string,
+  sessionId: string,
+  ports: {
+    count: number;
+    active: () => boolean;
+    prepare: (index: number) => Promise<DevicePhoto>;
+    commit: (photos: DevicePhoto[]) => void;
+  },
+) {
+  return preparationQueue.run(owner, {
+    ...ports,
+    async discard(photo) {
+      const canonical = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/${photo.id}-${photo.imageRevision}.jpg`;
+      if (photo.uri !== canonical) throw new Error("INVALID_UNCOMMITTED_PHOTO");
+      await FileSystem.deleteAsync(canonical, { idempotent: true });
+    },
+  });
 }
 export async function prepareMenuPhoto(
   owner: string,
