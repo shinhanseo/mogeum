@@ -11,6 +11,11 @@ import {
   type Product,
 } from "../_shared/product-catalog.ts";
 import { analyzeTaste, type TasteSnapshot } from "../_shared/taste-domain.ts";
+declare const __MOGEUM_BUILD_ID__: string | undefined;
+const buildId =
+  typeof __MOGEUM_BUILD_ID__ === "string"
+    ? __MOGEUM_BUILD_ID__
+    : "source-development";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -20,7 +25,11 @@ const cors = {
 const reply = (body: unknown, status = 200) =>
   Response.json(body, {
     status,
-    headers: { ...cors, "Cache-Control": "no-store" },
+    headers: {
+      ...cors,
+      "Cache-Control": "no-store",
+      "X-Mogeum-Build": buildId,
+    },
   });
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS")

@@ -21,3 +21,7 @@ Supabase `mogeum-dev`의 `menu-recommend`를 최신 공유 모듈을 포함한 �
 ## 남은 검증
 
 Apple·카카오 provider 등록과 실제 관리형 계정의 로그인→메뉴 추천 UI 검증이 남아 있다. Gemini 키도 미설정이다. 로컬 합성 계정의 실제 HTTP 성공, iOS·Android native 저장 검증, 이 배포의 비인증 응답 검증은 각각 다른 범위다. 관리형 DB 마이그레이션 이력 정합화와 실물 메뉴판 OCR 품질 측정도 별도다.
+
+## 후속 배포 · 2026-10-24
+
+최신 geometry-v3를 build `menu-cb7ea451e5d61969`로 배포했다. 위 v2 항목은 이전 배포 이력이다. [최신 배포 검증](discovery-deployment/README.md).
