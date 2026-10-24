@@ -1,0 +1,39 @@
+{
+  "checkedAt": "2026-10-24T02:15:29.267046+00:00",
+  "project": "mogeum-dev",
+  "authenticatedFlowVerified": false,
+  "checks": [
+    {
+      "function": "menu-recommend",
+      "forgedToken": false,
+      "status": 401,
+      "build": "menu-cb7ea451e5d61969",
+      "cache": "no-store",
+      "code": "UNAUTHENTICATED"
+    },
+    {
+      "function": "menu-recommend",
+      "forgedToken": true,
+      "status": 401,
+      "build": "menu-cb7ea451e5d61969",
+      "cache": "no-store",
+      "code": "UNAUTHENTICATED"
+    },
+    {
+      "function": "next-drinks",
+      "forgedToken": false,
+      "status": 401,
+      "build": "next-drinks-5b23d191add97be0",
+      "cache": "no-store",
+      "code": "UNAUTHENTICATED"
+    },
+    {
+      "function": "next-drinks",
+      "forgedToken": true,
+      "status": 401,
+      "build": "next-drinks-5b23d191add97be0",
+      "cache": "no-store",
+      "code": "UNAUTHENTICATED"
+    }
+  ]
+}

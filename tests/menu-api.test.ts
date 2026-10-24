@@ -9,6 +9,7 @@ import { composeNote } from "../src/features/tasting/answers";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { test } from "node:test";
 test(
@@ -53,6 +54,13 @@ test(
     const endpoint = "/functions/v1/menu-recommend";
     assert.equal((await request(endpoint, undefined, {})).status, 401);
     assert.equal((await request(endpoint, "invalid", {})).status, 401);
+    const tooLarge = await request(
+      endpoint,
+      a.access_token,
+      "x".repeat(600000),
+    );
+    assert.equal(tooLarge.status, 413);
+    assert.equal((await tooLarge.json()).code, "TOO_LARGE");
     const overCapacity = await request(endpoint, a.access_token, {
       action: "parse",
       photos: [menuWithRows(101)],
@@ -87,6 +95,77 @@ test(
       photos,
     });
     assert.equal(parsed.status, 200);
+    const nativeColumns = JSON.parse(
+      readFileSync(
+        "docs/verification/ocr-benchmark/ios-normalized-v2.json",
+        "utf8",
+      ),
+    ).cases.find((c: { id: string }) => c.id === "two-columns").rawNative;
+    const columnId = randomUUID();
+    const columnsResponse = await request(endpoint, a.access_token, {
+      action: "parse",
+      photos: [
+        {
+          ...nativeColumns,
+          id: columnId,
+          imageRevision: 1,
+          lines: nativeColumns.lines.map((l: object, n: number) => ({
+            ...l,
+            id: `${columnId}:1:${n}`,
+          })),
+        },
+      ],
+    });
+    assert.equal(columnsResponse.status, 200);
+    const columnsResult = await columnsResponse.json();
+    assert.equal(columnsResult.parser, "geometry-v3");
+    assert.equal(columnsResult.items.length, 6);
+    assert.deepEqual(
+      columnsResult.items.map((i: { price: number }) => i.price),
+      [15000, 25000, 90000, 12000, 9000, 9000],
+    );
+    const androidRaw = JSON.parse(
+      readFileSync(
+        "docs/verification/ocr-benchmark/android-photo-cache-cleanup.json",
+        "utf8",
+      ),
+    ).cases.find((c: { id: string }) => c.id === "two-columns").rawNative;
+    const androidId = randomUUID();
+    const recovered = await request(endpoint, a.access_token, {
+      action: "parse",
+      photos: [
+        {
+          ...androidRaw,
+          id: androidId,
+          imageRevision: 1,
+          lines: androidRaw.lines.map((line: object, n: number) => ({
+            ...line,
+            id: `${androidId}:1:${n}`,
+          })),
+        },
+      ],
+    });
+    assert.equal(recovered.status, 200);
+    const recoveredBody = await recovered.json();
+    assert.equal(recoveredBody.items.length, 6);
+    assert.ok(
+      recoveredBody.items.some(
+        (item: { name: string; price: number | null }) =>
+          item.name.includes("메이커스") && item.price === null,
+      ),
+    );
+    assert.ok(
+      recoveredBody.items.every(
+        (item: { confirmed: boolean; productId: unknown }) =>
+          !item.confirmed && item.productId === null,
+      ),
+    );
+    const v2Parsed = await request(endpoint, a.access_token, {
+      action: "parse",
+      photos: photos.map((p) => ({ ...p, engine: "apple-vision-v2" })),
+    });
+    assert.equal(v2Parsed.status, 200);
+    assert.equal((await v2Parsed.json()).items[0].price, 15000);
     const { items } = await parsed.json();
     assert.equal(items[0].price, 15000);
     assert.equal(items[0].productId, null);

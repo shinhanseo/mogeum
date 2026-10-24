@@ -52,3 +52,9 @@ iOS 개발 빌드의 `/dev/tasting?category=wine&mode=deep&question=appearance`�
 메뉴 복구 회귀는 `tests/menu-restore.test.ts`에서 실제 빈 저장과 읽기 실패, JSON/계정 경로/원문 참조, 카탈로그 변경 뒤 pendingSave 보존을 검사한다. 저장 transport의 opaque ID가 추천 권한으로 사용되지 않는지는 실제 HTTP CI에서 저장/재전송 성공·추천 거부로 검증한다. iOS 읽기 실패→재시도와 Android 도구 제약은 [메뉴 복구](verification/menu-recovery.md)에 구분했다.
 
 추천 근거 링크/최신 상태는 `tests/menu-evidence.test.ts`와 실제 HTTP CI에서 확인한다. 주기·재진입 갱신과 미검증된 실제 장시간 기기 시나리오는 [근거 갱신](verification/menu-evidence-freshness.md)에 구분한다.
+
+네이티브 OCR 검증 경로와 합성 14종 원문/좌표 baseline은 [실행 보고서](verification/native-ocr-benchmark.md)에 있다. `tests/ocr-benchmark.test.ts`는 지표 계산과 fixture 연결만 검증하며 네이티브 엔진을 mock 성공으로 대체하지 않는다. 실제 실행은 개발 빌드/로컬 fixture 서버가 필요하다.
+
+## 실제 native + 로컬 서버 검증
+
+[개발 전용 native record probe](verification/native-record-backend.md)는 iOS/Android의 실제 사진 준비·Storage 업로드·RPC 저장·응답 유실 replay·RLS·native 파일 정리·서버 삭제를 검증한다. Web mock이나 UI 탭 조작 검증으로 표현하지 않는다. 합성 계정 정리 도구의 다른 run 차단은 test:storage의 실제 HTTP 회귀에도 포함한다.

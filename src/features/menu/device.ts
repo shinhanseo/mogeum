@@ -1,5 +1,6 @@
 import { type MenuRestoreResult } from "./restore";
 import { createMenuStore } from "./storage";
+import { createPhotoPreparationQueue } from "./preparation";
 import { type MenuExclusion } from "./review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
@@ -28,9 +29,31 @@ export type MenuDraft = {
   exclusions?: MenuExclusion[];
   pendingSave?: { revision: number; photos: MenuPhoto[]; items: MenuItem[] };
 };
+export const MENU_PHOTO_PIPELINE = "jpeg-cache-cleanup-v1";
 const key = (owner: string) => `mogeum:menu:v1:${owner}`;
 export function newMenu(): MenuDraft {
   return { id: randomUUID(), revision: 0, photos: [], items: [] };
+}
+const preparationQueue = createPhotoPreparationQueue();
+/** Keep the queue until cancelled files are removed, so a remounted screen cannot reuse a revision path too early. */
+export function prepareMenuPhotoBatch(
+  owner: string,
+  sessionId: string,
+  ports: {
+    count: number;
+    active: () => boolean;
+    prepare: (index: number) => Promise<DevicePhoto>;
+    commit: (photos: DevicePhoto[]) => void;
+  },
+) {
+  return preparationQueue.run(owner, {
+    ...ports,
+    async discard(photo) {
+      const canonical = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/${photo.id}-${photo.imageRevision}.jpg`;
+      if (photo.uri !== canonical) throw new Error("INVALID_UNCOMMITTED_PHOTO");
+      await FileSystem.deleteAsync(canonical, { idempotent: true });
+    },
+  });
 }
 export async function prepareMenuPhoto(
   owner: string,
@@ -39,42 +62,65 @@ export async function prepareMenuPhoto(
   id = randomUUID(),
   imageRevision = 1,
 ): Promise<DevicePhoto> {
-  const image = await ImageManipulator.manipulateAsync(uri, [], {
-    compress: 0.9,
-    format: ImageManipulator.SaveFormat.JPEG,
-  });
-  const longest = Math.max(image.width, image.height);
-  const sized =
-    longest > 2200
-      ? await ImageManipulator.manipulateAsync(
-          image.uri,
-          [
-            {
-              resize:
-                image.width >= image.height
-                  ? { width: 2200 }
-                  : { height: 2200 },
-            },
-          ],
-          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+  const temporary = new Set<string>();
+  try {
+    const image = await ImageManipulator.manipulateAsync(uri, [], {
+      compress: 0.9,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+    temporary.add(image.uri);
+    const longest = Math.max(image.width, image.height);
+    const sized =
+      longest > 2200
+        ? await ImageManipulator.manipulateAsync(
+            image.uri,
+            [
+              {
+                resize:
+                  image.width >= image.height
+                    ? { width: 2200 }
+                    : { height: 2200 },
+              },
+            ],
+            { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+          )
+        : image;
+    temporary.add(sized.uri);
+    const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/`;
+    await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+    const target = `${directory}${id}-${imageRevision}.jpg`;
+    await FileSystem.copyAsync({ from: sized.uri, to: target });
+    return {
+      id,
+      imageRevision,
+      uri: target,
+      width: sized.width,
+      height: sized.height,
+      state: "waiting",
+      ocr: null,
+    };
+  } finally {
+    // Only these manipulation results are ours; preserve the selected source and durable drafts.
+    await Promise.all(
+      [...temporary]
+        .filter(
+          (file) =>
+            file !== uri &&
+            !!FileSystem.cacheDirectory &&
+            file.startsWith(FileSystem.cacheDirectory),
         )
-      : image;
-  const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/`;
-  await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-  const target = `${directory}${id}-${imageRevision}.jpg`;
-  await FileSystem.copyAsync({ from: sized.uri, to: target });
-  return {
-    id,
-    imageRevision,
-    uri: target,
-    width: sized.width,
-    height: sized.height,
-    state: "waiting",
-    ocr: null,
-  };
+        .map((file) =>
+          FileSystem.deleteAsync(file, { idempotent: true }).catch(() => {}),
+        ),
+    );
+  }
 }
-export async function readMenuPhoto(photo: DevicePhoto): Promise<DevicePhoto> {
+export async function readMenuPhoto(
+  photo: DevicePhoto,
+  observeNative?: (result: Awaited<ReturnType<typeof recognizeMenu>>) => void,
+): Promise<DevicePhoto> {
   const result = await recognizeMenu(photo.uri);
+  observeNative?.(result);
   if (result.width !== photo.width || result.height !== photo.height)
     throw new Error("OCR_ORIENTATION");
   const ocr: MenuPhoto = {
