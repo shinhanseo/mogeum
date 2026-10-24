@@ -141,3 +141,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 개발 서버 최신화: [geometry-v3·다음 한 잔 함수·북마크 DB 배포 및 인증 경계 검증](docs/verification/discovery-deployment/README.md).
 
 술장 조회는 사용 불가(`missing`) 사진을 제외하고 최근 정상 사진으로 대체합니다. 전부 없으면 기록을 유지한 채 사진 없이 표시합니다. [대표 사진 선택 계약](docs/data-model.md#술장-대표-사진-가용성--10번째-migration). 새 migration의 관리형 프로젝트 적용은 아직 남아 있습니다.
+
+메뉴판 저장 응답 전에 화면을 닫고 다시 열어도, 계정별 저장·복원 순서를 지켜 이전 응답이 새 수정 사항을 덮지 않도록 처리합니다. [요청 순서 검증](docs/verification/menu-request-order/README.md).

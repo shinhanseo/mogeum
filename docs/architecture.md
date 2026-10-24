@@ -1,6 +1,6 @@
 # 기술 구조
 
-현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 9개(9번째 북마크도 로컬·관리형 개발 프로젝트 적용)와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정은 남아 있다. 메뉴 geometry-v3와 next-drinks 최신 번들을 개발 프로젝트에 배포했으며, 실제 관리형 계정의 인증 후 추천 검증은 별도다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
+현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 10개(1–9번째는 로컬·관리형 개발 프로젝트 적용, 10번째 술장 정상 사진 선택은 로컬 적용·관리형 미적용)와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정은 남아 있다. 메뉴 geometry-v3와 next-drinks 최신 번들을 개발 프로젝트에 배포했으며, 실제 관리형 계정의 인증 후 추천 검증은 별도다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
 
 ## 구성
 
@@ -53,3 +53,7 @@ tests/fixtures/          synthetic OCR and AI fixtures
 ## 네이티브 인증 암호화
 
 Supabase PKCE에서 plain fallback이 관찰돼 native client 생성 전에 expo-crypto 기반 최소 S256 브리지를 적용했다. 기존 crypto 구현과 browser는 보존하고 SHA-256 실패는 전파한다. docs/verification/native-pkce에 native 표준값·SDK 요청 검증이 있다. provider 인증 성공과는 구분한다.
+
+### 메뉴판 저장·복원 순서
+
+계정별 공유 요청 큐가 서버 저장과 revision 영수증의 기기 저장이 끝날 때까지 재진입 복원을 기다리게 한다. 로컬 메뉴 저장/파일 정리 큐와는 별도여서 영수증 저장을 기다리는 중 교착하지 않는다. 취소 후에도 전송한 요청의 응답은 보관하되 새 추천 결과를 표시하지 않으며, 대기 중 취소된 다음 요청은 서버 재전송과 영수증 변경을 시작하지 않는다. 서버 오류 이후에는 기존 pendingSave를 복원해 같은 payload부터 재전송한다.
