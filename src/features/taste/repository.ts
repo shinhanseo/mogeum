@@ -1,3 +1,4 @@
+import { signPhotoBatch } from "../records/photo-links";
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { analyzeTaste, SUMMARY_VERSION, validateSelection, type SummaryResult } from '../../../supabase/functions/_shared/taste-domain';
 import type { TasteContext } from '../../../supabase/functions/_shared/taste-handler';
@@ -32,24 +33,7 @@ export async function tastePhotoUrls(client: SupabaseClient, owner: string, reco
   }
   if (!first.size) return {} as Record<string, string>;
   const paths = [...new Set(first.values())];
-  // Storage batch signing has no per-request abort option in this SDK. Bound the UI wait and ignore late results.
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let response: Awaited<ReturnType<ReturnType<typeof client.storage.from>['createSignedUrls']>>;
-  try {
-    response = await Promise.race([
-      client.storage.from('record-photos').createSignedUrls(paths, 300),
-      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('PHOTO_LINK_TIMEOUT')), 10000); }),
-    ]);
-  } finally {
-    if (timer !== undefined) clearTimeout(timer);
-  }
-  const {data: signed, error: signingError} = response;
-  if (signingError) throw signingError;
-  const byPath = new Map<string, string>();
-  for (const row of signed ?? []) {
-    if (!row.error && typeof row.path === 'string' && paths.includes(row.path) && typeof row.signedUrl === 'string' && row.signedUrl)
-      byPath.set(row.path, row.signedUrl);
-  }
+  const byPath = await signPhotoBatch(client, paths);
   return Object.fromEntries([...first].flatMap(([id,path]) => {
     const url = byPath.get(path);
     return url ? [[id,url]] : [];

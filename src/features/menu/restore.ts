@@ -1,4 +1,5 @@
 import type { MenuDraft } from "./device";
+import { currentDocumentUri } from "../../lib/document-uri";
 import { activeExclusions } from "./review";
 import {
   validateItems,
@@ -33,6 +34,11 @@ export function parseStoredMenu(
     invalid();
   const photoIds = new Set<string>();
   for (const p of d.photos) {
+    const uri = currentDocumentUri(
+      p?.uri,
+      documentDirectory,
+      `menu-drafts/${owner}/${d.id}/${p?.id}-${p?.imageRevision}.jpg`,
+    );
     if (
       !p ||
       !uuid.test(p.id) ||
@@ -47,10 +53,10 @@ export function parseStoredMenu(
       p.width > 2400 ||
       p.height > 2400 ||
       !["waiting", "reading", "ready", "failed"].includes(p.state) ||
-      p.uri !==
-        `${documentDirectory}menu-drafts/${owner}/${d.id}/${p.id}-${p.imageRevision}.jpg`
+      !uri
     )
       invalid();
+    p.uri = uri;
     photoIds.add(p.id);
     if (p.ocr) {
       validatePhotos([p.ocr]);
