@@ -22,6 +22,8 @@ iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메�
 
 노트 초안의 읽기·쓰기·정리를 직렬화하고, 완료 후 더 새롭게 작성된 초안은 보존합니다. [초안 순서·정리 검증](docs/verification/tasting-draft-order.md). Android 작성 단계의 시스템 Back 연결은 추가했으며 네이티브 동작 확인은 남아 있습니다. [미완료 검증 범위](docs/verification/composer-back/README.md).
 
+기록 저장·사진 교체의 동시 요청과 완료 정리를 계정/기록별로 직렬화합니다. [보관 요청 동시 실행 검증](docs/verification/record-request-order.md).
+
 ## 출시 범위
 
 - 사진만으로 기록 → 질문형 테이스팅 노트 → 술장·검색·상세·수정·삭제·재음용 기록
