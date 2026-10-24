@@ -92,3 +92,62 @@ test("blur/unmount during photo signing or a failing context cannot publish afte
   await pending;
   assert.deepEqual(states, [{ status: "loading" }, { status: "loading" }]);
 });
+
+test("a changed snapshot while signing photos cannot publish an outdated taste summary", async () => {
+  const states: TasteLoadState[] = [];
+  let changed = false;
+  const loader = createLatestTasteLoader({
+    context: async () =>
+      changed
+        ? {
+            ...context,
+            snapshot: { ...context.snapshot, hash: "edited-or-deleted" },
+          }
+        : context,
+    photos: async () => {
+      changed = true;
+      return { deleted: "old-private-url" };
+    },
+    publish: (state) => states.push(state),
+  });
+  await loader.load();
+  assert.deepEqual(states, [{ status: "loading" }, { status: "failed" }]);
+});
+test("final context verification failure clears the pending summary even if photo signing succeeded", async () => {
+  const states: TasteLoadState[] = [];
+  let reads = 0;
+  const loader = createLatestTasteLoader({
+    context: async () => {
+      if (++reads === 2) throw new Error("offline");
+      return context;
+    },
+    photos: async () => ({ record: "signed" }),
+    publish: (state) => states.push(state),
+  });
+  await loader.load();
+  assert.deepEqual(states, [{ status: "loading" }, { status: "failed" }]);
+});
+test("cancelling during final verification cannot publish or start another request", async () => {
+  const final = deferred<TasteContext>(),
+    started = deferred<void>();
+  const states: TasteLoadState[] = [];
+  let reads = 0;
+  const loader = createLatestTasteLoader({
+    context: () => {
+      if (++reads === 1) return Promise.resolve(context);
+      started.resolve();
+      return final.promise;
+    },
+    photos: async () => ({ record: "old" }),
+    publish: (state) => states.push(state),
+  });
+  const load = loader.load();
+  // Let the complete context/photo/verification chain reach its final request.
+  for (let n = 0; n < 8 && reads < 2; n++) await Promise.resolve();
+  assert.equal(reads, 2);
+  await started.promise;
+  loader.cancel();
+  final.resolve(context);
+  await load;
+  assert.deepEqual(states, [{ status: "loading" }]);
+});

@@ -123,3 +123,30 @@ test("photo signing failure preserves valid text evidence with explicit absence 
     { status: "fresh", photos: {} },
   );
 });
+
+test("record edits during private photo signing invalidate the old recommendation before publication", async () => {
+  let current = "old";
+  const result = await refreshMenuEvidence("old", {
+    active: () => true,
+    hash: async () => current,
+    photos: async () => {
+      current = "new-after-delete";
+      return { deleted: "signed-old-photo" };
+    },
+  });
+  assert.deepEqual(result, { status: "stale" });
+});
+test("a failed final snapshot check cannot publish earlier textual or photo evidence", async () => {
+  let reads = 0;
+  await assert.rejects(
+    refreshMenuEvidence("current", {
+      active: () => true,
+      hash: async () => {
+        if (++reads === 2) throw new Error("verification unavailable");
+        return "current";
+      },
+      photos: async () => ({ record: "signed-photo" }),
+    }),
+    /verification unavailable/,
+  );
+});

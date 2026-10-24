@@ -143,3 +143,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 술장 조회는 사용 불가(`missing`) 사진을 제외하고 최근 정상 사진으로 대체합니다. 전부 없으면 기록을 유지한 채 사진 없이 표시합니다. [대표 사진 선택 계약](docs/data-model.md#술장-대표-사진-가용성--10번째-migration). 새 migration의 관리형 프로젝트 적용은 아직 남아 있습니다.
 
 메뉴판 저장 응답 전에 화면을 닫고 다시 열어도, 계정별 저장·복원 순서를 지켜 이전 응답이 새 수정 사항을 덮지 않도록 처리합니다. [요청 순서 검증](docs/verification/menu-request-order/README.md).
+
+취향 요약·메뉴 추천 근거는 사진 준비 후 기록 버전을 재확인합니다. 취향 근거 화면도 앱 복귀 때 수정·삭제를 다시 읽습니다. [회귀 및 iOS 실제 복귀 검증](docs/verification/evidence-snapshot-window/README.md).

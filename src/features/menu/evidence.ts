@@ -21,5 +21,10 @@ export async function refreshMenuEvidence(
   // A private image failure must not invent URLs or discard valid textual evidence.
   const photos = await ports.photos().catch(() => ({}));
   if (!ports.active()) return { status: "cancelled" };
+  const verifiedHash = await ports.hash();
+  if (!ports.active()) return { status: "cancelled" };
+  if (typeof verifiedHash !== "string" || !verifiedHash)
+    throw new Error("INVALID_TASTE_CONTEXT");
+  if (verifiedHash !== expectedHash) return { status: "stale" };
   return { status: "fresh", photos };
 }
