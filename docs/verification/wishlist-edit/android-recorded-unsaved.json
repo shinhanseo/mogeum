@@ -1,0 +1,14 @@
+{
+  "synthetic": true,
+  "runId": "ui-android-wishlist-v1",
+  "recordCount": 1,
+  "entryCount": 1,
+  "wishlist": [
+    {
+      "productId": "ardbeg-10",
+      "saved": false,
+      "revision": 2
+    }
+  ],
+  "checkedAt": "2026-10-24T03:13:41.709Z"
+}
