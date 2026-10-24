@@ -1,3 +1,4 @@
+import { menuRequestQueue } from "./request-queue";
 import { menuFailureMessage } from "./result-contract";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
@@ -379,15 +380,17 @@ export function MenuFlow({
         });
         setStep("review");
       } else {
-        const d = await submitMenu(photos, {
-          read: () => current.current,
-          write: async (value) => {
-            commit(value);
-            await writes.current;
-          },
-          save: backend.save,
-          active: () => valid(version),
-        });
+        const d = await menuRequestQueue.run(owner, () =>
+          submitMenu(photos, {
+            read: () => current.current,
+            write: async (value) => {
+              commit(value);
+              await writes.current;
+            },
+            save: backend.save,
+            active: () => valid(version),
+          }),
+        );
         if (!d) return;
         const value = await backend.recommend(photos, d.items);
         if (!valid(version)) return;

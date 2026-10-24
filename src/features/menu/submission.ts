@@ -11,6 +11,7 @@ export async function submitMenu(
   photos: MenuPhoto[],
   port: Port,
 ): Promise<MenuDraft | null> {
+  if (!port.active()) return null;
   const pending = port.read().pendingSave;
   if (pending) {
     const revision = await port.save(

@@ -1,3 +1,4 @@
+import { menuRequestQueue } from "./request-queue";
 import { type MenuRestoreResult } from "./restore";
 import { createMenuStore } from "./storage";
 import { createPhotoPreparationQueue } from "./preparation";
@@ -162,5 +163,5 @@ export function persistMenu(owner: string, draft: MenuDraft): Promise<void> {
   return menuStore.save(owner, draft);
 }
 export function restoreMenu(owner: string): Promise<MenuRestoreResult> {
-  return menuStore.load(owner);
+  return menuRequestQueue.run(owner, () => menuStore.load(owner));
 }
