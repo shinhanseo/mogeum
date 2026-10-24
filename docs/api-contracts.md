@@ -6,6 +6,8 @@
 
 Authorization Bearer JWT 검증 필수. 클라이언트가 body의 userId로 타인 데이터를 요청할 수 없다. 요청은 schemaVersion과 operationId/idempotencyKey를 가진다. 오류는 code, 사용자 메시지, retryable, 관련 photoId를 포함한다. 내부 키·stack trace는 응답하지 않는다. 재시도는 같은 입력 버전에서 중복 결과를 만들지 않는다.
 
+`next-drinks`는 취향 snapshot과 전체 이력 조회 전후의 전체 기록 hash/개수를 비교한다. 조회 중 변경은409 `TASTE_CONTEXT_CHANGED`이며 앱에서 이전 개인 추천을 폐기하고 재조회한다. 검증 조회 실패는503이고 오래된 성공 결과로 대체하지 않는다. 현재 소스/로컬 번들에 구현됐으며 관리형 배포 여부는 docs/verification/discovery-snapshot.md를 따른다.
+
 | 작업 | 입력 | 출력 |
 |---|---|---|
 | taste-summary | inputRevision | status, summaryId/jobId, claims와 evidence recordIds |
@@ -127,3 +129,23 @@ POST `/functions/v1/menu-recommend`, 검증된 사용자 Bearer JWT 필수. `{ac
 ### 메뉴 로컬 복구와 저장 재전송
 
 로컬 restore는 empty/ready/failed로 구분하며 failed를 새 세션으로 저장하지 않는다. 현재 메뉴의 낡은 제품 확인은 해제하되 pendingSave는 정확한 내용과 revision을 보존한다. save_menu_session transport의 productId는 bounded opaque ID이며 제품 확인 권한이 아니다. 추천 Edge는 현재 카탈로그/메뉴 이름 후보와 일치하지 않는 ID를 계속 거부한다. [복구 검증과 한계](verification/menu-recovery.md)를 참조한다.
+
+메뉴 parse는 세션 전체에서 100개를 넘는 판매 항목이 나오면 HTTP 400 / MENU_ITEM_LIMIT를 반환한다. 일부 항목만 조용히 잘라 반환하지 않는다. 앱은 사진/OCR/이전 수정 입력을 유지하고 사진을 나눠 처리하도록 안내한다. 정확히 100개는 허용한다.
+
+현재 OCR 엔진 허용 값은 `apple-vision-v1`, `apple-vision-v2`, `mlkit-korean-16.0.1`, `manual`이다. v2는 Vision 좌표를 adapter에서 이미지 경계로 clip하며 서버는 여전히 유한한 [0,1] 사각형 꼭짓점만 받는다. 관리형 함수에 허용 목록 변경을 배포하기 전에는 v2 입력 연결을 완료로 보지 않는다.
+
+메뉴 Edge 요청 본문은 600,000 UTF-16 코드 유닛을 유지하며 stream 수신 중 검사한다. 바이트 상한은 선행 BOM을 포함해 1,800,003이다. 실제 body 한도 초과는 TOO_LARGE/413이고 기존 사진/메뉴 validation 코드는 유지한다. [검증](verification/menu-request-body.md).
+
+## 메뉴 해석 geometry-v3
+
+parse 응답의 parser는 geometry-v3다. 가격이 손상된 독립 OCR 셀은 금액으로 확정하지 않고 이름·lineIds·photoId·imageRevision을 보존한 `price: null`, `confirmed: false`, `productId: null` 후보로 반환한다. 금액 없는 카탈로그 이름 후보도 같은 상태로 남긴다. 제목/설명 등 모든 무가격 줄을 술로 확정하지 않으며 원문은 photos.lines에 유지한다. 클라이언트 수정은 원문을 덮어쓰지 않고, recommend는 사용자가 확정한 항목만 받는다. 버전별 실제 배포 상태는 docs/verification/menu-price-review.md를 따른다.
+
+## 술장 cursor 조회
+
+홈의 Data API 조회는 cellar_overview에 owner 필터·검색/주종 필터를 적용하고 last_consumed_at DESC NULLS LAST, id ASC로 31개를 읽어 30개를 노출한다. 다음 cursor는 마지막 노출 항목의 원본 timestamp(최대 소수점 6자리)와 UUID다. timestamp를 Date.toISOString으로 재생성하지 않는다. 전체 술장 수는 최초 페이지에서 별도의 owner-scoped HEAD count로 읽고 필터 결과 수와 구분한다. 사진 링크는 노출할 30개만 발급한다. cursor 입력은 UUID/ISO timestamp 형태를 검사하고, 실제 접근 권한은 verified Auth의 RLS/Storage 정책이 결정한다. 스크롤 사이 DB 변경에 대한 snapshot 고정 계약은 아니며 focus 재진입 시 첫 페이지부터 갱신한다.
+
+## 다음 한 잔 · next-drinks / 북마크
+
+POST next-drinks body는 `{ category?: 'whisky'|'beer'|'wine'|'traditional'|null }`만 받는다. owner는 검증된 JWT에서만 얻고 client 근거/owner override는 거절한다. recommendations에 product/source·similar·cautions·unconfirmedFeatures·kind·score를 반환하며, score는 내부 정렬용이다. 과대 body는 413, 인증 누락/거절은 401, 잘못된 category/field는 400, 데이터 호출 실패는 안전한 503 코드다. method=evidence-rules-v1/modelUsed=false와 catalogVersion/size를 포함한다.
+
+wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아니다. set_drink_wishlist(operation UUID, product ID, saved boolean, expected revision)는 현재 owner의 상태만 변경한다. 최초 expected revision은 0, 해제 후에도 revision은 남는다. 정확한 operation replay는 과거 receipt를 반환하고 원래 요청 변경/낡은 revision을 거절한다. receipt와 현재 상태는 다를 수 있으므로 클라이언트는 receipt 후 최신 목록을 재조회한다. 반영 전까지 operation/payload를 바꾸거나 후속 토글을 임의 전송하지 않는다. 후속 UI/pending queue 연결은 docs/verification/next-drinks-foundation.md를 따른다.
