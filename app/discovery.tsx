@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { BackHandler, StyleSheet, View } from "react-native";
+import { AppState, BackHandler, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../src/features/auth/AuthProvider";
 import { getSupabase } from "../src/lib/supabase";
@@ -50,9 +50,18 @@ function DiscoveryPanel({ owner }: { owner: string }) {
     saveLock = useRef(false);
   const refresh = useCallback(async () => {
     const sdk = getSupabase();
-    if (!sdk || saveLock.current) return;
+    if (
+      !sdk ||
+      saveLock.current ||
+      !focused.current ||
+      AppState.currentState !== "active"
+    )
+      return;
     const version = ++generation.current;
-    const active = () => focused.current && version === generation.current;
+    const active = () =>
+      focused.current &&
+      AppState.currentState === "active" &&
+      version === generation.current;
     setSaving(false);
     setBusy(true);
     setError("");
@@ -74,10 +83,13 @@ function DiscoveryPanel({ owner }: { owner: string }) {
         })),
       );
     } catch {
-      if (active())
+      if (active()) {
+        // A failed refresh cannot leave old personal comparisons available as current evidence.
+        setResult(null);
         setError(
           "술을 불러오지 못했어요. 남아 있는 저장 요청도 함께 다시 확인할게요.",
         );
+      }
     } finally {
       if (active()) setBusy(false);
     }
@@ -92,9 +104,24 @@ function DiscoveryPanel({ owner }: { owner: string }) {
       };
     }, [refresh]),
   );
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void refresh();
+      else generation.current++;
+    });
+    return () => subscription.remove();
+  }, [refresh]);
   async function toggle(productId: string) {
     const sdk = getSupabase();
-    if (!sdk || saveLock.current || busy || error) return;
+    if (
+      !sdk ||
+      saveLock.current ||
+      busy ||
+      error ||
+      !focused.current ||
+      AppState.currentState !== "active"
+    )
+      return;
     saveLock.current = true;
     setSaving(true);
     setError("");
@@ -107,7 +134,11 @@ function DiscoveryPanel({ owner }: { owner: string }) {
         !previous?.saved,
         previous?.revision ?? 0,
       );
-      if (focused.current && version === generation.current) {
+      if (
+        focused.current &&
+        AppState.currentState === "active" &&
+        version === generation.current
+      ) {
         setWishlist(resolution.state);
         if (resolution.conflicted)
           setError(
@@ -115,13 +146,17 @@ function DiscoveryPanel({ owner }: { owner: string }) {
           );
       }
     } catch {
-      if (focused.current && version === generation.current)
+      if (
+        focused.current &&
+        AppState.currentState === "active" &&
+        version === generation.current
+      )
         setError(
           "저장 상태를 확인하지 못했어요. 다시 시도하면 보관한 요청부터 확인해요.",
         );
     } finally {
       saveLock.current = false;
-      if (focused.current) {
+      if (focused.current && AppState.currentState === "active") {
         setSaving(false);
         if (version !== generation.current) void refresh();
       }
