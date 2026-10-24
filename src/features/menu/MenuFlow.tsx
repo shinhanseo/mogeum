@@ -9,6 +9,7 @@ import {
   newMenu,
   persistMenu,
   prepareMenuPhoto,
+  prepareMenuPhotoBatch,
   readMenuPhoto,
   restoreMenu,
   type MenuDraft,
@@ -66,6 +67,7 @@ export function MenuFlow({
   const epoch = useRef(0);
   const lock = useRef(false);
   const replacement = useRef<string | undefined>(undefined);
+  const preparing = useRef<number | null>(null);
   const restored = useRef(false);
   const [restoreState, setRestoreState] = useState<
     "loading" | "ready" | "failed"
@@ -247,7 +249,7 @@ export function MenuFlow({
     }
   }
   async function addAssets(assets: ImagePickerAsset[]) {
-    if (lock.current || !restored.current) return;
+    if (lock.current || preparing.current !== null || !restored.current) return;
     const replace = replacement.current;
     replacement.current = undefined;
     const room = replace ? 1 : 5 - current.current.photos.length;
@@ -256,32 +258,41 @@ export function MenuFlow({
     setBusy(true);
     setError("");
     const version = ++epoch.current;
+    preparing.current = version;
     try {
-      const next: DevicePhoto[] = [];
-      for (const asset of assets.slice(0, room)) {
-        const old = current.current.photos.find((p) => p.id === replace);
-        const photo = await prepareMenuPhoto(
-          owner,
-          current.current.id,
-          asset.uri,
-          old?.id,
-          old ? old.imageRevision + 1 : 1,
-        );
-        if (!valid(version)) return;
-        next.push(photo);
-      }
-      const keep = current.current.photos.filter((p) => p.id !== replace);
-      const photos = replace
-        ? current.current.photos.map((p) => (p.id === replace ? next[0] : p))
-        : [...keep, ...next];
-      commit({
-        ...current.current,
-        photos,
-        items: current.current.items.filter(
-          (i) => !next.some((p) => p.id === i.photoId),
-        ),
+      const selected = assets.slice(0, room);
+      const sessionId = current.current.id;
+      const old = current.current.photos.find((p) => p.id === replace);
+      const next = await prepareMenuPhotoBatch(owner, sessionId, {
+        count: selected.length,
+        active: () => valid(version),
+        prepare: (index) =>
+          prepareMenuPhoto(
+            owner,
+            sessionId,
+            selected[index].uri,
+            old?.id,
+            old ? old.imageRevision + 1 : 1,
+          ),
+        commit(next) {
+          const keep = current.current.photos.filter((p) => p.id !== replace);
+          const photos = replace
+            ? current.current.photos.map((p) =>
+                p.id === replace ? next[0] : p,
+              )
+            : [...keep, ...next];
+          commit({
+            ...current.current,
+            photos,
+            items: current.current.items.filter(
+              (i) => !next.some((p) => p.id === i.photoId),
+            ),
+          });
+          setStep("photos");
+        },
       });
-      setStep("photos");
+      if (preparing.current === version) preparing.current = null;
+      if (!next || !valid(version)) return;
       await recognize(
         next.map((p) => p.id),
         version,
@@ -290,6 +301,7 @@ export function MenuFlow({
       if (valid(version))
         setError("사진을 준비하지 못했어요. 다시 골라주세요.");
     } finally {
+      if (preparing.current === version) preparing.current = null;
       if (valid(version)) {
         lock.current = false;
         setBusy(false);
@@ -467,7 +479,7 @@ export function MenuFlow({
         error={error || picker.error}
         onStep={navigate}
         onAdd={(camera, id) => {
-          if (lock.current) return;
+          if (lock.current || preparing.current !== null) return;
           replacement.current = id;
           if (fixtureUri)
             void addAssets([
