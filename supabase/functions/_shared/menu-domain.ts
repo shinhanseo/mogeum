@@ -111,15 +111,23 @@ const bounds = (l: MenuLine) => ({
     Math.max(...l.polygon.map((p) => p.y)) -
     Math.min(...l.polygon.map((p) => p.y)),
 });
-/** Split only complete name→price columns with a visible gutter. Ambiguous price options stay together. */
+// An OCR amount with a damaged currency suffix is only a boundary/correction hint, never a price.
+const priceCell =
+  /^(?:₩\s*(?:\d{1,3}(?:,\d{3})+|\d+)|\d{1,3}(?:,\d{3})+(?:\s*원)?|\d{3,7}\s*원)$/u;
+const damagedPriceCell =
+  /^(?:[₩$€¥]\s*)?\d{1,3}(?:,\d{3})+[\p{L}\p{N}%％]{1,4}$/u;
+const isDamagedPriceCell = (text: string) =>
+  !priceCell.test(text) && damagedPriceCell.test(text);
+/** Split complete name→amount columns with a visible gutter, retaining uncertain amounts for review. */
 function splitMenuColumns(row: MenuLine[]): MenuLine[][] {
-  const priceOnly =
-    /^(?:₩\s*\d[\d,]*|\d{1,3}(?:,\d{3})+(?:\s*원)?|\d{3,7}\s*원)$/u;
   const groups: MenuLine[][] = [];
   let current: MenuLine[] = [];
   for (const line of row) {
     current.push(line);
-    if (priceOnly.test(line.text.trim())) {
+    if (
+      priceCell.test(line.text.trim()) ||
+      isDamagedPriceCell(line.text.trim())
+    ) {
       const name = current
         .slice(0, -1)
         .map((l) => l.text)
@@ -170,10 +178,13 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
           .map((l) => l.text)
           .join(" ")
           .trim();
+        const damaged = row.filter((line) =>
+          isDamagedPriceCell(line.text.trim()),
+        );
         // Require explicit currency or comma-grouped amount; years and volumes cannot become prices.
         const prices = [
           ...text.matchAll(
-            /(?:₩\s*\d[\d,]*|\d{1,3}(?:,\d{3})+(?:\s*원)?|\d{3,7}\s*원)/g,
+            /(?<![\p{L}\p{N},.])(?:₩\s*(?:\d{1,3}(?:,\d{3})+|\d+)|\d{1,3}(?:,\d{3})+(?:\s*원)?|\d{3,7}\s*원)(?![\d,])/gu,
           ),
         ].filter(
           (m) =>
@@ -181,21 +192,35 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
               text.slice((m.index ?? 0) + m[0].length),
             ),
         );
+        const labelText = row
+          .filter((line) => !damaged.includes(line))
+          .map((line) => line.text)
+          .join(" ")
+          .trim();
         const serving =
-          text.match(
+          labelText.match(
             /\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b|한\s*잔|글라스|바틀|보틀|glass|bottle/iu,
           )?.[0] ?? null;
         const price =
-          prices.length === 1 && !/[$€¥]|\b(?:USD|EUR|JPY)\b/i.test(text)
+          prices.length === 1 &&
+          !damaged.length &&
+          !/[$€¥]|\b(?:USD|EUR|JPY)\b/i.test(text)
             ? Number(prices[0][0].replace(/[^0-9]/g, ""))
             : null;
         let name = text;
+        for (const line of damaged) name = name.replace(line.text, "");
         for (const match of prices) name = name.replace(match[0], "");
         if (serving) name = name.replace(serving, "");
         name = name.replace(/[·|…]+/g, " ").trim();
         if (!name || name.length > 150 || !/\p{L}/u.test(name)) continue;
-        // Headings/unpriced descriptions are not safely identifiable as menu items. Raw lines remain available.
-        if (!prices.length) continue;
+        // Keep damaged amount rows and exact catalog names as unconfirmed candidates, without fabricating price/product.
+        // Other headings/descriptions remain in raw OCR for manual review.
+        if (
+          !prices.length &&
+          !damaged.length &&
+          !productCandidates(name).length
+        )
+          continue;
         output.push({
           id: `${p.id}:${p.imageRevision}:item:${row[0].id.split(":").at(-1)}`,
           photoId: p.id,

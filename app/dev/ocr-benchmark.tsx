@@ -9,7 +9,6 @@ import { Button } from "../../src/components/Button";
 import { colors, typography } from "../../src/theme/tokens";
 import manifest from "../../assets/fixtures/ocr-benchmark/manifest.json";
 import type { BenchmarkCase } from "../../src/features/menu/benchmark-metrics";
-const ocrBenchmarkFixtures = manifest as BenchmarkCase[];
 import { benchmarkMetrics } from "../../src/features/menu/benchmark-metrics";
 import {
   MENU_PHOTO_PIPELINE,
@@ -17,6 +16,7 @@ import {
   readMenuPhoto,
 } from "../../src/features/menu/device";
 import { parseMenu } from "../../supabase/functions/_shared/menu-domain";
+const ocrBenchmarkFixtures = manifest as BenchmarkCase[];
 type Result = {
   id: string;
   engine?: string;
