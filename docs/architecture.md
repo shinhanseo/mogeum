@@ -1,6 +1,6 @@
 # 기술 구조
 
-상태: Expo 58 / RN 0.88 / Router 58 초기화. 아래 서버·상태 관리·OCR 구조는 구현 예정 설계다.
+현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 9개(9번째 북마크도 로컬·관리형 개발 프로젝트 적용)와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정은 남아 있다. 메뉴 geometry-v3와 next-drinks 최신 번들을 개발 프로젝트에 배포했으며, 실제 관리형 계정의 인증 후 추천 검증은 별도다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
 
 ## 구성
 
@@ -11,8 +11,8 @@ React Native + Expo Development Build + TypeScript 앱이 Supabase Auth로 인�
 ## 앱 경계
 
 - Expo Router: 탭·기록 작성·상세·메뉴 추천 스택. +는 composer 진입.
-- TanStack Query: 원격 기록·술장·취향 요약·분석 상태. 키에 사용자·세션·버전 포함.
-- Zustand: 질문 답변·사진 선택·수정 중 draft. 인증 토큰이나 서버 데이터 전체를 중복 저장하지 않는다.
+- 현재 원격 조회는 SDK/repository와 화면의 상태·generation/focus 가드로 처리한다. TanStack Query는 아직 도입하지 않은 목표 도구이며, 도입 시 키에 사용자·세션·버전을 포함한다.
+- 현재 질문·작성 draft는 React 상태와 버전이 있는 AsyncStorage 복구로 처리한다. Zustand는 아직 도입하지 않은 목표 도구다. 인증 토큰이나 서버 데이터 전체를 중복 저장하지 않는다.
 - Repository/service 모듈: 화면과 SDK/AI/OCR 구현 분리.
 - OCR adapter: 사진 ID, canonical 이미지 크기, 텍스트와 정규화 좌표를 반환. ONNX와 ML Kit 교체 가능.
 - 서버 결과 schema validation: 런타임 검증 라이브러리는 부트스트랩에서 고정.
@@ -49,3 +49,7 @@ tests/fixtures/          synthetic OCR and AI fixtures
 ## 아직 고정하지 않는 것
 
 특정 AI 모델명, OCR 모델/변환 방식, 벡터 DB, 큐 제품, 유료 요금제. 도입 시 공식 문서·실기기·의존성 호환성을 확인하고 선정 이유를 docs/decisions.md에 기록한다.
+
+## 네이티브 인증 암호화
+
+Supabase PKCE에서 plain fallback이 관찰돼 native client 생성 전에 expo-crypto 기반 최소 S256 브리지를 적용했다. 기존 crypto 구현과 browser는 보존하고 SHA-256 실패는 전파한다. docs/verification/native-pkce에 native 표준값·SDK 요청 검증이 있다. provider 인증 성공과는 구분한다.
