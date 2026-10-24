@@ -1,3 +1,5 @@
+import { refreshMenuEvidence } from "./evidence";
+import { tastePhotoUrls } from "../taste/repository";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getBackendState } from "../../lib/env";
 import {
@@ -5,24 +7,13 @@ import {
   validateItems,
   type MenuPhoto,
   type MenuItem,
-  type MenuRecommendation,
 } from "../../../supabase/functions/_shared/menu-domain";
-export type MenuResult = {
-  evidenceRecords: {
-    id: string;
-    name: string | null;
-    date: string;
-    revision: number;
-    category: string | null;
-    revisit: string | null;
-    noteText: string | null;
-  }[];
-  recommendations: MenuRecommendation[];
-  tasteHash: string;
-  recordCount: number;
-  method: string;
-  limitedCatalog: boolean;
-};
+import {
+  requireCatalogVersion,
+  validateMenuResult,
+  type MenuResult,
+} from "./result-contract";
+export type { MenuResult } from "./result-contract";
 /** Pin the verified owner/token for all calls in this operation. */
 export async function menuClient(client: SupabaseClient, owner: string) {
   const { data } = await client.auth.getSession();
@@ -50,22 +41,24 @@ export async function menuRequest(
   const scoped = await menuClient(client, owner);
   const { data, error } = await scoped.functions.invoke("menu-recommend", {
     body: { action: items ? "recommend" : "parse", photos, items },
+    timeout: 30000,
   });
-  if (error) throw new Error("MENU_SERVICE_UNAVAILABLE");
-  if (items) {
-    if (
-      !Array.isArray(data?.evidenceRecords) ||
-      !Array.isArray(data?.recommendations) ||
-      typeof data.tasteHash !== "string"
-    )
-      throw new Error("INVALID_RESULT");
-    const ids = new Set(items.map((i) => i.id));
-    if (
-      data.recommendations.some((r: MenuRecommendation) => !ids.has(r.itemId))
-    )
-      throw new Error("INVALID_RESULT");
-    return data as MenuResult;
+  if (error) {
+    let code: unknown;
+    try {
+      const response = (error as { context?: Response }).context;
+      code = response ? (await response.json())?.code : undefined;
+    } catch {
+      /* Never expose remote exception text. */
+    }
+    throw new Error(
+      code === "MENU_ITEM_LIMIT"
+        ? "MENU_ITEM_LIMIT"
+        : "MENU_SERVICE_UNAVAILABLE",
+    );
   }
+  requireCatalogVersion(data);
+  if (items) return validateMenuResult(data, items);
   return { items: validateItems(data?.items, photos) };
 }
 export async function saveMenuSession(
@@ -77,15 +70,42 @@ export async function saveMenuSession(
   items: MenuItem[],
 ) {
   validatePhotos(photos);
-  validateItems(items, photos);
+  validateItems(items, photos, "stored");
   const scoped = await menuClient(client, owner);
-  const { data, error } = await scoped.rpc("save_menu_session", {
-    p_id: id,
-    p_revision: revision,
-    p_photos: photos,
-    p_items: items,
-  });
+  const { data, error } = await scoped
+    .rpc("save_menu_session", {
+      p_id: id,
+      p_revision: revision,
+      p_photos: photos,
+      p_items: items,
+    })
+    .abortSignal(AbortSignal.timeout(20000));
   if (error) throw error;
   if (!Number.isInteger(data)) throw new Error("INVALID_REVISION");
   return data as number;
+}
+
+export async function loadMenuEvidence(
+  client: SupabaseClient,
+  owner: string,
+  result: MenuResult,
+  active: () => boolean,
+) {
+  const scoped = await menuClient(client, owner);
+  return refreshMenuEvidence(result.tasteHash, {
+    active,
+    async hash() {
+      const { data, error } = await scoped
+        .rpc("taste_summary_context")
+        .abortSignal(AbortSignal.timeout(20000));
+      if (error) throw error;
+      return data?.snapshot?.hash;
+    },
+    photos: () =>
+      tastePhotoUrls(
+        scoped,
+        owner,
+        result.evidenceRecords.map((r) => r.id),
+      ),
+  });
 }

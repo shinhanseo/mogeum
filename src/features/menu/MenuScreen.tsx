@@ -20,7 +20,7 @@ import { Mogu } from "../../components/Mogu";
 import { Icon } from "../../components/Icon";
 import { colors, fonts, typography } from "../../theme/tokens";
 import {
-  productCandidate,
+  productCandidates,
   products,
   type MenuItem,
   type MenuRecommendation,
@@ -38,6 +38,8 @@ export type MenuStep =
   | "original";
 type Props = {
   draft: MenuDraft;
+  restoreState?: "loading" | "ready" | "failed";
+  onRestoreRetry?: () => void;
   step: MenuStep;
   result: MenuResult | null;
   evidencePhotos?: Record<string, string>;
@@ -127,7 +129,23 @@ export function MenuScreen(p: Props) {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {p.step === "start" ? (
+        {p.restoreState && p.restoreState !== "ready" ? (
+          <>
+            <Text style={s.title}>메뉴판을 다시{`\n`}불러올게요.</Text>
+            <Text style={s.body}>
+              {p.restoreState === "failed"
+                ? "기존 입력은 덮어쓰지 않았어요."
+                : "이전에 남긴 사진과 입력을 확인하고 있어요."}
+            </Text>
+            <Button
+              label={
+                p.restoreState === "loading" ? "불러오는 중" : "다시 불러오기"
+              }
+              loading={p.restoreState === "loading"}
+              onPress={p.onRestoreRetry ?? (() => {})}
+            />
+          </>
+        ) : p.step === "start" ? (
           <>
             <Text style={s.title}>
               오늘의 메뉴에서,{"\n"}내가 좋아할 한 잔.
@@ -321,24 +339,30 @@ export function MenuScreen(p: Props) {
                       <Text style={s.primary}>수정</Text>
                     </Pressable>
                   </View>
-                  {productCandidate(item.name) && (
+                  {productCandidates(item.name).length > 1 && (
+                    <Text style={s.body}>
+                      빈티지를 확인해 주세요. 다른 연도라면 제품을 선택하지
+                      않아도 돼요.
+                    </Text>
+                  )}
+                  {productCandidates(item.name).map((candidate) => (
                     <ChoiceChip
+                      key={candidate.id}
                       compact
-                      label={`제품 확인 · ${productCandidate(item.name)!.name}`}
-                      selected={
-                        item.productId === productCandidate(item.name)!.id
-                      }
+                      label={`제품 확인 · ${candidate.name}`}
+                      selected={item.productId === candidate.id}
                       disabled={p.busy}
                       onPress={() =>
                         p.onEdit({
                           ...item,
-                          productId: item.productId
-                            ? null
-                            : productCandidate(item.name)!.id,
+                          productId:
+                            item.productId === candidate.id
+                              ? null
+                              : candidate.id,
                         })
                       }
                     />
-                  )}
+                  ))}
                 </View>
               ))}
             {!p.draft.items.length && (
@@ -441,8 +465,7 @@ export function MenuScreen(p: Props) {
               );
             })}
             <Text style={s.caption}>
-              공식 제품 정보가 있는 일부 술만 비교해요. 취향 일치율은 매기지
-              않아요.
+              출처를 확인한 일부 술만 비교해요. 취향 일치율은 매기지 않아요.
             </Text>
             <Button
               label="메뉴판 추가하고 다시 추천받기"
@@ -569,7 +592,10 @@ export function MenuScreen(p: Props) {
             </Text>
             {[
               ...new Set([
-                ...selectedRec.similar.flatMap((f) => [...f.recordIds,...f.negativeIds]),
+                ...selectedRec.similar.flatMap((f) => [
+                  ...f.recordIds,
+                  ...f.negativeIds,
+                ]),
                 ...selectedRec.knownRecordIds,
               ]),
             ].map((id, n) => {
@@ -641,8 +667,8 @@ export function MenuScreen(p: Props) {
             <View style={s.notice}>
               <Text style={s.primary}>내 느낌과 술의 설명은 따로 봐요</Text>
               <Text style={s.body}>
-                새로운 술의 공식 설명과 이어봤어요.{"\n"}아직 이 술을 좋아한다고
-                단정한 건 아니에요.
+                새로운 술의 출처 있는 설명과 이어봤어요.{"\n"}아직 이 술을
+                좋아한다고 단정한 건 아니에요.
               </Text>
             </View>
             <Button
@@ -814,20 +840,22 @@ export function MenuScreen(p: Props) {
                     maxLength={60}
                   />
                   <Text style={s.label}>제품 확인</Text>
-                  {productCandidate(editing.name) && (
+                  {productCandidates(editing.name).length > 1 && (
+                    <Text style={s.body}>
+                      메뉴에 빈티지가 없어요. 실제 병의 연도를 확인한 뒤 선택해
+                      주세요.
+                    </Text>
+                  )}
+                  {productCandidates(editing.name).map((candidate) => (
                     <ChoiceChip
-                      label={`이 제품이 맞아요 · ${productCandidate(editing.name)!.name}`}
-                      selected={
-                        editing.productId === productCandidate(editing.name)!.id
-                      }
+                      key={candidate.id}
+                      label={`이 제품이 맞아요 · ${candidate.name}`}
+                      selected={editing.productId === candidate.id}
                       onPress={() =>
-                        setEditing({
-                          ...editing,
-                          productId: productCandidate(editing.name)!.id,
-                        })
+                        setEditing({ ...editing, productId: candidate.id })
                       }
                     />
-                  )}
+                  ))}
                   <ChoiceChip
                     label="제품 정보는 아직 모르겠어요"
                     selected={editing.productId === null}
@@ -881,7 +909,7 @@ function ProductSource({ productId }: { productId: string }) {
     <View style={s.section}>
       <Pressable
         accessibilityRole="link"
-        accessibilityLabel="제조사 제품 정보 열기"
+        accessibilityLabel="제품 정보 출처 열기"
         onPress={() => {
           void Linking.openURL(product.source.url).catch(() => setError(true));
         }}
