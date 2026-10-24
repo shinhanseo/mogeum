@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import postgres from 'postgres';
 
 type JsonObject = { [key: string]: postgres.JSONValue };
-type Params = (string | number | null | JsonObject | postgres.JSONValue[])[];
+type Params = (string | number | boolean | null | JsonObject | postgres.JSONValue[])[];
 type Row = Record<string, unknown>;
 interface Db { query<T extends Row = Row>(sql: string, params?: Params): Promise<{ rows: T[] }>; exec(sql: string): Promise<unknown>; close(): Promise<void>; }
 const a = '10000000-0000-4000-8000-000000000001';
@@ -56,9 +56,25 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
 
     await t.test('private tables enable RLS and bucket is private', async () => {
       const { rows } = await db.query("select relname,relrowsecurity from pg_class join pg_namespace n on n.oid=relnamespace where n.nspname='public' and relkind='r'");
-      assert.equal(rows.length, 12);
+      assert.equal(rows.length, 13);
       assert.ok(rows.every(row => row.relrowsecurity === true));
       assert.equal((await db.query("select public from storage.buckets where id='record-photos'")).rows[0].public, false);
+    });
+    await t.test('wishlist revisions and immutable receipts preserve ownership without becoming tasting records', async()=>{
+      await as(a);
+      const write=(op:number,saved:boolean,revision:number,product='glenlivet-12')=>db.query<{result: {revision:number;saved:boolean;replayed:boolean}}>('select public.set_drink_wishlist($1,$2,$3,$4) result',[operation(op),product,saved,revision]);
+      const first=(await write(190,true,0)).rows[0].result;assert.equal(first.revision,1);assert.equal(first.saved,true);
+      assert.equal((await write(190,true,0)).rows[0].result.replayed,true);
+      await assert.rejects(write(190,false,0),/OPERATION_PAYLOAD_CHANGED/);
+      assert.equal((await write(191,false,1)).rows[0].result.revision,2);
+      assert.equal((await write(190,true,0)).rows[0].result.saved,true);
+      assert.equal((await db.query('select saved from public.drink_wishlist')).rows[0].saved,false);
+      await assert.rejects(write(192,true,1),/STALE_WISHLIST/);
+      await code("insert into public.drink_wishlist(user_id,product_id,saved,revision) values ($1,'glenlivet-12',true,1)",[b],'42501');
+      await code('select * from private.wishlist_operations',[],'42501');
+      await assert.rejects(write(193,true,0,'invented-drink'),{code:'23514'});
+      await as(b);assert.equal((await db.query('select * from public.drink_wishlist')).rows.length,0);
+      assert.equal((await db.query('select count(*)::integer n from public.tasting_records')).rows[0].n,0);
     });
     await t.test('menu drafts enforce owner, five pages, optimistic revision and retry', async()=>{
       await as(a);const id=operation(180);
