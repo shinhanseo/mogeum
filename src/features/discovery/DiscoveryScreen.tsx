@@ -45,6 +45,7 @@ type Props = {
 /** 04 / 19:784 and 19:972. Expanded evidence/error/empty states extend the captured design. */
 export function DiscoveryScreen(props: Props) {
   const { result, wishlist, mode, busy, saving, error, category } = props;
+  const [editingSaved, setEditingSaved] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sourceError, setSourceError] = useState("");
   const saved = new Set(
@@ -82,7 +83,15 @@ export function DiscoveryScreen(props: Props) {
             onPress={props.onBack}
             style={s.back}
           />
-          <Text style={s.heading}>마셔보고 싶은 술</Text>
+          <View style={s.titleRow}>
+            <Text style={[s.heading, s.flex]}>마셔보고 싶은 술</Text>
+            <Button
+              variant="text"
+              label={editingSaved ? "완료" : "편집"}
+              onPress={() => setEditingSaved(!editingSaved)}
+              style={s.editLink}
+            />
+          </View>
           <Text style={s.body}>
             궁금했던 한 잔, 여기 모아뒀어요. {saved.size}
           </Text>
@@ -154,8 +163,13 @@ export function DiscoveryScreen(props: Props) {
               </View>
               <Button
                 variant="text"
-                label="마셨어요"
-                onPress={() => props.onRecord(product.id)}
+                label={editingSaved ? "저장 해제" : "마셨어요"}
+                disabled={editingSaved && (saving || busy || !!error)}
+                onPress={() =>
+                  editingSaved
+                    ? props.onSave(product.id)
+                    : props.onRecord(product.id)
+                }
                 style={s.recordLink}
               />
             </View>
@@ -356,6 +370,12 @@ const s = StyleSheet.create({
     gap: space.md,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
+  },
+  editLink: {
+    width: 64,
+    minHeight: 44,
+    paddingHorizontal: 0,
+    paddingVertical: 10,
   },
   recordLink: {
     width: 88,
