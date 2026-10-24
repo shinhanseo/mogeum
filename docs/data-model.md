@@ -69,3 +69,7 @@ record_notes의 last_operation_id/last_save_payload는 응답 유실 재시도 �
 
 ## 취향 요약 캐시 · 구현 2026-10-23
 `private.taste_summary_jobs`는 사용자당 현재 input hash, lease UUID, running/ready/failed, 획득 시각/생성 시각, 일별 횟수와 검증된 결과를 보관한다. 공개 테이블이 아니며 RLS와 anon/authenticated 직접 접근 철회를 함께 사용한다. service_role 전용 begin/finish RPC만 갱신한다. `taste_summary_context()`는 인증 소유자의 현재 기록 ID/revision hash와 일치하는 결과만 읽게 한다. 삭제된 경험이나 이전 연결의 캐시를 화면에 재사용하지 않는다. 모델 결과는 자유 주장이 아니라 검증된 집계 fact ID 목록이다.
+
+## 마셔보고 싶은 술 · 9번째 migration
+
+public.drink_wishlist는 (user_id, product_id) 복합 키와 saved/revision/updated_at을 저장한다. known product ID는 현재 출처 카탈로그 32개 whitelist와 일치하는지 회귀 검증한다. private.wishlist_operations는 (user_id, operation_id)와 immutable request/result receipt를 저장하고 일반 사용자가 직접 읽거나 쓰지 못한다. Auth 사용자 삭제 시 둘 다 cascade된다. 북마크는 consumed_at/테이스팅 답변을 만들거나 AI 선호 근거에 넣지 않는다. false tombstone으로 해제 이후에도 오래된 요청의 revision을 구별한다. 로컬에만 migration up을 적용했고 관리형 DB 적용은 남아 있다.

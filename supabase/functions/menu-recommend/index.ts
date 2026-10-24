@@ -1,3 +1,4 @@
+import { readMenuBody, MenuBodyTooLargeError } from "../_shared/menu-body.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import {
   parseMenu,
@@ -8,6 +9,11 @@ import {
   recommendMenu,
 } from "../_shared/menu-domain.ts";
 import type { TasteSnapshot } from "../_shared/taste-domain.ts";
+declare const __MOGEUM_BUILD_ID__: string | undefined;
+const buildId =
+  typeof __MOGEUM_BUILD_ID__ === "string"
+    ? __MOGEUM_BUILD_ID__
+    : "source-development";
 const url = Deno.env.get("SUPABASE_URL")!;
 const key =
   Deno.env.get("SUPABASE_ANON_KEY") ??
@@ -20,7 +26,11 @@ const cors = {
 const reply = (value: unknown, status = 200) =>
   Response.json(value, {
     status,
-    headers: { ...cors, "Cache-Control": "no-store" },
+    headers: {
+      ...cors,
+      "Cache-Control": "no-store",
+      "X-Mogeum-Build": buildId,
+    },
   });
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS")
@@ -38,14 +48,14 @@ Deno.serve(async (request) => {
   const { data: auth, error: authError } = await client.auth.getUser(token);
   if (authError || !auth.user) return reply({ code: "UNAUTHENTICATED" }, 401);
   try {
-    const raw = await request.text();
-    if (raw.length > 600000) return reply({ code: "TOO_LARGE" }, 413);
+    const raw = await readMenuBody(request);
     const body = JSON.parse(raw);
     const photos = validatePhotos(body.photos);
     if (body.action === "parse")
       return reply({
         items: parseMenu(photos),
-        parser: "geometry-v1",
+        parser: "geometry-v3",
+        catalogVersion: PRODUCT_CATALOG_VERSION,
         reviewRequired: true,
       });
     if (body.action !== "recommend")
@@ -87,8 +97,13 @@ Deno.serve(async (request) => {
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     return reply(
-      { code: /^(INVALID_|TOO_LARGE)/.test(code) ? code : "MENU_FAILED" },
-      400,
+      {
+        code:
+          /^(INVALID_|TOO_LARGE)/.test(code) || code === "MENU_ITEM_LIMIT"
+            ? code
+            : "MENU_FAILED",
+      },
+      error instanceof MenuBodyTooLargeError ? 413 : 400,
     );
   }
 });

@@ -38,6 +38,8 @@ export type MenuStep =
   | "original";
 type Props = {
   draft: MenuDraft;
+  restoreState?: "loading" | "ready" | "failed";
+  onRestoreRetry?: () => void;
   step: MenuStep;
   result: MenuResult | null;
   evidencePhotos?: Record<string, string>;
@@ -127,7 +129,23 @@ export function MenuScreen(p: Props) {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {p.step === "start" ? (
+        {p.restoreState && p.restoreState !== "ready" ? (
+          <>
+            <Text style={s.title}>메뉴판을 다시{`\n`}불러올게요.</Text>
+            <Text style={s.body}>
+              {p.restoreState === "failed"
+                ? "기존 입력은 덮어쓰지 않았어요."
+                : "이전에 남긴 사진과 입력을 확인하고 있어요."}
+            </Text>
+            <Button
+              label={
+                p.restoreState === "loading" ? "불러오는 중" : "다시 불러오기"
+              }
+              loading={p.restoreState === "loading"}
+              onPress={p.onRestoreRetry ?? (() => {})}
+            />
+          </>
+        ) : p.step === "start" ? (
           <>
             <Text style={s.title}>
               오늘의 메뉴에서,{"\n"}내가 좋아할 한 잔.
@@ -447,8 +465,7 @@ export function MenuScreen(p: Props) {
               );
             })}
             <Text style={s.caption}>
-              출처를 확인한 일부 술만 비교해요. 취향 일치율은 매기지
-              않아요.
+              출처를 확인한 일부 술만 비교해요. 취향 일치율은 매기지 않아요.
             </Text>
             <Button
               label="메뉴판 추가하고 다시 추천받기"
@@ -650,8 +667,8 @@ export function MenuScreen(p: Props) {
             <View style={s.notice}>
               <Text style={s.primary}>내 느낌과 술의 설명은 따로 봐요</Text>
               <Text style={s.body}>
-                새로운 술의 출처 있는 설명과 이어봤어요.{"\n"}아직 이 술을 좋아한다고
-                단정한 건 아니에요.
+                새로운 술의 출처 있는 설명과 이어봤어요.{"\n"}아직 이 술을
+                좋아한다고 단정한 건 아니에요.
               </Text>
             </View>
             <Button
