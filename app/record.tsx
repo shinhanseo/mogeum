@@ -1,3 +1,4 @@
+import { useScreenBack } from '../src/hooks/useScreenBack';
 import { discoveryPrefill } from '../src/features/discovery/prefill';
 import { useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
@@ -83,6 +84,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
   }, [owner, entryId, productId, previewEntry, previewCandidates]);
   const close = () => { if (!busyRef.current) router.back(); };
   const back = () => { if (busyRef.current) return; if (pending) { setError('저장 중인 기록을 먼저 완료해주세요.'); return; } if (step === 'start') close(); else setStep(step === 'rating' ? 'info' : 'start'); };
+  useScreenBack(back);
   const dateLabel = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
   const picker=usePhotoPicker(asset=>{setPhoto(asset);setStep('info');});
   const pickPhoto=(camera=false)=>{if(!busyRef.current&&!pending)void picker.open(camera);};
