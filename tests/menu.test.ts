@@ -90,12 +90,14 @@ test("parser preserves editions, servings and prices without treating years or v
     "글렌리벳 12년 20,000원 150,000원",
   ]);
   const items = parseMenu([p]);
-  assert.equal(items.length, 3);
+  assert.equal(items.length, 4);
   assert.equal(items[0].name, "글렌리벳 12년");
   assert.equal(items[0].price, 15000);
   assert.equal(items[0].serving, "30ml");
   assert.equal(items[1].price, 150000);
   assert.equal(items[2].price, null);
+  assert.equal(items[2].name, "Glenlivet 12");
+  assert.equal(items[3].price, null);
   assert.ok(items.every((i) => !i.confirmed && i.productId === null));
 });
 test("geometry pairs same row only and preserves source line references", () => {
@@ -290,4 +292,55 @@ test("Vision v2 image-boundary normalization is recognized without accepting arb
       ]),
     /INVALID_LINE/,
   );
+});
+
+test("complete spatial columns split with independent source lines and prices", () => {
+  const p = photo([
+    "글렌피딕 12년 30ml",
+    "15,000원",
+    "화요 25 375ml",
+    "25,000원",
+  ]);
+  p.lines.forEach((l, n) => {
+    const x = [0.05, 0.35, 0.55, 0.85][n];
+    const w = n % 2 ? 0.09 : 0.25;
+    l.polygon = [
+      { x, y: 0.2 },
+      { x: x + w, y: 0.2 },
+      { x: x + w, y: 0.23 },
+      { x, y: 0.23 },
+    ];
+  });
+  const items = parseMenu([p]);
+  assert.deepEqual(
+    items.map((i) => [i.name, i.price, i.serving]),
+    [
+      ["글렌피딕 12년", 15000, "30ml"],
+      ["화요 25", 25000, "375ml"],
+    ],
+  );
+  assert.deepEqual(
+    items.map((i) => i.lineIds),
+    [p.lines.slice(0, 2).map((l) => l.id), p.lines.slice(2).map((l) => l.id)],
+  );
+  assert.equal(new Set(items.map((i) => i.id)).size, 2);
+  validateItems(items, [p]);
+});
+test("glass and bottle price labels are never interpreted as independent drinks", () => {
+  const p = photo(["글렌피딕 12년", "glass", "15,000원", "bottle", "90,000원"]);
+  p.lines.forEach((l, n) => {
+    l.polygon = [
+      { x: n * 0.18, y: 0.2 },
+      { x: n * 0.18 + 0.15, y: 0.2 },
+      { x: n * 0.18 + 0.15, y: 0.23 },
+      { x: n * 0.18, y: 0.23 },
+    ];
+  });
+  const items = parseMenu([p]);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].price, null);
+});
+test("percent OCR suffix cannot turn into a KRW price, valid ABV plus price still works", () => {
+  assert.equal(parseMenu([photo(["맥주 15,000%", "맥주 15,000％"])]).length, 0);
+  assert.equal(parseMenu([photo(["맥주 5.4% 9,000원"])])[0].price, 9000);
 });
