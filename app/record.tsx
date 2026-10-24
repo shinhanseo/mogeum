@@ -1,7 +1,11 @@
+import { useScreenBack } from '../src/hooks/useScreenBack';
+import { discoveryPrefill } from '../src/features/discovery/prefill';
 import { useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { readPending, preparePhoto, savePending, finishPending } from '../src/features/records/device';
+import { usePhotoPicker } from '../src/features/records/usePhotoPicker';
+import { PhotoAccessSheet } from '../src/features/records/PhotoAccessSheet';
 import { ExistingDrinkChoice } from '../src/features/records/ExistingDrinkChoice';
 import type { EntryCandidate } from '../src/features/records/candidates';
 import type { PendingRecord } from '../src/features/records/pending';
@@ -24,12 +28,12 @@ type Step = 'start' | 'info' | 'rating';
 type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
   const auth = useAuth();
-  const { entryId } = useLocalSearchParams<{entryId?:string}>();
+  const { entryId, productId } = useLocalSearchParams<{entryId?:string;productId?:string}>();
   if (auth.status === 'loading') return <View style={{ flex:1, backgroundColor:colors.background }} />;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
-  return <RecordComposer key={`${auth.session.user.id}-${entryId??'new'}`} owner={auth.session.user.id} entryId={entryId} />;
+  return <RecordComposer key={`${auth.session.user.id}-${entryId??productId??'new'}`} owner={auth.session.user.id} entryId={entryId} productId={productId} />;
 }
-export function RecordComposer({ owner, entryId, previewEntry, previewCandidates }: { owner:string; entryId?:string; previewEntry?:RepeatEntry; previewCandidates?:EntryCandidate[] }) {
+export function RecordComposer({ owner, entryId, productId, previewEntry, previewCandidates }: { owner:string; entryId?:string; productId?:string; previewEntry?:RepeatEntry; previewCandidates?:EntryCandidate[] }) {
   const router = useRouter();
   const ownerRef = useRef<string | null>(owner);
   useEffect(() => { ownerRef.current = owner; return () => { ownerRef.current = null; }; }, [owner]);
@@ -63,6 +67,7 @@ export function RecordComposer({ owner, entryId, previewEntry, previewCandidates
       if (!active) return;
       if(!value){
         if(entryId){const client=getSupabase();if(!client)throw new Error('Missing backend');const entry=await loadRepeatEntry(client,owner,entryId);if(active){setRepeatEntry(entry);setName(entry.name??'');setCategory(entry.category);setStep('info');}}
+        else { const initial=discoveryPrefill(productId);if(initial&&active){setName(initial.name);setCategory(initial.category);setVintageMode(initial.vintageMode);setVintageYear(initial.vintageYear);setVintage(initial.vintageYear || (initial.vintageMode==='NV'?'NV':initial.category==='와인'?'모름':''));setStep('info');} }
         return;
       }
       setPending(value); setName(value.input.enteredName ?? '');
@@ -76,19 +81,13 @@ export function RecordComposer({ owner, entryId, previewEntry, previewCandidates
       setStep('rating');
     }).catch(() => { if (active) {setRestoreFailed(true);setError('기록을 준비하지 못했어요. 술장으로 돌아가 다시 열어주세요.');} }).finally(() => { if (active) setRestoring(false); });
     return () => { active = false; };
-  }, [owner, entryId, previewEntry, previewCandidates]);
+  }, [owner, entryId, productId, previewEntry, previewCandidates]);
   const close = () => { if (!busyRef.current) router.back(); };
   const back = () => { if (busyRef.current) return; if (pending) { setError('저장 중인 기록을 먼저 완료해주세요.'); return; } if (step === 'start') close(); else setStep(step === 'rating' ? 'info' : 'start'); };
+  useScreenBack(back);
   const dateLabel = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
-  async function pickPhoto(camera = false) {
-    setError('');
-    try {
-      if (camera && !(await ImagePicker.requestCameraPermissionsAsync()).granted) { setError('촬영하려면 카메라 접근을 허용해주세요.'); return; }
-      const options = { mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: false, quality: 0.85 };
-      const result = camera ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
-      if (!result.canceled && result.assets[0]) { setPhoto(result.assets[0]); setStep('info'); }
-    } catch { setError('사진을 열지 못했어요. 접근 권한을 확인하고 다시 시도해주세요.'); }
-  }
+  const picker=usePhotoPicker(asset=>{setPhoto(asset);setStep('info');});
+  const pickPhoto=(camera=false)=>{if(!busyRef.current&&!pending)void picker.open(camera);};
 
   async function saveRecord(withNote = false) {
     if (busyRef.current) return;
@@ -143,6 +142,7 @@ export function RecordComposer({ owner, entryId, previewEntry, previewCandidates
     <View style={styles.summaryText}>{step === 'info' ? <><Text style={styles.title}>오늘의 한 잔</Text><Text style={styles.body}>{photo ? '사진으로 가볍게 남겨요.' : '이름으로 가볍게 남겨요.'}</Text><Button label={photo ? "사진 변경" : "사진 추가"} variant="text" onPress={() => pickPhoto()} style={styles.changePhoto} /></> : <><Text style={styles.caption}>{category ?? '종류 미정'}</Text><Text style={styles.title} numberOfLines={3}>{name || '이름 없는 술'}</Text><Text style={styles.caption}>{dateLabel}{category === '와인' && vintage ? ` · ${vintage}` : ''}</Text></>}</View>
   </View>;
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <PhotoAccessSheet access={picker.access} busy={picker.busy} onClose={picker.close} onContinue={picker.proceed} onDismiss={picker.onDismiss}/>
     <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (repeatEntry || pending?.entryId || category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
     <ScrollView pointerEvents={saving ? 'none' : 'auto'} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       {step === 'start' ? <View style={styles.start}>
@@ -164,7 +164,7 @@ export function RecordComposer({ owner, entryId, previewEntry, previewCandidates
           <View style={[styles.bottomAction, { marginBottom: 4 }]}><Text style={styles.connection}>{pending ? '저장 중인 원래 기록으로 다시 시도해요.' : '내 계정에 안전하게 보관해요.'}</Text><Button label={owner ? '기록 저장' : '로그인하고 저장'} loading={saving} onPress={() => saveRecord()} /><Button label="저장하고 테이스팅 노트 쓰기" variant="secondary" disabled={saving} onPress={() => saveRecord(true)} /></View>
         </>}
       </View>}
-      {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+      {!!picker.error&&<Text accessibilityRole="alert" style={styles.body}>{picker.error}</Text>}{!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     </ScrollView>
     <Modal visible={sheet !== null} transparent animationType="slide" onRequestClose={() => setSheet(null)}><View style={styles.modalRoot}><Pressable accessibilityLabel="선택 닫기" accessibilityRole="button" style={styles.scrim} onPress={() => setSheet(null)} /><View accessibilityViewIsModal style={styles.sheet}><View style={styles.handle} />
       <Text style={styles.title}>{activeSheet === 'category' ? '어떤 종류의 술인가요?' : activeSheet === 'date' ? '언제 마셨나요?' : '어느 해의\n와인인가요?'}</Text>
