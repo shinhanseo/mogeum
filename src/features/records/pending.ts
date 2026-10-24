@@ -18,8 +18,11 @@ export async function submitPending(pending: PendingRecord, ports: SavePorts) {
   if (existing && (existing.entryId ?? null) !== (pending.entryId ?? null)) throw new Error('저장 중인 술 연결을 변경할 수 없어요. 원래 기록을 다시 시도해주세요.');
   if (existing && JSON.stringify(existing.input) !== JSON.stringify(pending.input)) throw new Error('저장 중인 원래 기록을 다시 시도해주세요.');
   checkOwner();
+  // A mounted screen may still hold the pre-response draft after a previous attempt
+  // persisted its receipt. Never downgrade that receipt or upload/save again.
+  const receipt = existing?.saved ?? pending.saved;
+  if (receipt) return receipt;
   await ports.write(pending);
-  if (pending.saved) return pending.saved;
   if (pending.input.photo && pending.localPhoto) {
     checkOwner();
     await ports.upload(pending.input.photo.storagePath, pending.localPhoto);

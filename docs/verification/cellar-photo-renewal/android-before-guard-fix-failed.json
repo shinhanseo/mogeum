@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "platform": "android",
+  "runId": "android-cellar-photo-renew-v1",
+  "startedAt": "2026-10-23T08:11:52.484Z",
+  "status": "failed",
+  "phase": "canonical_unrelated_files_preserved",
+  "passed": [
+    "real_local_auth_two_owners",
+    "native_upload_rpc_durable_replay",
+    "real_binary_read_and_foreign_owner_denied",
+    "native_cellar_cursor_page",
+    "native_cellar_batch_read_binary",
+    "native_expired_photo_renewal_and_foreign_owner_denied",
+    "photo_only_has_no_sensory_evidence"
+  ],
+  "finishedAt": "2026-10-23T08:11:55.872Z"
+}

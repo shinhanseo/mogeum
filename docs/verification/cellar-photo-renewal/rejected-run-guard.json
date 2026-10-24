@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "ios": {
+    "rejectedRunSourcePreserved": true,
+    "reportHashUnchanged": true
+  },
+  "android": {
+    "rejectedRunSourcePreserved": true,
+    "unrelatedCacheMarkerPreserved": true
+  }
+}
