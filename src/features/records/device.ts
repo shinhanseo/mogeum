@@ -36,7 +36,7 @@ export async function finishPending(pending: PendingRecord) {
   if (Platform.OS !== 'web' && isPreparedRecordPhoto(current.localPhoto,current.operationId,FileSystem.documentDirectory)) await FileSystem.deleteAsync(current.localPhoto, { idempotent: true }).catch(() => {});
 }
 export async function savePending(pending: PendingRecord, ownerId: () => string | null) {
-  decodePendingRecord(JSON.stringify(pending),pending.ownerId,FileSystem.documentDirectory,Platform.OS === 'web');
+  pending = decodePendingRecord(JSON.stringify(pending),pending.ownerId,FileSystem.documentDirectory,Platform.OS === 'web');
   const client = getSupabase();
   if (!client) throw new Error('서버 설정을 확인해주세요.');
   const session = (await client.auth.getSession()).data.session;
