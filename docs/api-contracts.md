@@ -6,6 +6,8 @@
 
 Authorization Bearer JWT 검증 필수. 클라이언트가 body의 userId로 타인 데이터를 요청할 수 없다. 요청은 schemaVersion과 operationId/idempotencyKey를 가진다. 오류는 code, 사용자 메시지, retryable, 관련 photoId를 포함한다. 내부 키·stack trace는 응답하지 않는다. 재시도는 같은 입력 버전에서 중복 결과를 만들지 않는다.
 
+`next-drinks`는 취향 snapshot과 전체 이력 조회 전후의 전체 기록 hash/개수를 비교한다. 조회 중 변경은409 `TASTE_CONTEXT_CHANGED`이며 앱에서 이전 개인 추천을 폐기하고 재조회한다. 검증 조회 실패는503이고 오래된 성공 결과로 대체하지 않는다. 현재 소스/로컬 번들에 구현됐으며 관리형 배포 여부는 docs/verification/discovery-snapshot.md를 따른다.
+
 | 작업 | 입력 | 출력 |
 |---|---|---|
 | taste-summary | inputRevision | status, summaryId/jobId, claims와 evidence recordIds |
