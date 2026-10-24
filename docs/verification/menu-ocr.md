@@ -82,3 +82,7 @@ CI: [앱 검사/양 플랫폼 export](https://github.com/shinhanseo/mogeum/actio
 ![용량 초과 안내와 사진 보존](menu/ios-menu-capacity.png)
 
 현재 양 플랫폼의 실제 네이티브 OCR 실행 증거는 [합성 메뉴 14종 baseline](native-ocr-benchmark.md)에 있다. Android는 개발 경로 자동 실행으로 ML Kit 호출과 결과를 확인했으며, 기존의 Android 화면/권한 E2E 미검증과 구분한다. 두 열 가격 연결과 iOS 경계 좌표 실패를 재현했고 후속 수정을 진행한다.
+
+## 관리형 배포 갱신 · 2026-10-23
+
+위의 브라우저 비활성화·재배포 대기 기록은 당시 상태다. 현재 최신 카탈로그·geometry-v2·본문 한도를 포함한 메뉴 함수는 개발 프로젝트에 배포했다. [빌드 식별자와 검증 경계](menu-deployment.md)를 참고한다.

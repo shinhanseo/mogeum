@@ -41,7 +41,7 @@ for (const platform of ["ios", "android"]) {
       p,
       items,
     );
-    assert.equal(metrics.correctPrices, platform === "ios" ? 6 : 2);
+    assert.equal(metrics.correctPrices, platform === "ios" ? 6 : 3);
     assert.equal(new Set(items.map((i) => i.id)).size, items.length);
     for (const item of items)
       assert.ok(item.lineIds.every((id) => p.lines.some((l) => l.id === id)));
