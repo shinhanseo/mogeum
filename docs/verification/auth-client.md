@@ -5,7 +5,7 @@
 #4의 클라이언트 기반과 #5/#7에서 사용할 기록 repository를 구현했다. #30 위에 쌓인 PR이며 로그인 UI/OAuth provider/계정 삭제/앱 저장 버튼 연결은 완료하지 않았다. 화면 수치·디자인은 변경하지 않았다.
 
 - 환경 설정이 없으면 클라이언트를 생성하지 않는다. 공개 키만 사용하는 기존 env 검증을 유지한다.
-- Supabase 클라이언트 하나, PKCE, URL 세션 자동 감지 비활성화, processLock을 사용한다.
+- Supabase 클라이언트 하나, PKCE, URL 세션 자동 감지 비활성화, SDK 내부 세션 조정을 사용한다. SDK 2.118의 네이티브 실행에서 확인한 deprecated processLock 옵션은 제거했다.
 - 네이티브 세션은 공식 React Native 가이드의 AsyncStorage adapter에 보관한다. 암호화 저장소라고 주장하지 않는다. 웹은 SDK 기본 저장소를 사용한다. 토큰은 로그에 출력하지 않는다.
 - 앱 foreground에서 갱신을 시작하고 background/Root cleanup에서 중지한다. 렌더링·Fast Refresh마다 리스너가 누적되지 않는다.
 - 세션 관찰은 먼저 auth 이벤트를 구독하고 복원을 수행한다. 복원 도중 로그아웃/계정 변경이 오면 이전 복원 결과를 폐기하며 unmount 후에도 결과를 발행하지 않는다.

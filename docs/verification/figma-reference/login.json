@@ -1,0 +1,1072 @@
+[
+  {
+    "id": "4:3039",
+    "name": "9:41",
+    "type": "TEXT",
+    "x": 25,
+    "y": 17,
+    "w": 28,
+    "h": 16,
+    "text": "9:41",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Bold",
+      "variationSettings": {
+        "wght": 700
+      }
+    },
+    "size": 13,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.20000000298023224,
+          "g": 0.1764705926179886,
+          "b": 0.16862745583057404
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:19"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3040",
+    "name": "Text",
+    "type": "TEXT",
+    "x": 330,
+    "y": 17,
+    "w": 26,
+    "h": 16,
+    "text": "",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Regular",
+      "variationSettings": {
+        "wght": 400
+      }
+    },
+    "size": 13,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.20000000298023224,
+          "g": 0.1764705926179886,
+          "b": 0.16862745583057404
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:19"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:7309",
+    "name": "Button · ‹",
+    "type": "INSTANCE",
+    "x": 6.5,
+    "y": 46.5,
+    "w": 44,
+    "h": 44,
+    "fills": []
+  },
+  {
+    "id": "I4:7309;4:5219",
+    "name": "다음",
+    "type": "TEXT",
+    "x": 24,
+    "y": 51,
+    "w": 9,
+    "h": 35,
+    "text": "‹",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Regular",
+      "variationSettings": {
+        "wght": 400
+      }
+    },
+    "size": 29,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.20000000298023224,
+          "g": 0.1764705926179886,
+          "b": 0.16862745583057404
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:19"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3042",
+    "name": "모금.",
+    "type": "TEXT",
+    "x": 154.5,
+    "y": 103,
+    "w": 91,
+    "h": 50,
+    "text": "모금.",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Bold",
+      "variationSettings": {
+        "wght": 700
+      }
+    },
+    "size": 42,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.47058823704719543,
+          "g": 0.24705882370471954,
+          "b": 0.29411765933036804
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:8"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3043",
+    "name": "한 모금씩, 쌓이는 내 취향",
+    "type": "TEXT",
+    "x": 122,
+    "y": 169,
+    "w": 156,
+    "h": 18,
+    "text": "한 모금씩, 쌓이는 내 취향",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Regular",
+      "variationSettings": {
+        "wght": 400
+      }
+    },
+    "size": 15,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.46666666865348816,
+          "g": 0.41960784792900085,
+          "b": 0.3960784375667572
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:11"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3046",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 156.760009765625,
+    "y": 343.3599853515625,
+    "w": 90.4800033569336,
+    "h": 14.039999961853027,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.37254902720451355,
+          "g": 0.22745098173618317,
+          "b": 0.21176470816135406
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3047",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 151.649658203125,
+    "y": 301.239990234375,
+    "w": 16.810344696044922,
+    "h": 11.096128463745117,
+    "fills": []
+  },
+  {
+    "id": "4:3048",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 236.3199462890625,
+    "y": 296.55999755859375,
+    "w": 15.600000381469727,
+    "h": 13.408571243286133,
+    "fills": []
+  },
+  {
+    "id": "4:3049",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 175.47998046875,
+    "y": 341.800048828125,
+    "w": 20.280000686645508,
+    "h": 10.920000076293945,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.9098039269447327,
+          "g": 0.8392156958580017,
+          "b": 0.729411780834198
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3050",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 209.800048828125,
+    "y": 341.800048828125,
+    "w": 20.280000686645508,
+    "h": 10.920000076293945,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.9098039269447327,
+          "g": 0.8392156958580017,
+          "b": 0.729411780834198
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3051",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 157.4691162109375,
+    "y": 226.836669921875,
+    "w": 89.4296646118164,
+    "h": 118.86332702636719,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 1,
+          "g": 0.9490196108818054,
+          "b": 0.8509804010391235
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3052",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 184.8399658203125,
+    "y": 235.719970703125,
+    "w": 10.50947380065918,
+    "h": 26.520000457763672,
+    "fills": []
+  },
+  {
+    "id": "4:3053",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 170.02001953125,
+    "y": 305.91998291015625,
+    "w": 65.5199966430664,
+    "h": 37.6391487121582,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.47058823704719543,
+          "g": 0.24705882370471954,
+          "b": 0.29411765933036804
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:8"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3054",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 177.8199462890625,
+    "y": 296.55999755859375,
+    "w": 48.36000061035156,
+    "h": 13.260000228881836,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0,
+          "g": 0,
+          "b": 0
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3055",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 185.6199951171875,
+    "y": 321.52001953125,
+    "w": 34.31999969482422,
+    "h": 19.5,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.6431372761726379,
+          "g": 0.3803921639919281,
+          "b": 0.42352941632270813
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3057",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 189.67604591967074,
+    "y": 305.93499755859375,
+    "w": 23.399999618530273,
+    "h": 28.079999923706055,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 1,
+          "g": 0.9921568632125854,
+          "b": 0.9803921580314636
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:7"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3058",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 193.85579712291633,
+    "y": 309.504638671875,
+    "w": 17.15999984741211,
+    "h": 17.940000534057617,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.8666666746139526,
+          "g": 0.772549033164978,
+          "b": 0.6392157077789307
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3059",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 194.87026527222451,
+    "y": 318.10101318359375,
+    "w": 16.3799991607666,
+    "h": 7.800000190734863,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.5529412031173706,
+          "g": 0.6078431606292725,
+          "b": 0.4745098054409027
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3060",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 206.3496738565284,
+    "y": 313.52410888671875,
+    "w": 4.679999828338623,
+    "h": 4.679999828338623,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.9764705896377563,
+          "g": 0.9137254953384399,
+          "b": 0.7215686440467834
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3061",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 185.6199951171875,
+    "y": 323.8599853515625,
+    "w": 34.31999969482422,
+    "h": 17.15999984741211,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.6431372761726379,
+          "g": 0.3803921639919281,
+          "b": 0.42352941632270813
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3062",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 189.52001953125,
+    "y": 326.97998046875,
+    "w": 26.520000457763672,
+    "h": 0,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0,
+          "g": 0,
+          "b": 0
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3063",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 169.239990234375,
+    "y": 286.41998291015625,
+    "w": 17.15999984741211,
+    "h": 9.359999656677246,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.9176470637321472,
+          "g": 0.686274528503418,
+          "b": 0.6274510025978088
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3064",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 218.3800048828125,
+    "y": 286.41998291015625,
+    "w": 17.15999984741211,
+    "h": 9.359999656677246,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.9176470637321472,
+          "g": 0.686274528503418,
+          "b": 0.6274510025978088
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3065",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 183.280029296875,
+    "y": 280.17999267578125,
+    "w": 6.239999771118164,
+    "h": 7.800000190734863,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.2862745225429535,
+          "g": 0.21960784494876862,
+          "b": 0.1882352977991104
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3066",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 214.47998046875,
+    "y": 280.17999267578125,
+    "w": 6.239999771118164,
+    "h": 7.800000190734863,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.2862745225429535,
+          "g": 0.21960784494876862,
+          "b": 0.1882352977991104
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3067",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 186.2440185546875,
+    "y": 281.583984375,
+    "w": 1.871995210647583,
+    "h": 1.871995210647583,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3068",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 217.4439697265625,
+    "y": 281.583984375,
+    "w": 1.871995210647583,
+    "h": 1.871995210647583,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3069",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 197.3199462890625,
+    "y": 291.8800048828125,
+    "w": 9.359999656677246,
+    "h": 3.119999885559082,
+    "fills": []
+  },
+  {
+    "id": "4:3070",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 251.1400146484375,
+    "y": 277.84002685546875,
+    "w": 10.140000343322754,
+    "h": 9.359999656677246,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0,
+          "g": 0,
+          "b": 0
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:3071",
+    "name": "네 술장을 준비해둘게.",
+    "type": "TEXT",
+    "x": 86.5,
+    "y": 383,
+    "w": 227,
+    "h": 30,
+    "text": "네 술장을 준비해둘게.",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Bold",
+      "variationSettings": {
+        "wght": 700
+      }
+    },
+    "size": 25,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.20000000298023224,
+          "g": 0.1764705926179886,
+          "b": 0.16862745583057404
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:19"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3072",
+    "name": "로그인하면 기록을 계정에 보관할 수 있어요.",
+    "type": "TEXT",
+    "x": 83,
+    "y": 427,
+    "w": 234,
+    "h": 16,
+    "text": "로그인하면 기록을 계정에 보관할 수 있어요.",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Regular",
+      "variationSettings": {
+        "wght": 400
+      }
+    },
+    "size": 13,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.46666666865348816,
+          "g": 0.41960784792900085,
+          "b": 0.3960784375667572
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:11"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:5440",
+    "name": "Button · Apple로 계속하기",
+    "type": "INSTANCE",
+    "x": 24,
+    "y": 501,
+    "w": 352,
+    "h": 52,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.14509804546833038,
+          "g": 0.13725490868091583,
+          "b": 0.13333334028720856
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "I4:5440;4:5212",
+    "name": "다음",
+    "type": "TEXT",
+    "x": 142.5,
+    "y": 518,
+    "w": 115,
+    "h": 18,
+    "text": "Apple로 계속하기",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Bold",
+      "variationSettings": {
+        "wght": 700
+      }
+    },
+    "size": 15,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "4:5442",
+    "name": "Button · 카카오로 계속하기",
+    "type": "INSTANCE",
+    "x": 24,
+    "y": 565,
+    "w": 352,
+    "h": 52,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.9960784316062927,
+          "g": 0.8980392217636108,
+          "b": 0
+        },
+        "boundVariables": {}
+      }
+    ]
+  },
+  {
+    "id": "I4:5442;4:5212",
+    "name": "다음",
+    "type": "TEXT",
+    "x": 143,
+    "y": 582,
+    "w": 114,
+    "h": 18,
+    "text": "카카오로 계속하기",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Bold",
+      "variationSettings": {
+        "wght": 700
+      }
+    },
+    "size": 15,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.20000000298023224,
+          "g": 0.1764705926179886,
+          "b": 0.16862745583057404
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:19"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3077",
+    "name": "먼저 둘러보기",
+    "type": "TEXT",
+    "x": 162.5,
+    "y": 649,
+    "w": 75,
+    "h": 16,
+    "text": "먼저 둘러보기",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Bold",
+      "variationSettings": {
+        "wght": 700
+      }
+    },
+    "size": 13,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.47058823704719543,
+          "g": 0.24705882370471954,
+          "b": 0.29411765933036804
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:8"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3078",
+    "name": "계속하면 서비스 이용약관과 개인정보 처리방침에",
+    "type": "TEXT",
+    "x": 88.5,
+    "y": 712,
+    "w": 223,
+    "h": 13,
+    "text": "계속하면 서비스 이용약관과 개인정보 처리방침에",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Regular",
+      "variationSettings": {
+        "wght": 400
+      }
+    },
+    "size": 11,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.46666666865348816,
+          "g": 0.41960784792900085,
+          "b": 0.3960784375667572
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:11"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3079",
+    "name": "동의하게 됩니다.",
+    "type": "TEXT",
+    "x": 161.5,
+    "y": 732,
+    "w": 77,
+    "h": 13,
+    "text": "동의하게 됩니다.",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Regular",
+      "variationSettings": {
+        "wght": 400
+      }
+    },
+    "size": 11,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.46666666865348816,
+          "g": 0.41960784792900085,
+          "b": 0.3960784375667572
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:11"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3080",
+    "name": "성인 사용자를 위한 술 취향 기록 서비스예요.",
+    "type": "TEXT",
+    "x": 100,
+    "y": 782,
+    "w": 200,
+    "h": 13,
+    "text": "성인 사용자를 위한 술 취향 기록 서비스예요.",
+    "font": {
+      "family": "Noto Sans KR",
+      "style": "Regular",
+      "variationSettings": {
+        "wght": 400
+      }
+    },
+    "size": 11,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.46666666865348816,
+          "g": 0.41960784792900085,
+          "b": 0.3960784375667572
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:11"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "4:3081",
+    "name": "Vector",
+    "type": "VECTOR",
+    "x": 143,
+    "y": 850,
+    "w": 114,
+    "h": 5,
+    "fills": [
+      {
+        "type": "SOLID",
+        "visible": true,
+        "opacity": 1,
+        "blendMode": "NORMAL",
+        "color": {
+          "r": 0.20000000298023224,
+          "g": 0.1764705926179886,
+          "b": 0.16862745583057404
+        },
+        "boundVariables": {
+          "color": {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:6:19"
+          }
+        }
+      }
+    ]
+  }
+]
