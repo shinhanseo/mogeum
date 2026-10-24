@@ -1,3 +1,4 @@
+import { createWishlistQueue } from "../src/features/discovery/wishlist";
 import { parseDiscoveryResult } from "../src/features/discovery/contract";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -102,6 +103,61 @@ test(
           .data?.length,
         0,
       );
+      let pendingWishlist: string | null = null,
+        loseResponse = true;
+      const queue = createWishlistQueue({
+        active: (id) => id === users[0],
+        read: async () => pendingWishlist,
+        write: async (_owner, raw) => {
+          pendingWishlist = raw;
+        },
+        remove: async () => {
+          pendingWishlist = null;
+        },
+        apply: async (op) => {
+          const response = await a.rpc("set_drink_wishlist", {
+            p_operation_id: op.operationId,
+            p_product_id: op.productId,
+            p_saved: op.saved,
+            p_expected_revision: op.expectedRevision,
+          });
+          assert.equal(response.error, null);
+          if (loseResponse) {
+            loseResponse = false;
+            throw new Error("synthetic response loss after commit");
+          }
+          return response.data;
+        },
+        refresh: async () => {
+          const rows = await a
+            .from("drink_wishlist")
+            .select("product_id,saved,revision");
+          assert.equal(rows.error, null);
+          return rows.data!.map((r) => ({
+            productId: r.product_id,
+            saved: r.saved,
+            revision: r.revision,
+          }));
+        },
+      });
+      await assert.rejects(
+        queue.submit({
+          version: 1,
+          owner: users[0],
+          operationId: randomUUID(),
+          productId: "makers-mark",
+          saved: true,
+          expectedRevision: 0,
+        }),
+        /synthetic response loss/,
+      );
+      assert.ok(pendingWishlist);
+      const recovered = await queue.resume(users[0]);
+      assert.equal(
+        recovered!.state.find((r) => r.productId === "makers-mark")!.revision,
+        1,
+      );
+      assert.equal(pendingWishlist, null);
       let latest: { recordId: string; revision: number } | null = null;
       for (let n = 0; n < 201; n++) {
         const result = await a.rpc("create_tasting_record", {
