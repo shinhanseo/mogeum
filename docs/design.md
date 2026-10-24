@@ -77,3 +77,7 @@ Chrome에서 22(4:4343) 원본을 다시 확인했다. 24px 좌우 여백, 24px 
 
 ## 취향 요약 구현 · 2026-10-23
 Chrome에서 최신 28(9:7442), 29(9:7517), 31 첫 근거 화면을 확인했다. 400×868 원본, 352 콘텐츠/24 좌우 여백, 카드 없는 짧은 요약·모구·선택 칩·세로 근거 사진·공통 CTA/바텀탭을 따른다. 29의 Content · Auto layout(9:7521), AITasteSummary, Preference chips, 대표 기록 사진, 취향 CTA 구성을 확인했다. 원본 screenshot은 docs/verification/figma-reference/taste-original.png. MCP 재인증 필요 및 Chrome FigmaScript 로드 실패로 레이어 JSON 자동 추출은 불가했다. 기존 토큰/공통 컴포넌트와 원본 UI 수치를 기준으로 구현했으며 픽셀 완전 일치라고 주장하지 않는다. 로딩/오류/키 미설정/stale/서로 다른 술 수는 원본 외 확장 상태다. 다음 한 잔/메뉴판 추천은 미연결임을 표시한다.
+
+## 다음 한 잔 연결 · 2026-10-24
+
+43(19:784)/45(19:972)의 보관한 고해상도 context와 렌더를 기반으로 추천 목록·저장 목록을 연결했다. 원본 SVG, 공통 Button/outlined ChoiceChip/BottomTabBar를 사용한다. 좁은 화면·긴 이름은 고정 canvas 폭 대신 flex/가로 필터 스크롤을 사용한다. bookmark 선택·목록 내 근거 펼침·실패 상태는 확장 상태이며 44 독립 상세 화면의 구현/픽셀 일치를 주장하지 않는다. 검증은 docs/verification/discovery-ui/README.md에 있다.

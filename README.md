@@ -118,4 +118,4 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 
 술장 이미지 오류 시 현재 계정의 대표 사진 링크를 한 번 갱신합니다. [실제 만료·양 플랫폼 복원·반복 요청 차단](docs/verification/cellar-photo-renewal.md).
 
-다음 한 잔의 기록 기반 추천/북마크 서버·DB를 준비했습니다. 앱 화면은 아직 미연결입니다. [구현·양 플랫폼 API 검증·원본 확보·남은 UI](docs/verification/next-drinks-foundation.md).
+다음 한 잔의 기록 기반 추천/북마크 서버·DB와 앱 목록·저장 복구·기록 prefill을 연결했습니다. 관리형 배포와 전체 로그인 E2E는 남아 있습니다. [서버 기반](docs/verification/next-drinks-foundation.md), [앱 연결·양 플랫폼 17단계·UI 검증과 남은 범위](docs/verification/discovery-ui/README.md).

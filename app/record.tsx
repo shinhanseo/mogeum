@@ -1,3 +1,4 @@
+import { discoveryPrefill } from '../src/features/discovery/prefill';
 import { useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
 import { useAuth } from '../src/features/auth/AuthProvider';
@@ -26,12 +27,12 @@ type Step = 'start' | 'info' | 'rating';
 type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
   const auth = useAuth();
-  const { entryId } = useLocalSearchParams<{entryId?:string}>();
+  const { entryId, productId } = useLocalSearchParams<{entryId?:string;productId?:string}>();
   if (auth.status === 'loading') return <View style={{ flex:1, backgroundColor:colors.background }} />;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
-  return <RecordComposer key={`${auth.session.user.id}-${entryId??'new'}`} owner={auth.session.user.id} entryId={entryId} />;
+  return <RecordComposer key={`${auth.session.user.id}-${entryId??productId??'new'}`} owner={auth.session.user.id} entryId={entryId} productId={productId} />;
 }
-export function RecordComposer({ owner, entryId, previewEntry, previewCandidates }: { owner:string; entryId?:string; previewEntry?:RepeatEntry; previewCandidates?:EntryCandidate[] }) {
+export function RecordComposer({ owner, entryId, productId, previewEntry, previewCandidates }: { owner:string; entryId?:string; productId?:string; previewEntry?:RepeatEntry; previewCandidates?:EntryCandidate[] }) {
   const router = useRouter();
   const ownerRef = useRef<string | null>(owner);
   useEffect(() => { ownerRef.current = owner; return () => { ownerRef.current = null; }; }, [owner]);
@@ -65,6 +66,7 @@ export function RecordComposer({ owner, entryId, previewEntry, previewCandidates
       if (!active) return;
       if(!value){
         if(entryId){const client=getSupabase();if(!client)throw new Error('Missing backend');const entry=await loadRepeatEntry(client,owner,entryId);if(active){setRepeatEntry(entry);setName(entry.name??'');setCategory(entry.category);setStep('info');}}
+        else { const initial=discoveryPrefill(productId);if(initial&&active){setName(initial.name);setCategory(initial.category);setVintageMode(initial.vintageMode);setVintageYear(initial.vintageYear);setVintage(initial.vintageYear || (initial.vintageMode==='NV'?'NV':initial.category==='와인'?'모름':''));setStep('info');} }
         return;
       }
       setPending(value); setName(value.input.enteredName ?? '');
@@ -78,7 +80,7 @@ export function RecordComposer({ owner, entryId, previewEntry, previewCandidates
       setStep('rating');
     }).catch(() => { if (active) {setRestoreFailed(true);setError('기록을 준비하지 못했어요. 술장으로 돌아가 다시 열어주세요.');} }).finally(() => { if (active) setRestoring(false); });
     return () => { active = false; };
-  }, [owner, entryId, previewEntry, previewCandidates]);
+  }, [owner, entryId, productId, previewEntry, previewCandidates]);
   const close = () => { if (!busyRef.current) router.back(); };
   const back = () => { if (busyRef.current) return; if (pending) { setError('저장 중인 기록을 먼저 완료해주세요.'); return; } if (step === 'start') close(); else setStep(step === 'rating' ? 'info' : 'start'); };
   const dateLabel = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
