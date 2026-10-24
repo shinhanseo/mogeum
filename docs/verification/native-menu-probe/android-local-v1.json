@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "platform": "android",
+  "runId": "android-menu-local-v5",
+  "startedAt": "2026-10-23T07:31:39.699Z",
+  "status": "completed",
+  "phase": "completed",
+  "passed": [
+    "real_local_auth_two_owners",
+    "native_upload_rpc_durable_replay",
+    "real_binary_read_and_foreign_owner_denied",
+    "photo_only_has_no_sensory_evidence",
+    "stored_operation_file_only_cleanup",
+    "native_two_photo_ocr_contract",
+    "actual_edge_parse_from_both_photos",
+    "native_review_restore_preserves_raw_ocr",
+    "native_menu_save_replay_and_foreign_owner_denied",
+    "native_saved_note_drives_recommendation_owner_evidence",
+    "real_record_delete_and_storage_cleanup"
+  ],
+  "menu": {
+    "photos": 2,
+    "engines": [
+      "mlkit-korean-16.0.1",
+      "mlkit-korean-16.0.1"
+    ],
+    "lines": [
+      13,
+      13
+    ],
+    "items": 7,
+    "method": "evidence-rules-v1"
+  },
+  "finishedAt": "2026-10-23T07:31:43.125Z"
+}

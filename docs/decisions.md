@@ -31,3 +31,9 @@ Expo Development Build/TypeScript/Expo Router, StyleSheet 토큰, TanStack Query
 ## 기술 선택 시 기록할 것
 
 결정 날짜, 대안, 측정/공식 자료, 채택 이유, 영향 이슈, 되돌리는 조건. 기술 스택과 API 계약을 이슈마다 다르게 만들지 않는다. 성능 수치는 실측 전 추정으로 표시한다.
+
+## 2026-10-19 · 앱 초기 설정
+
+공식 SDK 58 템플릿과 npm registry를 확인해 Expo 58.0.14 / React Native 0.88.0 / React 19.3.0 / Router 58.0.23을 채택했다. Node는 로컬 설치된 비 LTS 25 대신 24.22.0 LTS를 사용하며 `.nvmrc`와 lockfile로 재현한다. TypeScript 6.0.3, npm 11.12.1, tsx + node:test로 작은 환경 설정 회귀 테스트를 실행한다. 서버 cache/store/schema 라이브러리는 실제 기능에서 추가한다.
+
+Development Build를 사용하고 native 디렉터리는 app.config.ts에서 생성한다. 로컬 검증 식별자는 com.example.mogeum.dev이며 앱 설정에 출시 식별자를 하드코딩하지 않았다. 앱 초기 화면은 개발 진단용이며 Figma 제품 화면 구현 완료를 뜻하지 않는다.
