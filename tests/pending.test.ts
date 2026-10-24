@@ -43,3 +43,18 @@ test('old new-drink pending records still submit a null entry',async()=>{
  const h=harness();h.ports.save=async(id,input,entryId)=>{assert.equal(entryId,null);return saved;};
  await submitPending(draft,h.ports);
 });
+test('a stale mounted draft reuses the durable receipt without overwriting it or uploading again',async()=>{
+ const h=harness();const photoDraft={...draft,localPhoto:'synthetic-local',input:{photo:{storagePath:'A/records/fixed-operation/photo.jpg',width:1,height:1}}};
+ const completed={...photoDraft,saved};await h.ports.write(completed);
+ h.ports.upload=async()=>{throw Error('completed photo must not upload again');};
+ h.ports.save=async()=>{throw Error('completed operation must not call RPC again');};
+ let writes=0;h.ports.write=async()=>{writes++;throw Error('receipt must not be downgraded');};
+ assert.deepEqual(await submitPending(photoDraft,h.ports),saved);
+ assert.equal(writes,0);assert.deepEqual(h.disk(),completed);
+ await assert.rejects(submitPending({...photoDraft,input:{enteredName:'changed'}},h.ports));
+ assert.deepEqual(h.disk(),completed);
+});
+test('account changes during receipt lookup prevent even a completed result from escaping',async()=>{
+ const h=harness();h.ports.read=async()=>{h.changeOwner();return {...draft,saved};};
+ await assert.rejects(submitPending(draft,h.ports));assert.equal(h.saves(),0);
+});

@@ -1,3 +1,5 @@
+import { createWishlistQueue } from "../src/features/discovery/wishlist";
+import { parseDiscoveryResult } from "../src/features/discovery/contract";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
@@ -29,12 +31,13 @@ test(
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const users: string[] = [];
-    const make = () =>
-      createClient(status.API_URL, status.ANON_KEY, {
+    const make = (key = status.ANON_KEY) =>
+      createClient(status.API_URL, key, {
         auth: { persistSession: false, autoRefreshToken: false },
       });
     try {
-      const a = make(),
+      assert.match(status.PUBLISHABLE_KEY, /^sb_publishable_/);
+      const a = make(status.PUBLISHABLE_KEY),
         b = make();
       for (const sdk of [a, b]) {
         const { data, error } = await sdk.auth.signUp({
@@ -66,6 +69,7 @@ test(
       const initial = await request({}, token);
       assert.equal(initial.status, 200);
       const empty = await initial.json();
+      parseDiscoveryResult(empty);
       assert.equal(empty.recommendations.length, 32);
       assert.ok(
         empty.recommendations.every(
@@ -82,9 +86,12 @@ test(
           p_expected_revision: 0,
         });
       const [first, concurrent] = await Promise.all([bookmark(), bookmark()]);
-    assert.equal(concurrent.error, null);
-    assert.equal(concurrent.data.revision, 1);
-    assert.equal(Number(first.data.replayed) + Number(concurrent.data.replayed), 1);
+      assert.equal(concurrent.error, null);
+      assert.equal(concurrent.data.revision, 1);
+      assert.equal(
+        Number(first.data.replayed) + Number(concurrent.data.replayed),
+        1,
+      );
       assert.equal(first.error, null);
       assert.equal(first.data.revision, 1);
       assert.equal((await bookmark()).data.replayed, true);
@@ -97,6 +104,61 @@ test(
           .data?.length,
         0,
       );
+      let pendingWishlist: string | null = null,
+        loseResponse = true;
+      const queue = createWishlistQueue({
+        active: (id) => id === users[0],
+        read: async () => pendingWishlist,
+        write: async (_owner, raw) => {
+          pendingWishlist = raw;
+        },
+        remove: async () => {
+          pendingWishlist = null;
+        },
+        apply: async (op) => {
+          const response = await a.rpc("set_drink_wishlist", {
+            p_operation_id: op.operationId,
+            p_product_id: op.productId,
+            p_saved: op.saved,
+            p_expected_revision: op.expectedRevision,
+          });
+          assert.equal(response.error, null);
+          if (loseResponse) {
+            loseResponse = false;
+            throw new Error("synthetic response loss after commit");
+          }
+          return response.data;
+        },
+        refresh: async () => {
+          const rows = await a
+            .from("drink_wishlist")
+            .select("product_id,saved,revision");
+          assert.equal(rows.error, null);
+          return rows.data!.map((r) => ({
+            productId: r.product_id,
+            saved: r.saved,
+            revision: r.revision,
+          }));
+        },
+      });
+      await assert.rejects(
+        queue.submit({
+          version: 1,
+          owner: users[0],
+          operationId: randomUUID(),
+          productId: "makers-mark",
+          saved: true,
+          expectedRevision: 0,
+        }),
+        /synthetic response loss/,
+      );
+      assert.ok(pendingWishlist);
+      const recovered = await queue.resume(users[0]);
+      assert.equal(
+        recovered!.state.find((r) => r.productId === "makers-mark")!.revision,
+        1,
+      );
+      assert.equal(pendingWishlist, null);
       let latest: { recordId: string; revision: number } | null = null;
       for (let n = 0; n < 201; n++) {
         const result = await a.rpc("create_tasting_record", {
@@ -133,6 +195,7 @@ test(
       const response = await request({}, token);
       assert.equal(response.status, 200);
       const value = await response.json();
+      parseDiscoveryResult(value);
       assert.equal(value.recordCount, 201);
       assert.equal(value.omittedSensoryRecords, 1);
       assert.equal(value.modelUsed, false);

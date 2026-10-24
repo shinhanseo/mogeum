@@ -1,3 +1,7 @@
+import {
+  DiscoverySnapshotChanged,
+  withStableDiscoverySnapshot,
+} from "../_shared/discovery-snapshot.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import { readMenuBody, MenuBodyTooLargeError } from "../_shared/menu-body.ts";
 import {
@@ -11,6 +15,11 @@ import {
   type Product,
 } from "../_shared/product-catalog.ts";
 import { analyzeTaste, type TasteSnapshot } from "../_shared/taste-domain.ts";
+declare const __MOGEUM_BUILD_ID__: string | undefined;
+const buildId =
+  typeof __MOGEUM_BUILD_ID__ === "string"
+    ? __MOGEUM_BUILD_ID__
+    : "source-development";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -20,7 +29,11 @@ const cors = {
 const reply = (body: unknown, status = 200) =>
   Response.json(body, {
     status,
-    headers: { ...cors, "Cache-Control": "no-store" },
+    headers: {
+      ...cors,
+      "Cache-Control": "no-store",
+      "X-Mogeum-Build": buildId,
+    },
   });
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS")
@@ -72,77 +85,86 @@ Deno.serve(async (request) => {
     )
       return reply({ code: "INVALID_CATEGORY" }, 400);
     const owner = auth.data.user.id;
-    const [context, wishlist] = await Promise.all([
-      client.rpc("taste_summary_context"),
-      client
-        .from("drink_wishlist")
-        .select("product_id,saved,revision")
-        .eq("user_id", owner)
-        .order("product_id"),
-    ]);
-    if (context.error || wishlist.error) throw new Error("CONTEXT_FAILED");
-    const snapshot = context.data.snapshot as TasteSnapshot;
-    const history: DrinkHistory[] = [],
-      known = new Set<string>();
-    let cursor: string | null = null;
-    for (;;) {
-      let query = client
-        .from("tasting_records")
-        .select("id,entered_name,category,vintage_status,vintage_year")
-        .eq("user_id", owner)
-        .order("id")
-        .limit(200);
-      if (cursor) query = query.gt("id", cursor);
-      const page = await query;
-      if (page.error) throw new Error("HISTORY_FAILED");
-      for (const row of page.data ?? []) {
-        const ids = seenProductIds([row]);
-        if ([...ids].some((id) => !known.has(id))) {
-          history.push(row);
-          for (const id of ids) known.add(id);
+    const result = await withStableDiscoverySnapshot(
+      async () => {
+        const context = await client.rpc("taste_summary_context");
+        if (context.error || !context.data?.snapshot)
+          throw new Error("CONTEXT_FAILED");
+        return context.data.snapshot as TasteSnapshot;
+      },
+      async (snapshot) => {
+        const wishlist = await client
+          .from("drink_wishlist")
+          .select("product_id,saved,revision")
+          .eq("user_id", owner)
+          .order("product_id");
+        if (wishlist.error) throw new Error("WISHLIST_FAILED");
+        const history: DrinkHistory[] = [],
+          known = new Set<string>();
+        let cursor: string | null = null;
+        for (;;) {
+          let query = client
+            .from("tasting_records")
+            .select("id,entered_name,category,vintage_status,vintage_year")
+            .eq("user_id", owner)
+            .order("id")
+            .limit(200);
+          if (cursor) query = query.gt("id", cursor);
+          const page = await query;
+          if (page.error) throw new Error("HISTORY_FAILED");
+          for (const row of page.data ?? []) {
+            const ids = seenProductIds([row]);
+            if ([...ids].some((id) => !known.has(id))) {
+              history.push(row);
+              for (const id of ids) known.add(id);
+            }
+          }
+          if (!page.data || page.data.length < 200) break;
+          cursor = page.data.at(-1)!.id;
         }
-      }
-      if (!page.data || page.data.length < 200) break;
-      cursor = page.data.at(-1)!.id;
-    }
-    const recommendations = discoverDrinks(
-      snapshot,
-      history,
-      category as Product["category"] | null,
+        const recommendations = discoverDrinks(
+          snapshot,
+          history,
+          category as Product["category"] | null,
+        );
+        const evidenceIds = new Set(
+          recommendations.flatMap((r) =>
+            [...r.similar, ...r.cautions].flatMap((f) => [
+              ...f.recordIds,
+              ...f.negativeIds,
+            ]),
+          ),
+        );
+        return {
+          recommendations,
+          wishlist: wishlist.data ?? [],
+          evidenceRecords: snapshot.records
+            .filter((r) => evidenceIds.has(r.id))
+            .map((r) => ({
+              id: r.id,
+              name: r.name,
+              category: r.category,
+              date: r.date,
+              revision: r.revision,
+              revisit: r.revisit,
+              noteText: r.note?.text ?? null,
+            })),
+          tasteHash: snapshot.hash,
+          recordCount: snapshot.totalRecords,
+          sensoryRecordCount: analyzeTaste(snapshot).recordCount,
+          omittedSensoryRecords: snapshot.omittedCount,
+          method: "evidence-rules-v1",
+          modelUsed: false,
+          catalogVersion: PRODUCT_CATALOG_VERSION,
+          catalogSize: products.length,
+          limitedCatalog: true,
+        };
+      },
     );
-    const evidenceIds = new Set(
-      recommendations.flatMap((r) =>
-        [...r.similar, ...r.cautions].flatMap((f) => [
-          ...f.recordIds,
-          ...f.negativeIds,
-        ]),
-      ),
-    );
-    return reply({
-      recommendations,
-      wishlist: wishlist.data ?? [],
-      evidenceRecords: snapshot.records
-        .filter((r) => evidenceIds.has(r.id))
-        .map((r) => ({
-          id: r.id,
-          name: r.name,
-          category: r.category,
-          date: r.date,
-          revision: r.revision,
-          revisit: r.revisit,
-          noteText: r.note?.text ?? null,
-        })),
-      tasteHash: snapshot.hash,
-      recordCount: snapshot.totalRecords,
-      sensoryRecordCount: analyzeTaste(snapshot).recordCount,
-      omittedSensoryRecords: snapshot.omittedCount,
-      method: "evidence-rules-v1",
-      modelUsed: false,
-      catalogVersion: PRODUCT_CATALOG_VERSION,
-      catalogSize: products.length,
-      limitedCatalog: true,
-    });
-  } catch {
+    return reply(result);
+  } catch (error) {
+    if (error instanceof DiscoverySnapshotChanged)
+      return reply({ code: "TASTE_CONTEXT_CHANGED" }, 409);
     return reply({ code: "NEXT_DRINKS_UNAVAILABLE" }, 503);
   }
 });
