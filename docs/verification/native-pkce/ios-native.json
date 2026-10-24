@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "platform": "ios",
+  "runId": "pkce-ios-v3",
+  "rfc7636Vector": true,
+  "sdkMethod": "s256",
+  "sdkChallengeMatchesDigest": true,
+  "challengeLength": 43,
+  "accountCreated": false,
+  "browserOpened": false,
+  "checkedAt": "2026-10-24T03:36:18.995Z"
+}

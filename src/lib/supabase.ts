@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 import { getBackendState } from './env';
+import { ensureNativeAuthCrypto } from './native-auth-crypto';
 
 let client: SupabaseClient | null = null;
 /** No client or network request is created until valid public configuration exists. */
@@ -10,6 +11,7 @@ export function getSupabase(): SupabaseClient | null {
   if (client) return client;
   const state = getBackendState();
   if (!state.configured) return null;
+  ensureNativeAuthCrypto();
   client = createClient(state.config.url, state.config.publishableKey, {
     auth: {
       ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),

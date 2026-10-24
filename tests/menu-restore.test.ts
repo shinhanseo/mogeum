@@ -51,6 +51,36 @@ function fixture(): MenuDraft {
 }
 const restore = (value: unknown) =>
   parseStoredMenu(JSON.stringify(value), owner, directory);
+test("a relocated iOS menu preserves corrected input, pending request and photo revision without reading the old sandbox", () => {
+  const root = "file:///var/mobile/Containers/Data/Application/";
+  const old = `${root}14422F63-BB97-4116-9AA5-37DD3F82D4F1/Documents/`;
+  const current = `${root}2A8FBFC8-9D84-4073-AF03-61EE1FE96BBD/Documents/`;
+  const d = fixture();
+  d.photos[0].uri = `${old}menu-drafts/${owner}/${id}/${pid}-1.jpg`;
+  d.items[0].name = "직접 남긴 이름";
+  d.items[0].productId = null;
+  d.items[0].price = 21000;
+  d.pendingSave = {
+    revision: d.revision,
+    photos: [d.photos[0].ocr!],
+    items: structuredClone(d.items),
+  };
+  const raw = JSON.stringify(d);
+  const restored = parseStoredMenu(raw, owner, current);
+  assert.equal(
+    restored.photos[0].uri,
+    `${current}menu-drafts/${owner}/${id}/${pid}-1.jpg`,
+  );
+  assert.equal(restored.photos[0].imageRevision, 1);
+  assert.equal(restored.items[0].name, "직접 남긴 이름");
+  assert.equal(restored.items[0].price, 21000);
+  assert.deepEqual(restored.pendingSave, d.pendingSave);
+  assert.equal(JSON.stringify(d), raw);
+  assert.throws(
+    () => parseStoredMenu(raw, "other-account", current),
+    /INVALID_MENU_DRAFT/,
+  );
+});
 test("real empty storage is distinct from unavailable storage or malformed metadata", async () => {
   assert.deepEqual(
     await readStoredMenu(
