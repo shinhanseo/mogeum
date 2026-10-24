@@ -68,7 +68,7 @@ function ConnectedTasting({ owner, recordId }: {owner:string;recordId:string}) {
     const frozen={...value,composition:{text:note,edited,sourceRevision:value.revision},pendingSave:{operationId,expectedRevision:revision.current}};
     await persistDraft(frozen);
     await tastingRepository(client).save(frozen,operationId,revision.current,note,edited);
-    await clearDraft(owner,recordId);
+    if (!await clearDraft(owner,recordId,frozen)) throw new Error('A newer draft was preserved');
     if(active.current)router.replace({pathname:'/detail',params:{recordId}});
   }
   if(draft)return <><TastingComposer initial={draft} onChange={value=>{void persistDraft(value).catch(()=>setError('임시 저장에 실패했어요.'));}} onSave={save} onClose={close}/>{!!error&&<Text accessibilityRole="alert" style={{...typography.caption,color:colors.primary,padding:12}}>{error}</Text>}</>;

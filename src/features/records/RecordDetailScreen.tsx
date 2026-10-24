@@ -9,13 +9,13 @@ import { colors, fonts, typography } from '../../theme/tokens';
 import { recordDate, type RecordDetail } from './detail';
 const categories:Record<string,string>={whisky:'위스키',wine:'와인',beer:'맥주',traditional:'전통주',other:'기타'};
 const feelings={again:'또 마시고 싶어요',okay:'괜찮아요',not_for_me:'내 취향이 아니에요'};
-export function RecordDetailScreen({record,photoUri,history,onClose,onNote,onSelect,onRepeat}:{record:RecordDetail;photoUri:string|null;history:{id:string;consumed_at:string}[];onClose:()=>void;onNote:()=>void;onSelect:(id:string)=>void;onRepeat:()=>void}){
+export function RecordDetailScreen({record,photoUri,history,onClose,onNote,onSelect,onRepeat,onEdit,onPhotoError}:{record:RecordDetail;photoUri:string|null;history:{id:string;consumed_at:string}[];onClose:()=>void;onNote:()=>void;onSelect:(id:string)=>void;onRepeat:()=>void;onEdit:()=>void;onPhotoError?:(uri:string)=>void}){
  const [failed,setFailed]=useState<string|null>(null);
  const note=record.record_notes?.confirmed_note;
  return <SafeAreaView style={s.page}><WebStatusSpace/><ScreenHeader title="내 술 기록" onBack={onClose} onClose={onClose}/><ScrollView contentContainerStyle={s.content}>
- {photoUri&&photoUri!==failed?<Image source={{uri:photoUri}} onError={()=>setFailed(photoUri)} style={s.photo} resizeMode="cover" accessibilityLabel="마신 술 사진"/>:<View style={[s.photo,s.placeholder]}><Icon name="photo"/><Text style={s.meta}>사진 없이 남긴 한 잔</Text></View>}
+ {photoUri&&photoUri!==failed?<Image source={{uri:photoUri}} onError={()=>{setFailed(photoUri);onPhotoError?.(photoUri);}} style={s.photo} resizeMode="cover" accessibilityLabel="마신 술 사진"/>:<View style={[s.photo,s.placeholder]}><Icon name="photo"/><Text style={s.meta}>사진 없이 남긴 한 잔</Text></View>}
  <Text style={s.category}>{categories[record.category??'']??'종류 미정'}</Text><Text style={s.name}>{record.entered_name||'이름 없는 술'}</Text>
- <Text style={s.meta}>{recordDate(record.consumed_at)} · 나만 보기{record.vintage_status==='year'?` · ${record.vintage_year} 빈티지`:record.vintage_status==='nv'?' · NV':''}</Text>
+ <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8}}><Text style={s.meta}>{recordDate(record.consumed_at)} · 나만 보기{record.vintage_status==='year'?` · ${record.vintage_year} 빈티지`:record.vintage_status==='nv'?' · NV':''}</Text><Pressable accessibilityRole="button" accessibilityLabel="기록 기본 정보 수정" onPress={onEdit} style={{minWidth:44,minHeight:44,alignItems:'center',justifyContent:'center'}}><Text style={[s.meta,{color:colors.primary}]}>수정</Text></Pressable></View>
  {record.revisit&&<Text style={s.feeling}>{feelings[record.revisit]}</Text>}
  {note?<View style={s.note}><Text style={s.noteTitle}>나의 테이스팅 노트</Text><Text style={s.prose}>{note}</Text></View>:<Text style={s.meta}>테이스팅 노트는 나중에 추가해도 돼요.</Text>}
  {record.rating!==null&&<View style={s.stars} accessibilityLabel={`내 별점 ${record.rating}점`}>{[1,2,3,4,5].map(n=><RatingStar key={n} filled={n<=record.rating!}/>)}</View>}

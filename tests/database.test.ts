@@ -5,7 +5,7 @@ import { PGlite } from '@electric-sql/pglite';
 import postgres from 'postgres';
 
 type JsonObject = { [key: string]: postgres.JSONValue };
-type Params = (string | number | null | JsonObject)[];
+type Params = (string | number | boolean | null | JsonObject | postgres.JSONValue[])[];
 type Row = Record<string, unknown>;
 interface Db { query<T extends Row = Row>(sql: string, params?: Params): Promise<{ rows: T[] }>; exec(sql: string): Promise<unknown>; close(): Promise<void>; }
 const a = '10000000-0000-4000-8000-000000000001';
@@ -56,9 +56,37 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
 
     await t.test('private tables enable RLS and bucket is private', async () => {
       const { rows } = await db.query("select relname,relrowsecurity from pg_class join pg_namespace n on n.oid=relnamespace where n.nspname='public' and relkind='r'");
-      assert.equal(rows.length, 10);
+      assert.equal(rows.length, 13);
       assert.ok(rows.every(row => row.relrowsecurity === true));
       assert.equal((await db.query("select public from storage.buckets where id='record-photos'")).rows[0].public, false);
+    });
+    await t.test('wishlist revisions and immutable receipts preserve ownership without becoming tasting records', async()=>{
+      await as(a);
+      const write=(op:number,saved:boolean,revision:number,product='glenlivet-12')=>db.query<{result: {revision:number;saved:boolean;replayed:boolean}}>('select public.set_drink_wishlist($1,$2,$3,$4) result',[operation(op),product,saved,revision]);
+      const first=(await write(190,true,0)).rows[0].result;assert.equal(first.revision,1);assert.equal(first.saved,true);
+      assert.equal((await write(190,true,0)).rows[0].result.replayed,true);
+      await assert.rejects(write(190,false,0),/OPERATION_PAYLOAD_CHANGED/);
+      assert.equal((await write(191,false,1)).rows[0].result.revision,2);
+      assert.equal((await write(190,true,0)).rows[0].result.saved,true);
+      assert.equal((await db.query('select saved from public.drink_wishlist')).rows[0].saved,false);
+      await assert.rejects(write(192,true,1),/STALE_WISHLIST/);
+      await code("insert into public.drink_wishlist(user_id,product_id,saved,revision) values ($1,'glenlivet-12',true,1)",[b],'42501');
+      await code('select * from private.wishlist_operations',[],'42501');
+      await assert.rejects(write(193,true,0,'invented-drink'),{code:'23514'});
+      await as(b);assert.equal((await db.query('select * from public.drink_wishlist')).rows.length,0);
+      assert.equal((await db.query('select count(*)::integer n from public.tasting_records')).rows[0].n,0);
+    });
+    await t.test('menu drafts enforce owner, five pages, optimistic revision and retry', async()=>{
+      await as(a);const id=operation(180);
+      const write=(revision:number,photos:postgres.JSONValue[]=[],items:postgres.JSONValue[]=[])=>db.query('select public.save_menu_session($1,$2,$3::jsonb,$4::jsonb) revision',[id,revision,photos,items]);
+      assert.equal((await write(0)).rows[0].revision,1);
+      assert.equal((await write(0)).rows[0].revision,1);
+      assert.equal((await write(1,[{id:'page'}])).rows[0].revision,2);
+      await assert.rejects(write(0));await assert.rejects(write(2,Array.from({length:6},()=>({}))));
+      await as(b);assert.equal((await db.query('select * from public.menu_sessions where id=$1',[id])).rows.length,0);
+      await assert.rejects(write(0));await assert.rejects(db.query('update public.menu_sessions set revision=10 where id=$1',[id]),{code:'42501'});
+      await as(null);await assert.rejects(write(0),{code:'42501'});
+      await as(a);
     });
     await t.test('anonymous clients cannot read rows, create records, or upload photos', async () => {
       await as(null);
@@ -123,7 +151,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
     });
     await t.test('user B cannot read A rows, photos, or the security-invoker overview', async () => {
       await as(b);
-      for (const table of ['cellar_entries','tasting_records','record_photos','record_notes','record_answers','record_drafts','user_settings','profiles','photo_deletion_jobs','cellar_overview']) {
+      for (const table of ['cellar_entries','tasting_records','record_photos','record_notes','record_answers','record_drafts','user_settings','profiles','photo_deletion_jobs','deleted_record_operations','cellar_overview']) {
         assert.equal((await db.query(`select * from public.${table}`)).rows.length, 0, table);
       }
       assert.equal((await db.query('select * from storage.objects')).rows.length, 0);
@@ -172,6 +200,78 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await db.query('select representative_photo_id from public.cellar_entries where id=$1', [second.cellarEntryId])).rows[0].representative_photo_id, null);
       assert.equal((await db.query('select status from public.photo_deletion_jobs where storage_path=$1', [path(a, 1)])).rows[0].status, 'pending');
       if (!databaseUrl) assert.equal((await db.query('delete from storage.objects where name=$1 returning id', [path(a, 1)])).rows.length, 1);
+    });
+    await t.test('basic edits sync a single entry label and deletion queues a private photo without touching other dates', async () => {
+      await uploadMetadata(a,70);
+      const record=await saved(70,{enteredName:'Before edit',category:'whisky',photo:photo(a,70)});
+      const row=(await db.query<{result:{revision:number}}>('select to_jsonb(public.edit_tasting_record($1,$2,$3::jsonb)) result',[record.recordId,record.revision,{enteredName:'After edit',rating:3}])).rows[0].result;
+      assert.equal((await db.query('select display_name from public.cellar_entries where id=$1',[record.cellarEntryId])).rows[0].display_name,'After edit');
+      await assert.rejects(db.query('select public.edit_tasting_record($1,$2,$3::jsonb)',[record.recordId,record.revision,{rating:2}]),{code:'40001'});
+      const another=await saved(71,{enteredName:'Another date',category:'whisky'},record.cellarEntryId);
+      const updated=(await db.query<{result:{revision:number}}>('select to_jsonb(public.edit_tasting_record($1,$2,$3::jsonb)) result',[record.recordId,row.revision,{enteredName:'This date only'}])).rows[0].result;
+      assert.equal((await db.query('select display_name from public.cellar_entries where id=$1',[record.cellarEntryId])).rows[0].display_name,'After edit');
+      await as(b);
+      await assert.rejects(db.query('select public.edit_tasting_record($1,$2,$3::jsonb)',[record.recordId,updated.revision,{rating:1}]),{code:'42501'});
+      assert.equal((await db.query('delete from public.tasting_records where id=$1 returning id',[record.recordId])).rows.length,0);
+      await as(a);
+      assert.equal((await db.query('delete from public.tasting_records where id=$1 and revision=$2 returning id',[record.recordId,row.revision])).rows.length,0);
+      assert.equal((await db.query('delete from public.tasting_records where id=$1 and revision=$2 returning id',[record.recordId,updated.revision])).rows.length,1);
+      assert.equal((await db.query('select id from public.tasting_records where id=$1',[another.recordId])).rows.length,1);
+      await assert.rejects(saved(70,{enteredName:'Before edit',category:'whisky',photo:photo(a,70)}),{code:'P0002'});
+      const job=(await db.query('select id from public.photo_deletion_jobs where storage_path=$1',[path(a,70)])).rows[0];
+      assert.equal((await db.query('select public.complete_photo_deletion($1) result',[Number(job.id)])).rows[0].result,false);
+      await as(b);await assert.rejects(db.query('select public.complete_photo_deletion($1)',[Number(job.id)]),{code:'42501'});await as(a);
+      if(!databaseUrl){await db.query('delete from storage.objects where name=$1',[path(a,70)]);assert.equal((await db.query('select public.complete_photo_deletion($1) result',[Number(job.id)])).rows[0].result,true);}
+    });
+    await t.test('photo replacement and explicit regrouping are atomic, owner-scoped and replay safely', async () => {
+      await as(a); await uploadMetadata(a,90); await uploadMetadata(a,91);
+      const source=await saved(90,{enteredName:'Source',category:'whisky',rating:4,photo:photo(a,90)});
+      const other=await saved(92,{enteredName:'Target',category:'whisky'});
+      const rev=async()=>Number((await db.query('select revision from public.tasting_records where id=$1',[source.recordId])).rows[0].revision);
+      const change=async(n:number,revision:number,input:JsonObject)=> (await db.query<{result:Saved}>('select public.change_record_attachment($1,$2,$3,$4::jsonb) result',[source.recordId,operation(n),revision,input])).rows[0].result;
+      const before=(await db.query('select entered_name,category,consumed_at,rating from public.tasting_records where id=$1',[source.recordId])).rows[0];
+      const initial=await rev(); const replacement={kind:'photo',...photo(a,91)};
+      const replaced=await change(91,initial,replacement);
+      assert.ok(replaced.revision>initial);
+      assert.equal((await change(91,initial,replacement)).replayed,true);
+      assert.equal((await db.query('select storage_path from public.record_photos where record_id=$1',[source.recordId])).rows[0].storage_path,path(a,91));
+      assert.equal((await db.query('select storage_path from public.photo_deletion_jobs where storage_path=$1',[path(a,90)])).rows.length,1);
+      assert.equal((await db.query('select p.storage_path from public.cellar_entries e join public.record_photos p on p.id=e.representative_photo_id where e.id=$1',[source.cellarEntryId])).rows[0].storage_path,path(a,91));
+      await assert.rejects(change(91,initial,{kind:'split',name:null}),{code:'23505'});
+      await assert.rejects(change(93,initial,{kind:'move',entryId:other.cellarEntryId}),{code:'40001'});
+      await assert.rejects(change(93,await rev(),{kind:'photo',...photo(a,99)}));
+      assert.equal((await db.query('select storage_path from public.record_photos where record_id=$1',[source.recordId])).rows[0].storage_path,path(a,91));
+      await as(b); await assert.rejects(change(93,replaced.revision,{kind:'split',name:null}),{code:'P0002'}); await as(a);
+      await assert.rejects(change(93,await rev(),{kind:'move',entryId:foreign.cellarEntryId}),{code:'42501'});
+      const moved=await change(93,await rev(),{kind:'move',entryId:other.cellarEntryId});
+      assert.equal(moved.cellarEntryId,other.cellarEntryId);
+      assert.equal((await db.query('select id from public.cellar_overview where id=$1',[source.cellarEntryId])).rows.length,0);
+      assert.equal(Number((await db.query('select record_count from public.cellar_overview where id=$1',[other.cellarEntryId])).rows[0].record_count),2);
+      const revision=await rev();const split=await change(94,revision,{kind:'split',name:'Separated'});
+      assert.equal((await change(94,revision,{kind:'split',name:'Separated'})).cellarEntryId,split.cellarEntryId);
+      assert.notEqual(split.cellarEntryId,other.cellarEntryId);
+      assert.deepEqual((await db.query('select entered_name,category,consumed_at,rating from public.tasting_records where id=$1',[source.recordId])).rows[0],before);
+      assert.equal((await db.query('select storage_path from public.record_photos where record_id=$1',[source.recordId])).rows[0].storage_path,path(a,91));
+      await assert.rejects(db.query('select * from private.record_attachment_receipts'),{code:'42501'});
+    });
+    await t.test('taste context is owner-scoped; only server leases can publish and stale results disappear',async()=>{
+      await as(a);const source=await saved(110,{enteredName:'Summary source',category:'whisky',revisit:'again'});
+      const context=async()=> (await db.query<{result:{snapshot:{hash:string;records:{id:string}[]};cached:unknown;stale:boolean}}>('select public.taste_summary_context() result')).rows[0].result;
+      const before=await context();assert.ok(before.snapshot.records.some(r=>r.id===source.recordId));
+      await as(b);assert.ok(!(await context()).snapshot.records.some(r=>r.id===source.recordId));await as(a);
+      await assert.rejects(db.query('select public.begin_taste_summary($1,$2,$3)',[a,before.snapshot.hash,operation(111)]),{code:'42501'});
+      await db.exec('reset role');await db.exec('set role service_role');
+      const begin=async(lease:number,hash:string)=> (await db.query('select public.begin_taste_summary($1,$2,$3) result',[a,hash,operation(lease)])).rows[0].result;
+      assert.equal(await begin(111,before.snapshot.hash),'acquired');assert.equal(await begin(112,before.snapshot.hash),'running');
+      const result={version:'taste-v1',selection:{highlightIds:['fixture-fact']},model:'fixture',generatedAt:'2026-10-23'};
+      assert.equal((await db.query('select public.finish_taste_summary($1,$2,$3,$4::jsonb) result',[a,before.snapshot.hash,operation(112),result])).rows[0].result,false);
+      assert.equal((await db.query('select public.finish_taste_summary($1,$2,$3,$4::jsonb) result',[a,before.snapshot.hash,operation(111),result])).rows[0].result,true);
+      await as(a);assert.deepEqual((await context()).cached,result);
+      await db.query("select public.update_tasting_record($1,$2,'{\"rating\":2}')",[source.recordId,source.revision]);
+      const stale=await context();assert.notEqual(stale.snapshot.hash,before.snapshot.hash);assert.equal(stale.cached,null);assert.equal(stale.stale,true);
+      await db.exec('reset role');await db.exec('set role service_role');assert.equal(await begin(113,stale.snapshot.hash),'limited');assert.equal(await begin(113,before.snapshot.hash),'stale');
+      await as(a);await assert.rejects(db.query('select * from private.taste_summary_jobs'),{code:'42501'});
+      await as(null);await assert.rejects(db.query('select public.taste_summary_context()'),{code:'42501'});await as(a);
     });
     await t.test('optimistic edits reject stale revisions and keep the saved experience', async () => {
       const oldRevision = Number((await db.query('select revision from public.tasting_records where id=$1', [second.recordId])).rows[0].revision);
@@ -232,6 +332,15 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
         await as(a);
         assert.equal((await db.query('select * from public.tasting_records where operation_id=$1', [operation(100)])).rows.length, 1);
       } finally { await sql.end(); }
+    });
+    await t.test('deletion receipts do not block account deletion cascades',async()=>{
+      const owner='10000000-0000-4000-8000-000000000003';
+      await db.exec('reset role');await db.query('insert into auth.users(id,email) values($1,$2)',[owner,'cascade@example.test']);
+      await as(owner);const record=await saved(80,{enteredName:'Cascade fixture'});
+      await db.exec('reset role');await db.query('delete from auth.users where id=$1',[owner]);
+      assert.equal((await db.query('select id from public.tasting_records where id=$1',[record.recordId])).rows.length,0);
+      assert.equal((await db.query('select * from public.deleted_record_operations where user_id=$1',[owner])).rows.length,0);
+      await as(a);
     });
     await t.test('unverified common products are not client-readable or writable', async () => {
       await db.exec('reset role');
