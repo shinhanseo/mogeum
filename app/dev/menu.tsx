@@ -40,10 +40,11 @@ const snapshot: TasteSnapshot = {
   })),
 };
 export default function DevMenu() {
-  const { picker, catalog, failure } = useLocalSearchParams<{
+  const { picker, catalog, failure, runId } = useLocalSearchParams<{
     picker?: string;
     catalog?: string;
     failure?: string;
+    runId?: string;
   }>();
   const restoreAttempts = useRef(0);
   if (!__DEV__) return <Redirect href="/" />;
@@ -60,14 +61,17 @@ export default function DevMenu() {
         개발 검증 · 실제 기기 OCR / 합성 취향 / 서버 호출 없음
       </Text>
       <MenuFlow
+        key={`${runId ?? ""}:${picker ?? ""}:${catalog ?? ""}:${failure ?? ""}`}
         owner={
-          failure === "catalog"
-            ? "menu-catalog-mismatch-fixture"
-            : catalog === "1"
-              ? "menu-catalog-fixture"
-              : picker === "1"
-                ? "menu-picker-fixture"
-                : "menu-ocr-fixture"
+          runId && /^[a-z0-9_-]{1,40}$/i.test(runId)
+            ? `menu-preparation-fixture-${runId}`
+            : failure === "catalog"
+              ? "menu-catalog-mismatch-fixture"
+              : catalog === "1"
+                ? "menu-catalog-fixture"
+                : picker === "1"
+                  ? "menu-picker-fixture"
+                  : "menu-ocr-fixture"
         }
         fixtureEvidenceUri={
           Image.resolveAssetSource(
