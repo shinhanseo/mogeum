@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -40,25 +39,16 @@ type Props = {
   onRetry: () => void;
   onBack: () => void;
   onRecord: (productId: string) => void;
-  onEvidence: (recordId: string) => void;
+  onReason: (productId: string) => void;
 };
-/** 04 / 19:784 and 19:972. Expanded evidence/error/empty states extend the captured design. */
+/** 04 / 19:784 and 19:972. Error/empty states extend the captured design. */
 export function DiscoveryScreen(props: Props) {
   const { result, wishlist, mode, busy, saving, error, category } = props;
   const [editingSaved, setEditingSaved] = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [sourceError, setSourceError] = useState("");
   const saved = new Set(
     wishlist.filter((r) => r.saved).map((r) => r.productId),
   );
   const rows = mode === "saved" ? products.filter((p) => saved.has(p.id)) : [];
-  async function source(product: Product) {
-    try {
-      await Linking.openURL(product.source.url);
-    } catch {
-      setSourceError("제품 정보 페이지를 열지 못했어요.");
-    }
-  }
   function explanation(row: NextDrink) {
     if (!row.similar.length)
       return row.cautions.length
@@ -145,11 +135,6 @@ export function DiscoveryScreen(props: Props) {
           />
         </View>
       ) : null}
-      {sourceError ? (
-        <Text accessibilityRole="alert" style={s.notice}>
-          {sourceError}
-        </Text>
-      ) : null}
       {mode === "saved" ? (
         <>
           {rows.map((product) => (
@@ -233,65 +218,11 @@ export function DiscoveryScreen(props: Props) {
                   <Text style={[s.body, s.flex]}>{explanation(row)}</Text>
                   <Button
                     variant="text"
-                    label={
-                      expanded === row.product.id ? "접기  ‹" : "이유 보기  ›"
-                    }
-                    onPress={() =>
-                      setExpanded(
-                        expanded === row.product.id ? null : row.product.id,
-                      )
-                    }
+                    label="이유 보기  ›"
+                    onPress={() => props.onReason(row.product.id)}
                     style={s.reasonLink}
                   />
                 </View>
-                {expanded === row.product.id ? (
-                  <View style={s.explanation}>
-                    {row.similar.map((f) => (
-                      <View key={f.factId}>
-                        <Text style={s.label}>{f.label} · 좋게 남긴 느낌</Text>
-                        {f.recordIds.slice(0, 3).map((id) => (
-                          <Button
-                            key={id}
-                            variant="text"
-                            label={`${result.evidenceRecords.find((r) => r.id === id)?.name ?? "이름 없는 술"} 기록 보기 ›`}
-                            onPress={() => props.onEvidence(id)}
-                          />
-                        ))}
-                      </View>
-                    ))}
-                    {row.cautions.map((f) => (
-                      <View key={f.factId}>
-                        <Text style={s.label}>
-                          {f.label} · 아쉽게 남긴 느낌
-                        </Text>
-                        {f.negativeIds.slice(0, 3).map((id) => (
-                          <Button
-                            key={id}
-                            variant="text"
-                            label={`${result.evidenceRecords.find((r) => r.id === id)?.name ?? "이름 없는 술"} 기록 보기 ›`}
-                            onPress={() => props.onEvidence(id)}
-                          />
-                        ))}
-                      </View>
-                    ))}
-                    <Text style={s.body}>{row.product.description}</Text>
-                    {row.unconfirmedFeatures.length ? (
-                      <Text style={s.caption}>
-                        아직 비교하지 못한 느낌:{" "}
-                        {row.unconfirmedFeatures
-                          .map((f) => f.label)
-                          .join(" · ")}
-                      </Text>
-                    ) : null}
-                    <Button
-                      variant="text"
-                      label={`${row.product.source.title} · 제품 정보 ›`}
-                      onPress={() => {
-                        void source(row.product);
-                      }}
-                    />
-                  </View>
-                ) : null}
                 <View style={s.divider} />
               </View>
             ))}
@@ -392,10 +323,4 @@ const s = StyleSheet.create({
   tipTitle: { ...typography.fieldLabel, color: colors.primary },
   message: { gap: space.md },
   notice: { ...typography.body, color: colors.primary },
-  explanation: {
-    padding: space.lg,
-    gap: space.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-  },
 });
