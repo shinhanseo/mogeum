@@ -24,8 +24,15 @@ export function createLatestTasteLoader(ports: {
         if (version !== generation) return;
         // Missing signed photos can use the existing placeholder; failure to verify the records cannot.
         const photos = await ports.photos(context).catch(() => ({}));
-        if (version === generation)
-          ports.publish({ status: "ready", context, photos });
+        if (version !== generation) return;
+        const verified = await ports.context();
+        if (version !== generation) return;
+        if (
+          !context.snapshot.hash ||
+          verified.snapshot.hash !== context.snapshot.hash
+        )
+          throw new Error("TASTE_CONTEXT_CHANGED");
+        ports.publish({ status: "ready", context: verified, photos });
       } catch {
         if (version === generation) ports.publish({ status: "failed" });
       }
