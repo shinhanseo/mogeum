@@ -13,7 +13,7 @@ export function RecordDetailScreen({record,photoUri,history,onClose,onNote,onSel
  const [failed,setFailed]=useState<string|null>(null);
  const note=record.record_notes?.confirmed_note;
  return <SafeAreaView style={s.page}><WebStatusSpace/><ScreenHeader title="내 술 기록" onBack={onClose} onClose={onClose}/><ScrollView contentContainerStyle={s.content}>
- {photoUri&&photoUri!==failed?<Image source={{uri:photoUri}} onError={()=>{setFailed(photoUri);onPhotoError?.(photoUri);}} style={s.photo} resizeMode="cover" accessibilityLabel="마신 술 사진"/>:<View style={[s.photo,s.placeholder]}><Icon name="photo"/><Text style={s.meta}>사진 없이 남긴 한 잔</Text></View>}
+ {photoUri&&photoUri!==failed?<Image source={{uri:photoUri}} onError={()=>{setFailed(photoUri);onPhotoError?.(photoUri);}} style={s.photo} resizeMode="cover" accessibilityLabel="마신 술 사진"/>:<View style={[s.photo,s.placeholder]}><Icon name="photo"/><Text style={s.meta}>{record.record_photos.length>0?'사진을 불러오지 못했어요':'사진 없이 남긴 한 잔'}</Text></View>}
  <Text style={s.category}>{categories[record.category??'']??'종류 미정'}</Text><Text style={s.name}>{record.entered_name||'이름 없는 술'}</Text>
  <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8}}><Text style={s.meta}>{recordDate(record.consumed_at)} · 나만 보기{record.vintage_status==='year'?` · ${record.vintage_year} 빈티지`:record.vintage_status==='nv'?' · NV':''}</Text><Pressable accessibilityRole="button" accessibilityLabel="기록 기본 정보 수정" onPress={onEdit} style={{minWidth:44,minHeight:44,alignItems:'center',justifyContent:'center'}}><Text style={[s.meta,{color:colors.primary}]}>수정</Text></Pressable></View>
  {record.revisit&&<Text style={s.feeling}>{feelings[record.revisit]}</Text>}
