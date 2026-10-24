@@ -1,6 +1,6 @@
 # 기술 구조
 
-현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 8개와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정은 남아 있다. 메뉴 함수 최신 번들은 개발 프로젝트에 배포했으며, 실제 관리형 계정의 인증 후 추천 검증은 별도다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
+현재 Expo 58 / RN 0.88 / Router 58 앱, Supabase 마이그레이션 9개(9번째 북마크도 로컬·관리형 개발 프로젝트 적용)와 기록 RPC·메뉴/취향 Edge 함수를 구현했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 OAuth·Gemini 키 설정은 남아 있다. 메뉴 geometry-v3와 next-drinks 최신 번들을 개발 프로젝트에 배포했으며, 실제 관리형 계정의 인증 후 추천 검증은 별도다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
 
 ## 구성
 
@@ -49,3 +49,7 @@ tests/fixtures/          synthetic OCR and AI fixtures
 ## 아직 고정하지 않는 것
 
 특정 AI 모델명, OCR 모델/변환 방식, 벡터 DB, 큐 제품, 유료 요금제. 도입 시 공식 문서·실기기·의존성 호환성을 확인하고 선정 이유를 docs/decisions.md에 기록한다.
+
+## 네이티브 인증 암호화
+
+Supabase PKCE에서 plain fallback이 관찰돼 native client 생성 전에 expo-crypto 기반 최소 S256 브리지를 적용했다. 기존 crypto 구현과 browser는 보존하고 SHA-256 실패는 전파한다. docs/verification/native-pkce에 native 표준값·SDK 요청 검증이 있다. provider 인증 성공과는 구분한다.
