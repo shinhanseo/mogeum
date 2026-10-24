@@ -421,3 +421,7 @@ verify_jwt = false
 [functions.menu-recommend]
 # Signed user JWT is validated by Auth.getUser inside the handler.
 verify_jwt = false
+
+[functions.next-drinks]
+# The handler validates the signed user JWT through Auth.getUser.
+verify_jwt = false

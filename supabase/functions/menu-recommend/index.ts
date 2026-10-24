@@ -9,6 +9,11 @@ import {
   recommendMenu,
 } from "../_shared/menu-domain.ts";
 import type { TasteSnapshot } from "../_shared/taste-domain.ts";
+declare const __MOGEUM_BUILD_ID__: string | undefined;
+const buildId =
+  typeof __MOGEUM_BUILD_ID__ === "string"
+    ? __MOGEUM_BUILD_ID__
+    : "source-development";
 const url = Deno.env.get("SUPABASE_URL")!;
 const key =
   Deno.env.get("SUPABASE_ANON_KEY") ??
@@ -21,7 +26,11 @@ const cors = {
 const reply = (value: unknown, status = 200) =>
   Response.json(value, {
     status,
-    headers: { ...cors, "Cache-Control": "no-store" },
+    headers: {
+      ...cors,
+      "Cache-Control": "no-store",
+      "X-Mogeum-Build": buildId,
+    },
   });
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS")
@@ -45,7 +54,7 @@ Deno.serve(async (request) => {
     if (body.action === "parse")
       return reply({
         items: parseMenu(photos),
-        parser: "geometry-v2",
+        parser: "geometry-v3",
         catalogVersion: PRODUCT_CATALOG_VERSION,
         reviewRequired: true,
       });
