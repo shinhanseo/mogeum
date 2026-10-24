@@ -193,6 +193,29 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await code('select public.move_tasting_record($1,$2,$3)', [first.recordId, foreign.cellarEntryId, current], '42501');
       assert.equal((await db.query('select cellar_entry_id from public.tasting_records where id=$1', [first.recordId])).rows[0].cellar_entry_id, second.cellarEntryId);
     });
+    await t.test('cellar photos skip missing representatives and fallback photos without losing the preference', async () => {
+      await as(a);
+      await uploadMetadata(a,500); await uploadMetadata(a,501);
+      const older=await saved(500,{enteredName:'Photo availability fixture',consumedAt:'2026-01-01T12:00:00Z',photo:photo(a,500)});
+      await saved(501,{consumedAt:'2026-01-02T12:00:00Z',photo:photo(a,501)},older.cellarEntryId);
+      const representative=String((await db.query('select id from public.record_photos where record_id=$1',[older.recordId])).rows[0].id);
+      await db.query('update public.cellar_entries set representative_photo_id=$1 where id=$2',[representative,older.cellarEntryId]);
+      const overview=async()=> (await db.query('select photo_path,record_count from public.cellar_overview where id=$1',[older.cellarEntryId])).rows[0];
+      assert.equal((await overview()).photo_path,path(a,500));
+      await db.query("update public.record_photos set upload_status='missing' where id=$1",[representative]);
+      assert.equal((await overview()).photo_path,path(a,501));
+      assert.equal((await db.query('select representative_photo_id from public.cellar_entries where id=$1',[older.cellarEntryId])).rows[0].representative_photo_id,representative);
+      await db.query("update public.record_photos set upload_status='missing' where storage_path=$1",[path(a,501)]);
+      assert.equal((await overview()).photo_path,null);
+      assert.equal(Number((await overview()).record_count),2);
+      await db.query("update public.record_photos set upload_status='ready' where id=$1",[representative]);
+      assert.equal((await overview()).photo_path,path(a,500));
+      await db.query('update public.cellar_entries set representative_photo_id=null where id=$1',[older.cellarEntryId]);
+      assert.equal((await overview()).photo_path,path(a,500));
+      await as(b);
+      assert.equal((await db.query('select id from public.cellar_overview where id=$1',[older.cellarEntryId])).rows.length,0);
+      await as(a);
+    });
     await t.test('deleting a representative photo clears its reference and queues binary cleanup', async () => {
       const photoId = String((await db.query('select id from public.record_photos where record_id=$1', [first.recordId])).rows[0].id);
       await db.query('update public.cellar_entries set representative_photo_id=$1 where id=$2', [photoId, second.cellarEntryId]);

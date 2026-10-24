@@ -139,3 +139,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 다음 한 잔의 기록 기반 추천/북마크 서버·DB와 앱 목록·저장 복구·기록 prefill을 연결했습니다. 개발 프로젝트 배포도 적용했고 전체 로그인 E2E는 남아 있습니다. [서버 기반](docs/verification/next-drinks-foundation.md), [앱 연결·양 플랫폼 17단계·UI 검증과 남은 범위](docs/verification/discovery-ui/README.md).
 
 개발 서버 최신화: [geometry-v3·다음 한 잔 함수·북마크 DB 배포 및 인증 경계 검증](docs/verification/discovery-deployment/README.md).
+
+술장 조회는 사용 불가(`missing`) 사진을 제외하고 최근 정상 사진으로 대체합니다. 전부 없으면 기록을 유지한 채 사진 없이 표시합니다. [대표 사진 선택 계약](docs/data-model.md#술장-대표-사진-가용성--10번째-migration). 새 migration의 관리형 프로젝트 적용은 아직 남아 있습니다.
