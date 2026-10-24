@@ -1,0 +1,2634 @@
+{
+  "whisky": [
+    {
+      "id": "conditions",
+      "figmaId": "75:1438",
+      "title": "어떻게\n마셨나요?",
+      "hint": "온도와 마신 방식도 함께 남겨요.",
+      "fields": [
+        {
+          "id": "conditions.method",
+          "label": "마신 방식",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_7e10599fb927",
+              "label": "스트레이트"
+            },
+            {
+              "code": "v_9d650ecc6deb",
+              "label": "물 첨가"
+            },
+            {
+              "code": "v_ac554bad56bf",
+              "label": "얼음 첨가"
+            },
+            {
+              "code": "v_122792039015",
+              "label": "하이볼·믹서"
+            },
+            {
+              "code": "v_2991f61ced07",
+              "label": "기타"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.memo",
+          "label": "물·얼음의 양, 함께 먹은 음식 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "appearance",
+      "figmaId": "120:2392",
+      "title": "잔에 담긴 위스키는\n어떤 빛인가요?",
+      "hint": "눈에 보이는 색과 가장 가까운 견본을 골라요.",
+      "fields": [
+        {
+          "id": "appearance.color",
+          "label": "내가 본 색",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_d9f7c3aaa699",
+              "label": "옅은 짚색",
+              "color": "#F4E9B8"
+            },
+            {
+              "code": "v_dd1a1135a8f8",
+              "label": "밝은 금색",
+              "color": "#E9CF72"
+            },
+            {
+              "code": "v_8c9a0b5d22df",
+              "label": "진한 금색",
+              "color": "#DCAF38"
+            },
+            {
+              "code": "v_f104e1212a34",
+              "label": "호박색",
+              "color": "#CC8A2E"
+            },
+            {
+              "code": "v_168e08c837a9",
+              "label": "구리빛",
+              "color": "#A85C35"
+            },
+            {
+              "code": "v_f60065a5466d",
+              "label": "짙은 갈색",
+              "color": "#623722"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nose",
+      "figmaId": "75:1494",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 계열과 세부 향을 골라요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "향의 분류 · 복수 선택",
+          "kind": "aroma"
+        }
+      ]
+    },
+    {
+      "id": "palate",
+      "figmaId": "75:1575",
+      "title": "입안에서 어떤 맛이\n느껴졌나요?",
+      "hint": "향의 달콤함과 실제 단맛은 다를 수 있어요.",
+      "fields": [
+        {
+          "id": "palate.sweet",
+          "label": "단맛",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "palate.acid",
+          "label": "산미",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "palate.bitter",
+          "label": "쓴맛",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "palate.spice",
+          "label": "향신료 같은 알싸함",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "figmaId": "75:1640",
+      "title": "입안을 어떻게\n감쌌나요?",
+      "hint": "무게와 질감을 나눠 남겨요.",
+      "fields": [
+        {
+          "id": "body.weight",
+          "label": "무게감",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_b357f76a0777",
+              "label": "가벼워요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_57be39ecce71",
+              "label": "묵직해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.texture",
+          "label": "질감 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_ef7665837142",
+              "label": "매끈해요"
+            },
+            {
+              "code": "v_d91433a47d7d",
+              "label": "오일리해요"
+            },
+            {
+              "code": "v_e7b0df87f62e",
+              "label": "크리미해요"
+            },
+            {
+              "code": "v_49010be74ca0",
+              "label": "입안이 말라요"
+            }
+          ]
+        },
+        {
+          "id": "body.oily",
+          "label": "드라이함 ↔ 오일리함",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_87d949b632bf",
+              "label": "드라이해요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_d91433a47d7d",
+              "label": "오일리해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alcohol",
+      "figmaId": "75:1742",
+      "title": "알코올 자극은\n어땠나요?",
+      "hint": "실제 도수가 아니라 내가 느낀 자극이에요.",
+      "fields": [
+        {
+          "id": "alcohol.nose",
+          "label": "코에서 느낀 자극",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "alcohol.mouth",
+          "label": "입안에서 느낀 자극",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "alcohol.throat",
+          "label": "목에서 느낀 자극",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "alcohol.feeling",
+          "label": "전체 느낌",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_269836a00a4e",
+              "label": "부드러워요"
+            },
+            {
+              "code": "v_f419e5624cca",
+              "label": "따뜻해요"
+            },
+            {
+              "code": "v_2d88682e3ed5",
+              "label": "화끈해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "retronasal",
+      "figmaId": "75:1804",
+      "title": "마신 뒤 올라오는 향은\n어땠나요?",
+      "hint": "입안에 머금거나 삼킨 뒤 코로 느껴지는 향이에요.",
+      "fields": [
+        {
+          "id": "retronasal.comparison",
+          "label": "처음 맡은 향과 비교하면?",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_5f0069df099f",
+              "label": "비슷해요"
+            },
+            {
+              "code": "v_8256bc1ef976",
+              "label": "다른 향이 느껴져요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "retronasal.features",
+          "label": "다른 향 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_ed0e90733d1a",
+              "label": "과일"
+            },
+            {
+              "code": "v_e66b00781c72",
+              "label": "달콤한 향"
+            },
+            {
+              "code": "v_ef9fc0939537",
+              "label": "꽃·허브"
+            },
+            {
+              "code": "v_993972fa62b8",
+              "label": "곡물·견과류"
+            },
+            {
+              "code": "v_027837d60c51",
+              "label": "나무·향신료"
+            },
+            {
+              "code": "v_d91ec40a1768",
+              "label": "연기·피트"
+            },
+            {
+              "code": "v_2991f61ced07",
+              "label": "기타"
+            }
+          ],
+          "when": {
+            "field": "retronasal.comparison",
+            "includes": "v_8256bc1ef976"
+          }
+        },
+        {
+          "id": "retronasal.memo",
+          "label": "구체적으로 떠오른 향 · 선택",
+          "kind": "text",
+          "when": {
+            "field": "retronasal.comparison",
+            "includes": "v_8256bc1ef976"
+          }
+        },
+        {
+          "id": "retronasal.strength",
+          "label": "마신 뒤 올라오는 향의 강도",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "75:1893",
+      "title": "무엇이 얼마나\n오래 남았나요?",
+      "hint": "여운의 길이와 남은 향·맛을 나눠요.",
+      "fields": [
+        {
+          "id": "finish.length",
+          "label": "여운의 길이",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_dac89befbdf1",
+              "label": "금방 사라져요"
+            },
+            {
+              "code": "v_0f16876ea58a",
+              "label": "잠깐 남아요"
+            },
+            {
+              "code": "v_1bfac10557ad",
+              "label": "오래 남아요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.features",
+          "label": "여운의 특징 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_ed0e90733d1a",
+              "label": "과일"
+            },
+            {
+              "code": "v_f4b1a406b163",
+              "label": "꿀·바닐라"
+            },
+            {
+              "code": "v_b294b251f77d",
+              "label": "나무"
+            },
+            {
+              "code": "v_62d500e43789",
+              "label": "향신료"
+            },
+            {
+              "code": "v_8b0e2bb594ce",
+              "label": "연기"
+            },
+            {
+              "code": "v_4d3c41fd0a1c",
+              "label": "쌉쌀함"
+            },
+            {
+              "code": "v_245ff77624a0",
+              "label": "건조함"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.time",
+          "label": "대략적인 시간 · 선택, 예: 20초 정도",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "overall",
+      "figmaId": "75:1944",
+      "title": "이번 한 잔, 무엇이\n기억에 남나요?",
+      "hint": "정답 없이, 내 말로 마무리해요.",
+      "fields": [
+        {
+          "id": "overall.impression",
+          "label": "가장 인상적이었던 점 · 선택",
+          "kind": "text"
+        },
+        {
+          "id": "overall.regret",
+          "label": "조금 아쉬웠던 점 · 선택",
+          "kind": "text"
+        },
+        {
+          "id": "overall.memo",
+          "label": "이번 한 잔을 정리하는 내 말 · 선택",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "wine": [
+    {
+      "id": "conditions",
+      "figmaId": "75:2323",
+      "title": "어떤 상태에서\n마셨나요?",
+      "hint": "온도·개봉 시간·음식도 함께 남겨요.",
+      "fields": [
+        {
+          "id": "conditions.temperature",
+          "label": "느껴지는 온도",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_567c0d60896c",
+              "label": "차갑게"
+            },
+            {
+              "code": "v_cbdb367ed9ba",
+              "label": "서늘하게"
+            },
+            {
+              "code": "v_45bf5e5cc5f5",
+              "label": "실온에 가깝게"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.opened",
+          "label": "개봉 후 시간",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_0333e99106cc",
+              "label": "개봉 직후"
+            },
+            {
+              "code": "v_b1c95a009ab8",
+              "label": "시간이 지난 뒤"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.decanted",
+          "label": "디캔팅 여부 · 선택",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_767a8404e5a0",
+              "label": "했어요"
+            },
+            {
+              "code": "v_20737f5db107",
+              "label": "하지 않았어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.method",
+          "label": "마신 방식",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_3f97277e4d5f",
+              "label": "잔으로"
+            },
+            {
+              "code": "v_02df75961432",
+              "label": "바틀로"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.memo",
+          "label": "함께 먹은 음식·지난 시간 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "appearance",
+      "figmaId": "123:2456",
+      "title": "잔에 담긴 와인은\n어떤 빛인가요?",
+      "hint": "와인 종류에 맞는 색상 견본을 골라요.",
+      "fields": [
+        {
+          "id": "appearance.type",
+          "label": "와인 종류",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_e7af17107cce",
+              "label": "레드"
+            },
+            {
+              "code": "v_4b6304d7eb9d",
+              "label": "화이트"
+            },
+            {
+              "code": "v_f1e977b3ae2c",
+              "label": "로제"
+            },
+            {
+              "code": "v_1d6365acfe0b",
+              "label": "기타·모름"
+            }
+          ]
+        },
+        {
+          "id": "appearance.color.red",
+          "label": "내가 본 색",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_be4f5efd8f3a",
+              "label": "보라빛",
+              "color": "#622747"
+            },
+            {
+              "code": "v_f6b6f166fde3",
+              "label": "루비빛",
+              "color": "#9D304B"
+            },
+            {
+              "code": "v_c22d398e14c2",
+              "label": "가넷빛",
+              "color": "#773546"
+            },
+            {
+              "code": "v_1537d2b4819d",
+              "label": "벽돌빛",
+              "color": "#A65D4B"
+            },
+            {
+              "code": "v_6c353afe7f9e",
+              "label": "갈색",
+              "color": "#84543B"
+            },
+            {
+              "code": "v_f60065a5466d",
+              "label": "짙은 갈색",
+              "color": "#513728"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ],
+          "when": {
+            "field": "appearance.type",
+            "includes": "v_e7af17107cce"
+          }
+        },
+        {
+          "id": "appearance.color.white",
+          "label": "내가 본 색",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_302e9fe0c948",
+              "label": "옅은 레몬빛",
+              "color": "#F5EDCB"
+            },
+            {
+              "code": "v_8ad5cab32c1a",
+              "label": "레몬빛",
+              "color": "#EEDD89"
+            },
+            {
+              "code": "v_7ef3f2b75608",
+              "label": "금빛",
+              "color": "#D9B953"
+            },
+            {
+              "code": "v_706449b34ced",
+              "label": "진한 금빛",
+              "color": "#BB963B"
+            },
+            {
+              "code": "v_7cd90e51628a",
+              "label": "호박빛",
+              "color": "#B47735"
+            },
+            {
+              "code": "v_6c353afe7f9e",
+              "label": "갈색",
+              "color": "#76513A"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ],
+          "when": {
+            "field": "appearance.type",
+            "includes": "v_4b6304d7eb9d"
+          }
+        },
+        {
+          "id": "appearance.color.rose",
+          "label": "내가 본 색",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_ae6d783597ab",
+              "label": "옅은 분홍빛",
+              "color": "#F4D9D8"
+            },
+            {
+              "code": "v_4cce9691d54a",
+              "label": "분홍빛",
+              "color": "#E9B2B8"
+            },
+            {
+              "code": "v_6e46cc077cdd",
+              "label": "연어빛",
+              "color": "#E6AE9A"
+            },
+            {
+              "code": "v_5de3ddb61c2b",
+              "label": "주황빛",
+              "color": "#D99B77"
+            },
+            {
+              "code": "v_168e08c837a9",
+              "label": "구리빛",
+              "color": "#BB795C"
+            },
+            {
+              "code": "v_f8b2a2ec0382",
+              "label": "진한 분홍빛",
+              "color": "#C57A8C"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ],
+          "when": {
+            "field": "appearance.type",
+            "includes": "v_f1e977b3ae2c"
+          }
+        },
+        {
+          "id": "appearance.density",
+          "label": "색의 진하기",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_a4b52e0f8572",
+              "label": "옅어요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_054cfd0cbfc7",
+              "label": "진해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "appearance.clarity",
+          "label": "투명도",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_454e53e30abd",
+              "label": "맑아요"
+            },
+            {
+              "code": "v_6dfb7e2fb835",
+              "label": "약간 흐려요"
+            },
+            {
+              "code": "v_d31be7a3905b",
+              "label": "탁해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nose",
+      "figmaId": "75:2385",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 계열과 세부 향을 골라요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "향의 분류 · 복수 선택",
+          "kind": "aroma"
+        }
+      ]
+    },
+    {
+      "id": "aroma_change",
+      "figmaId": "123:2509",
+      "title": "돌리거나 기다린 뒤,\n향이 달라졌나요?",
+      "hint": "실제로 비교했을 때만 더 남겨요.",
+      "fields": [
+        {
+          "id": "aroma_change.observed",
+          "label": "비교해본 시점",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_c7d9a3661788",
+              "label": "잔을 돌린 뒤"
+            },
+            {
+              "code": "v_b1c95a009ab8",
+              "label": "시간이 지난 뒤"
+            },
+            {
+              "code": "v_de3f12c930f8",
+              "label": "둘 다 비교했어요"
+            },
+            {
+              "code": "v_d0414c7fab24",
+              "label": "확인하지 않았어요"
+            }
+          ]
+        },
+        {
+          "id": "aroma_change.comparison",
+          "label": "처음 향과 비교하면?",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_5f0069df099f",
+              "label": "비슷해요"
+            },
+            {
+              "code": "v_8256bc1ef976",
+              "label": "다른 향이 느껴져요"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ],
+          "unless": {
+            "field": "aroma_change.observed",
+            "includes": "v_d0414c7fab24"
+          }
+        },
+        {
+          "id": "aroma_change.memo",
+          "label": "새로 느껴진 향 · 선택",
+          "kind": "text",
+          "when": {
+            "field": "aroma_change.comparison",
+            "includes": "v_8256bc1ef976"
+          },
+          "unless": {
+            "field": "aroma_change.observed",
+            "includes": "v_d0414c7fab24"
+          }
+        },
+        {
+          "id": "aroma_change.time",
+          "label": "경과 시간 · 선택, 예: 30분 뒤",
+          "kind": "text",
+          "unless": {
+            "field": "aroma_change.observed",
+            "includes": "v_d0414c7fab24"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sweetness",
+      "figmaId": "75:2460",
+      "title": "실제로 느껴지는\n단맛은 어땠나요?",
+      "hint": "과일 향이 풍부한 것과 단맛은 달라요.",
+      "fields": [
+        {
+          "id": "sweetness.level",
+          "label": "단맛",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "sweetness.memo",
+          "label": "단맛에 대한 한마디 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "acidity",
+      "figmaId": "75:2512",
+      "title": "새콤함은 얼마나\n느껴졌나요?",
+      "hint": "입안에 느껴지는 새콤함을 떠올려요.",
+      "fields": [
+        {
+          "id": "acidity.level",
+          "label": "산미",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "acidity.memo",
+          "label": "산미에 대한 한마디 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "tannin",
+      "figmaId": "75:2564",
+      "title": "입안을 조이거나\n마르게 했나요?",
+      "hint": "강도와 부드러운지 거친지를 나눠요.",
+      "fields": [
+        {
+          "id": "tannin.level",
+          "label": "떫은 느낌의 강도",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "tannin.texture",
+          "label": "느낌 · 하나 선택",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_269836a00a4e",
+              "label": "부드러워요"
+            },
+            {
+              "code": "v_c09a303823c2",
+              "label": "거칠게 느껴져요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "figmaId": "75:2623",
+      "title": "입안을 어떻게\n감쌌나요?",
+      "hint": "무게와 매끈함·크리미함을 나눠요.",
+      "fields": [
+        {
+          "id": "body.weight",
+          "label": "무게감",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_b357f76a0777",
+              "label": "가벼워요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_57be39ecce71",
+              "label": "묵직해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.texture",
+          "label": "질감 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_ef7665837142",
+              "label": "매끈해요"
+            },
+            {
+              "code": "v_e7b0df87f62e",
+              "label": "크리미해요"
+            },
+            {
+              "code": "v_d91433a47d7d",
+              "label": "오일리해요"
+            },
+            {
+              "code": "v_9b7311de2aa5",
+              "label": "거칠어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.memo",
+          "label": "질감에 대한 내 표현 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "alcohol_carbonation",
+      "figmaId": "75:2697",
+      "title": "자극과 기포는\n어땠나요?",
+      "hint": "알코올 자극과 탄산은 각각 답해요.",
+      "fields": [
+        {
+          "id": "alcohol.level",
+          "label": "알코올 자극",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "alcohol.feeling",
+          "label": "느껴지는 자극",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "barely",
+              "label": "거의 없어요"
+            },
+            {
+              "code": "v_f419e5624cca",
+              "label": "따뜻해요"
+            },
+            {
+              "code": "v_2d88682e3ed5",
+              "label": "화끈해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "carbonation.level",
+          "label": "탄산감",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "carbonation.texture",
+          "label": "기포의 느낌 · 선택",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_4c8eb48d9a17",
+              "label": "촘촘하고 부드러워요"
+            },
+            {
+              "code": "v_a610e80cb9f1",
+              "label": "크고 거칠어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "75:2764",
+      "title": "무엇이 얼마나\n오래 남았나요?",
+      "hint": "길이와 남은 향·맛을 함께 골라요.",
+      "fields": [
+        {
+          "id": "finish.length",
+          "label": "여운의 길이",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_6349e9828cc4",
+              "label": "짧아요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_723d2e97e253",
+              "label": "길어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.features",
+          "label": "여운의 특징 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_ed0e90733d1a",
+              "label": "과일"
+            },
+            {
+              "code": "v_ef9fc0939537",
+              "label": "꽃·허브"
+            },
+            {
+              "code": "v_027837d60c51",
+              "label": "나무·향신료"
+            },
+            {
+              "code": "v_e819c125a91d",
+              "label": "새콤함"
+            },
+            {
+              "code": "v_4d3c41fd0a1c",
+              "label": "쌉쌀함"
+            },
+            {
+              "code": "v_dc7b7c521f19",
+              "label": "떫은 느낌"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "overall",
+      "figmaId": "123:2564",
+      "title": "이번 와인, 무엇이\n기억에 남나요?",
+      "hint": "균형과 인상적인 점을 내 말로 남겨요.",
+      "fields": [
+        {
+          "id": "overall.balance",
+          "label": "전체적으로 어땠나요?",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_0af34fa90b5b",
+              "label": "잘 어우러졌어요"
+            },
+            {
+              "code": "v_b87cf72caa55",
+              "label": "유독 튀는 느낌이 있어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "overall.impression",
+          "label": "유독 튄 느낌·인상적이었던 점 · 선택",
+          "kind": "text"
+        },
+        {
+          "id": "overall.memo",
+          "label": "아쉬웠던 점·자유 감상 · 선택",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "beer": [
+    {
+      "id": "conditions",
+      "figmaId": "75:3139",
+      "title": "어떻게\n마셨나요?",
+      "hint": "용기와 마신 방법, 온도를 함께 남겨요.",
+      "fields": [
+        {
+          "id": "conditions.container",
+          "label": "종류",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_1cfd442e73db",
+              "label": "생맥주"
+            },
+            {
+              "code": "v_31eaf1068c99",
+              "label": "병"
+            },
+            {
+              "code": "v_25128ec70835",
+              "label": "캔"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.method",
+          "label": "마신 방법",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_3772a67fbb34",
+              "label": "잔에 따랐어요"
+            },
+            {
+              "code": "v_cfd56165d859",
+              "label": "용기 그대로"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.memo",
+          "label": "온도·함께 먹은 음식 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "appearance",
+      "figmaId": "121:2528",
+      "title": "잔에 담긴 맥주는\n어떤 빛인가요?",
+      "hint": "색상 견본과 맑고 흐린 정도를 골라요.",
+      "fields": [
+        {
+          "id": "appearance.color",
+          "label": "내가 본 색",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_d9f7c3aaa699",
+              "label": "옅은 짚색",
+              "color": "#F4E9B8"
+            },
+            {
+              "code": "v_43c587b2bc48",
+              "label": "황금색",
+              "color": "#E7BD44"
+            },
+            {
+              "code": "v_f104e1212a34",
+              "label": "호박색",
+              "color": "#C88B34"
+            },
+            {
+              "code": "v_168e08c837a9",
+              "label": "구리빛",
+              "color": "#A75F37"
+            },
+            {
+              "code": "v_f60065a5466d",
+              "label": "짙은 갈색",
+              "color": "#643E29"
+            },
+            {
+              "code": "v_d9e0b2c03630",
+              "label": "검정색",
+              "color": "#25211F"
+            },
+            {
+              "code": "unknown",
+              "label": "잘 모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "appearance.clarity",
+          "label": "투명도 · 하나 선택",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_454e53e30abd",
+              "label": "맑아요"
+            },
+            {
+              "code": "v_6dfb7e2fb835",
+              "label": "약간 흐려요"
+            },
+            {
+              "code": "v_d31be7a3905b",
+              "label": "탁해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "foam",
+      "figmaId": "75:3417",
+      "title": "잔 위의 거품은\n어땠나요?",
+      "hint": "양과 유지되는 시간, 색을 나눠 남겨요.",
+      "fields": [
+        {
+          "id": "foam.amount",
+          "label": "거품의 양",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "none",
+              "label": "없어요"
+            },
+            {
+              "code": "v_6aab6ffd1045",
+              "label": "얇게 있어요"
+            },
+            {
+              "code": "v_fd19f06e2407",
+              "label": "적당해요"
+            },
+            {
+              "code": "v_b8cc37379072",
+              "label": "풍성해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "foam.retention",
+          "label": "거품이 유지된 시간",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_dac89befbdf1",
+              "label": "금방 사라져요"
+            },
+            {
+              "code": "v_0f16876ea58a",
+              "label": "잠깐 남아요"
+            },
+            {
+              "code": "v_1bfac10557ad",
+              "label": "오래 남아요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "foam.color",
+          "label": "거품의 색 · 선택",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_a1e63f0c6f7b",
+              "label": "흰색"
+            },
+            {
+              "code": "v_b11743c782f5",
+              "label": "크림색"
+            },
+            {
+              "code": "v_3f8853189d87",
+              "label": "베이지색"
+            },
+            {
+              "code": "v_6c353afe7f9e",
+              "label": "갈색"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nose",
+      "figmaId": "75:3201",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 계열과 세부 향을 골라요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "향의 분류 · 복수 선택",
+          "kind": "aroma"
+        }
+      ]
+    },
+    {
+      "id": "palate",
+      "figmaId": "75:3281",
+      "title": "입안에서는 어떤 맛이\n느껴졌나요?",
+      "hint": "단맛·산미·쓴맛을 각각 골라요.",
+      "fields": [
+        {
+          "id": "palate.sweet",
+          "label": "단맛",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "palate.acid",
+          "label": "산미",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "palate.bitter",
+          "label": "쓴맛",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "palate.extra",
+          "label": "추가로 느낀 맛 · 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_4f07716be88c",
+              "label": "짠맛"
+            },
+            {
+              "code": "v_e38d08e91e94",
+              "label": "감칠맛"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "palate.memo",
+          "label": "맛에 대한 내 표현 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "carbonation",
+      "figmaId": "75:3469",
+      "title": "기포는 어떻게\n느껴졌나요?",
+      "hint": "탄산의 세기와 기포의 느낌을 나눠요.",
+      "fields": [
+        {
+          "id": "carbonation.level",
+          "label": "탄산감",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "carbonation.texture",
+          "label": "기포의 느낌",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_3bbb6e36240b",
+              "label": "잔잔하고 촘촘해요"
+            },
+            {
+              "code": "v_a610e80cb9f1",
+              "label": "크고 거칠어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "figmaId": "75:3528",
+      "title": "입안을 어떻게\n감쌌나요?",
+      "hint": "무게와 크리미함·끈적함은 다른 감각이에요.",
+      "fields": [
+        {
+          "id": "body.weight",
+          "label": "무게감",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_34c923de44e2",
+              "label": "물처럼 가벼워요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_57be39ecce71",
+              "label": "묵직해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.texture",
+          "label": "질감 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_ef7665837142",
+              "label": "매끈해요"
+            },
+            {
+              "code": "v_e7b0df87f62e",
+              "label": "크리미해요"
+            },
+            {
+              "code": "v_f52197f79d7d",
+              "label": "끈적해요"
+            },
+            {
+              "code": "v_7a0c10c9bc7c",
+              "label": "입안이 조여요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.memo",
+          "label": "입안의 느낌을 내 말로 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "alcohol",
+      "figmaId": "121:2581",
+      "title": "알코올 자극은\n어땠나요?",
+      "hint": "실제 도수가 아니라 내가 느낀 자극이에요.",
+      "fields": [
+        {
+          "id": "alcohol.level",
+          "label": "알코올 자극의 강도",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "alcohol.feeling",
+          "label": "느낌 · 하나 선택",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "barely",
+              "label": "거의 없어요"
+            },
+            {
+              "code": "v_f419e5624cca",
+              "label": "따뜻해요"
+            },
+            {
+              "code": "v_2d88682e3ed5",
+              "label": "화끈해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "alcohol.memo",
+          "label": "알코올 자극 메모 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "75:3591",
+      "title": "무엇이 얼마나\n오래 남았나요?",
+      "hint": "여운의 길이와 남은 향·맛을 나눠요.",
+      "fields": [
+        {
+          "id": "finish.length",
+          "label": "여운의 길이",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_6349e9828cc4",
+              "label": "짧아요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_723d2e97e253",
+              "label": "길어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.features",
+          "label": "여운의 특징 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_da32af99de4e",
+              "label": "과일·풀 향"
+            },
+            {
+              "code": "v_adb39bbcae45",
+              "label": "곡물·단맛"
+            },
+            {
+              "code": "v_6b01d8c62c29",
+              "label": "볶은 맛"
+            },
+            {
+              "code": "v_3fd28333f1e1",
+              "label": "쓴맛"
+            },
+            {
+              "code": "v_9b40e3520070",
+              "label": "산미"
+            },
+            {
+              "code": "v_f48df550c871",
+              "label": "깔끔하게 사라져요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "overall",
+      "figmaId": "75:3347",
+      "title": "이번 맥주, 무엇이\n기억에 남나요?",
+      "hint": "인상적인 점이나 어울리는 상황을 남겨요.",
+      "fields": [
+        {
+          "id": "overall.impression",
+          "label": "가장 인상적이었던 점 · 선택",
+          "kind": "text"
+        },
+        {
+          "id": "overall.regret",
+          "label": "조금 아쉬웠던 점 · 선택",
+          "kind": "text"
+        },
+        {
+          "id": "overall.memo",
+          "label": "어울릴 것 같은 상황·자유 감상 · 선택",
+          "kind": "text"
+        }
+      ]
+    }
+  ],
+  "traditional": [
+    {
+      "id": "conditions",
+      "figmaId": "75:3974",
+      "title": "어떤 술을 어떻게\n마셨나요?",
+      "hint": "종류를 몰라도 계속 작성할 수 있어요.",
+      "fields": [
+        {
+          "id": "conditions.subtype",
+          "label": "세부 주종",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_438dc68cd145",
+              "label": "탁주"
+            },
+            {
+              "code": "v_c977708b0477",
+              "label": "약주·청주"
+            },
+            {
+              "code": "v_923bb3340aa1",
+              "label": "증류주"
+            },
+            {
+              "code": "v_a650c708d183",
+              "label": "과실주"
+            },
+            {
+              "code": "v_2991f61ced07",
+              "label": "기타"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.temperature",
+          "label": "느껴지는 온도",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_567c0d60896c",
+              "label": "차갑게"
+            },
+            {
+              "code": "v_cbdb367ed9ba",
+              "label": "서늘하게"
+            },
+            {
+              "code": "v_6b9330e3a197",
+              "label": "실온"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "conditions.memo",
+          "label": "얼음·섞어 마신 방법 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "nose",
+      "figmaId": "75:4043",
+      "title": "어떤 향이\n떠올랐나요?",
+      "hint": "떠오르는 향을 구체적으로 골라요.",
+      "fields": [
+        {
+          "id": "nose",
+          "label": "향의 분류 · 복수 선택",
+          "kind": "aroma"
+        }
+      ]
+    },
+    {
+      "id": "sweetness",
+      "figmaId": "75:4121",
+      "title": "단맛은 얼마나\n느껴졌나요?",
+      "hint": "거의 느끼지 못했다면 ‘없음’을 골라요.",
+      "fields": [
+        {
+          "id": "sweetness.level",
+          "label": "단맛",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "sweetness.memo",
+          "label": "단맛에 대한 한마디 · 선택",
+          "kind": "text"
+        }
+      ]
+    },
+    {
+      "id": "acidity_umami",
+      "figmaId": "75:4173",
+      "title": "새콤함과 감칠맛은\n어땠나요?",
+      "hint": "두 감각을 각각 답하거나 ‘모름’으로 남겨요.",
+      "fields": [
+        {
+          "id": "palate.acid",
+          "label": "산미",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "palate.umami",
+          "label": "감칠맛",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "figmaId": "75:4242",
+      "title": "입안에서 어떻게\n흘렀나요?",
+      "hint": "무게와 입자의 느낌을 나눠 남겨요.",
+      "fields": [
+        {
+          "id": "body.weight",
+          "label": "무게감",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_b357f76a0777",
+              "label": "가벼워요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_57be39ecce71",
+              "label": "묵직해요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "body.texture",
+          "label": "질감 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_454e53e30abd",
+              "label": "맑아요"
+            },
+            {
+              "code": "v_ef7665837142",
+              "label": "매끈해요"
+            },
+            {
+              "code": "v_8e2a390674fe",
+              "label": "걸쭉해요"
+            },
+            {
+              "code": "v_f525041fdd73",
+              "label": "가루·입자가 느껴져요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "carbonation",
+      "figmaId": "75:4305",
+      "title": "탄산은 얼마나\n느껴졌나요?",
+      "hint": "탄산이 없는 술은 ‘없음’으로 남겨요.",
+      "fields": [
+        {
+          "id": "carbonation.level",
+          "label": "탄산감",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "carbonation.texture",
+          "label": "탄산의 느낌",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_cc3c56a49509",
+              "label": "잔잔해요"
+            },
+            {
+              "code": "v_7fef14233d17",
+              "label": "부드럽게 올라와요"
+            },
+            {
+              "code": "v_c82ba6f0d987",
+              "label": "강하게 톡 쏘아요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "alcohol",
+      "figmaId": "75:4366",
+      "title": "알코올 자극은\n어땠나요?",
+      "hint": "느껴진 위치는 선택으로 더 남길 수 있어요.",
+      "fields": [
+        {
+          "id": "alcohol.level",
+          "label": "알코올 자극",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "level_0",
+              "label": "없음",
+              "intensity": 0
+            },
+            {
+              "code": "level_1",
+              "label": "약함",
+              "intensity": 1
+            },
+            {
+              "code": "level_2",
+              "label": "중간",
+              "intensity": 2
+            },
+            {
+              "code": "level_3",
+              "label": "강함",
+              "intensity": 3
+            },
+            {
+              "code": "unknown",
+              "label": "모름"
+            }
+          ],
+          "intensity": true
+        },
+        {
+          "id": "alcohol.location",
+          "label": "느껴진 위치 · 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_f4f759edb468",
+              "label": "코"
+            },
+            {
+              "code": "v_64907b75ff23",
+              "label": "입안"
+            },
+            {
+              "code": "v_5fbc9add7bd4",
+              "label": "목"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "figmaId": "75:4426",
+      "title": "무엇이 얼마나\n남았나요?",
+      "hint": "길이와 마지막 느낌을 나눠 남겨요.",
+      "fields": [
+        {
+          "id": "finish.length",
+          "label": "여운의 길이",
+          "kind": "choice",
+          "max": 1,
+          "options": [
+            {
+              "code": "v_6349e9828cc4",
+              "label": "짧아요"
+            },
+            {
+              "code": "v_41977e8d0420",
+              "label": "중간이에요"
+            },
+            {
+              "code": "v_723d2e97e253",
+              "label": "길어요"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        },
+        {
+          "id": "finish.features",
+          "label": "여운의 특징 · 복수 선택",
+          "kind": "choice",
+          "max": 99,
+          "options": [
+            {
+              "code": "v_4d1f315f12a8",
+              "label": "곡물"
+            },
+            {
+              "code": "v_924aed016935",
+              "label": "발효 향"
+            },
+            {
+              "code": "v_5b841cadd6d7",
+              "label": "과일·꽃"
+            },
+            {
+              "code": "v_71ecbdfe9381",
+              "label": "단맛"
+            },
+            {
+              "code": "v_9b40e3520070",
+              "label": "산미"
+            },
+            {
+              "code": "v_4d3c41fd0a1c",
+              "label": "쌉쌀함"
+            },
+            {
+              "code": "v_d88021e1413a",
+              "label": "알코올의 따뜻함"
+            },
+            {
+              "code": "unknown",
+              "label": "모르겠어요"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

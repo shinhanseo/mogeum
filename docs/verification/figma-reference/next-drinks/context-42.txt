@@ -1,0 +1,152 @@
+const img14MyTasteMoguCharacter = "assets/42-img14MyTasteMoguCharacter.svg";
+const imgDrinkIllustration = "assets/42-imgDrinkIllustration.svg";
+const imgIconBookmarkLucide = "assets/42-imgIconBookmarkLucide.svg";
+const imgIcon = "assets/42-imgIcon.svg";
+const imgFrame = "assets/42-imgFrame.svg";
+const imgIcon1 = "assets/42-imgIcon1.svg";
+
+type ButtonProps = {
+  className?: string;
+  label?: string;
+  state?: "Default";
+  type?: "Text";
+};
+
+function Button({ className, label = "다음", state = "Default", type = "Text" }: ButtonProps) {
+  return (
+    <div className={className || "content-stretch flex h-[var(--size-text-action,44px)] items-center justify-center relative rounded-[var(--radius\\/16,16px)] w-[180px]"} data-node-id="4:4967">
+      <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--action\/primary,#783f4b)] text-center whitespace-nowrap" data-node-id="4:5219">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+type AiTasteSummaryProps = {
+  className?: string;
+  stage?: "Pattern";
+};
+
+function AiTasteSummary({ className, stage = "Pattern" }: AiTasteSummaryProps) {
+  return (
+    <div className={className || "content-stretch flex flex-col gap-[var(--space\\/8,8px)] h-[124px] items-start relative w-[352px]"} data-node-id="9:7409">
+      <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold h-[20px] leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--action\/primary,#783f4b)] text-[length:var(--font\/size\/caption,12px)] w-[240px]" data-node-id="9:7410">
+        기록 8개 · 취향 요약
+      </p>
+      <div className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold leading-[0] relative shrink-0 text-[color:var(--action\/primary,#783f4b)] text-[length:var(--font\/size\/heading2,24px)] w-[252px]" data-node-id="9:7411">
+        <p className="leading-[var(--font\/line\/heading2,36px)] mb-0">과일 향,</p>
+        <p className="leading-[var(--font\/line\/heading2,36px)]">깔끔한 끝맛.</p>
+      </div>
+      <div className="absolute contents inset-[12.9%_6.08%_38.5%_79.55%]" data-node-id="9:7414" data-name="Group">
+        <div className="absolute inset-[12.9%_6.08%_38.5%_79.55%]" data-node-id="9:7415" data-name="14-my-taste-mogu-character">
+          <div className="absolute inset-[-0.6%_-0.89%_0_-4.98%]">
+            <img alt="" className="block max-w-none size-full" src={img14MyTasteMoguCharacter} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Component42() {
+  return (
+    <div className="bg-[var(--background\/default,#faf7f2)] content-stretch flex flex-col items-start overflow-clip relative rounded-[30px] size-full" data-node-id="19:675" data-name="42 · 내 취향 — 다음 한 잔 진입">
+      <div className="[word-break:break-word] content-stretch flex font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal h-[44px] items-center justify-between leading-[var(--font\/line\/caption,18px)] px-[24px] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] w-[400px]" data-node-id="19:676" data-name="Status bar">
+        <p className="relative shrink-0 text-[length:var(--font\/size\/caption,12px)] w-[90px]" data-node-id="19:677">
+          9:41
+        </p>
+        <p className="relative shrink-0 text-[12px] text-right w-[70px]" data-node-id="19:678">
+          ​
+        </p>
+      </div>
+      <div className="content-stretch flex flex-col h-[739px] items-start overflow-x-clip overflow-y-auto relative shrink-0 w-[400px]" data-node-id="19:679" data-name="스크롤 영역">
+        <div className="content-stretch flex flex-col gap-[var(--space\/16,16px)] items-start overflow-clip p-[var(--space\/24,24px)] relative shrink-0 w-[400px]" data-node-id="19:680" data-name="Content · Auto layout">
+          <div className="content-stretch flex gap-[var(--space\/8,8px)] items-center overflow-clip relative shrink-0 w-[352px]" data-node-id="19:701" data-name="화면 제목 · 행동">
+            <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold leading-[var(--font\/line\/heading2,36px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/heading2,24px)] w-[216px]" data-node-id="19:702">
+              내 취향
+            </p>
+            <Button className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[128px]" label="메뉴판에서 찾기  ›" />
+          </div>
+          <AiTasteSummary className="content-stretch flex flex-col gap-[var(--space\/8,8px)] h-[124px] items-start relative shrink-0 w-[352px]" />
+          <div className="content-stretch flex flex-col gap-[var(--space\/4,4px)] items-start overflow-clip relative shrink-0 w-[352px]" data-node-id="19:737" data-name="다음 한 잔 소개">
+            <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold leading-[var(--font\/line\/heading3,30px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/heading3,20px)] w-[352px]" data-node-id="19:738">
+              다음 한 잔
+            </p>
+          </div>
+          <div className="content-stretch flex flex-col gap-[var(--space\/12,12px)] items-start relative shrink-0 w-[352px]" data-node-id="19:740" data-name="모금/NextDrinkCard">
+            <div className="content-stretch flex gap-[var(--space\/12,12px)] items-center relative shrink-0 w-[352px]" data-node-id="I19:740;17:186" data-name="New drink identity">
+              <div className="relative shrink-0 size-[88px]" data-node-id="I19:740;17:187" data-name="모금/DrinkIllustration">
+                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDrinkIllustration} />
+              </div>
+              <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--space\/4,4px)] items-start relative shrink-0 w-[196px]" data-node-id="I19:740;17:188" data-name="Drink details">
+                <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[196px]" data-node-id="I19:740;17:191">
+                  위스키 · 싱글몰트
+                </p>
+                <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold leading-[var(--font\/line\/heading3,30px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/heading3,20px)] w-[196px]" data-node-id="I19:740;17:190">
+                  글렌리벳 12년
+                </p>
+                <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[196px]" data-node-id="I19:740;17:189">
+                  가까운 취향
+                </p>
+              </div>
+              <a className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative shrink-0" data-node-id="I19:740;24:185" data-name="저장 행동 · 북마크">
+                <div className="relative shrink-0 size-[20px]" data-node-id="I19:740;24:185;23:186" data-name="icon/bookmark · Lucide">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconBookmarkLucide} />
+                </div>
+              </a>
+            </div>
+            <div className="content-stretch flex gap-[var(--space\/8,8px)] items-center overflow-clip relative shrink-0 w-[352px]" data-node-id="I19:740;24:188" data-name="짧은 추천 근거 · 상세 진입">
+              <div className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[0] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/bodysmall,14px)] w-[240px]" data-node-id="I19:740;17:192">
+                <p className="leading-[var(--font\/line\/bodysmall,22px)] mb-0">과일 향은 익숙하게,</p>
+                <p className="leading-[var(--font\/line\/bodysmall,22px)]">바닐라는 새롭게.</p>
+              </div>
+              <a className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[104px]" data-node-id="I19:740;17:206" data-name="추천 이유">
+                <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--action\/primary,#783f4b)] text-center whitespace-pre" data-node-id="I19:740;17:206;4:5219">{`이유 보기  ›`}</p>
+              </a>
+            </div>
+            <div className="bg-[var(--border\/default,#e6ddd4)] h-px relative shrink-0 w-[352px]" data-node-id="I19:740;24:189" data-name="목록 구분선" />
+          </div>
+          <div className="content-stretch cursor-pointer flex gap-[var(--space\/8,8px)] items-start overflow-clip relative shrink-0 w-[352px]" data-node-id="19:777" data-name="추천과 저장 목록 진입">
+            <Button className="content-stretch flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[172px]" label="추천 더 보기  ›" />
+            <Button className="content-stretch flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[172px]" label="저장한 술 3  ›" />
+          </div>
+        </div>
+      </div>
+      <div className="content-stretch flex flex-col h-[85px] items-start pb-[6px] relative shrink-0 w-[400px]" data-node-id="21:1057" data-name="BottomTabBar · 내 취향">
+        <div className="absolute bg-[var(--background\/default,#faf7f2)] h-[78px] left-0 top-[7px] w-[400px]" data-node-id="I21:1057;4:5249" data-name="Navigation surface" />
+        <div className="absolute bg-[var(--color\/border,#e6ddd4)] h-px left-0 top-[7px] w-[400px]" data-node-id="I21:1057;4:5250" data-name="Top divider" />
+        <div className="content-stretch flex h-[64px] items-end justify-between px-[var(--space\/24,24px)] relative shrink-0 w-[400px]" data-node-id="I21:1057;4:5251" data-name="Navigation items">
+          <div className="content-stretch flex flex-col h-[44px] items-center justify-between relative shrink-0 w-[88px]" data-node-id="I21:1057;4:5252" data-name="나의 술장">
+            <div className="relative shrink-0 size-[20px]" data-node-id="I21:1057;4:5253" data-name="Icon">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIcon} />
+            </div>
+            <p className="[word-break:break-word] font-['Noto_Sans_KR:Regular'] font-normal leading-[14px] relative shrink-0 text-[10px] text-[color:var(--text\/secondary,#776b65)] whitespace-nowrap" data-node-id="I21:1057;4:5256">
+              나의 술장
+            </p>
+          </div>
+          <div className="content-stretch flex flex-col h-[64px] items-center relative shrink-0 w-[56px]" data-node-id="I21:1057;4:5257" data-name="Record action — opens composer">
+            <a className="bg-[var(--action\/primary,#783f4b)] content-stretch cursor-pointer flex items-center justify-center relative rounded-[var(--radius-full,999px)] shrink-0 size-[56px]" data-node-id="I21:1057;4:5258" data-name="Record +">
+              <div className="relative shrink-0 size-[22px]" data-node-id="I21:1057;4:5259" data-name="Frame">
+                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame} />
+              </div>
+            </a>
+          </div>
+          <div className="content-stretch flex flex-col h-[44px] items-center justify-between relative shrink-0 w-[88px]" data-node-id="I21:1057;4:5261" data-name="내 취향">
+            <div className="h-[22px] relative shrink-0 w-[28px]" data-node-id="I21:1057;4:5262" data-name="Icon">
+              <div className="absolute inset-[-6.6%_0_-0.26%_0]">
+                <img alt="" className="block max-w-none size-full" src={imgIcon1} />
+              </div>
+            </div>
+            <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[14px] relative shrink-0 text-[10px] text-[color:var(--action\/primary,#783f4b)] whitespace-nowrap" data-node-id="I21:1057;4:5264">
+              내 취향
+            </p>
+          </div>
+        </div>
+        <div className="h-[11px] relative shrink-0 w-[400px]" data-node-id="I21:1057;4:5265" data-name="Safe area spacing" />
+        <div className="content-stretch flex h-[4px] items-start justify-center relative shrink-0 w-[400px]" data-node-id="I21:1057;4:5266" data-name="Home indicator row">
+          <div className="bg-[var(--text\/primary,#332d2b)] h-[4px] relative rounded-[2px] shrink-0 w-[114px]" data-node-id="I21:1057;4:5267" data-name="Rectangle" />
+        </div>
+      </div>
+    </div>
+  );
+}
