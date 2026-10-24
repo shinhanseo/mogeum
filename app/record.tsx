@@ -1,14 +1,20 @@
+import { useScreenBack } from '../src/hooks/useScreenBack';
+import { discoveryPrefill } from '../src/features/discovery/prefill';
 import { useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { readPending, preparePhoto, savePending, finishPending } from '../src/features/records/device';
+import { usePhotoPicker } from '../src/features/records/usePhotoPicker';
+import { PhotoAccessSheet } from '../src/features/records/PhotoAccessSheet';
+import { ExistingDrinkChoice } from '../src/features/records/ExistingDrinkChoice';
+import type { EntryCandidate } from '../src/features/records/candidates';
 import type { PendingRecord } from '../src/features/records/pending';
 import { loadRepeatEntry, type RepeatEntry } from '../src/features/records/repeat';
 import { getSupabase } from '../src/lib/supabase';
 import type { RecordInput } from '../src/features/records/repository';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../src/components/Button';
 import { ChoiceChip } from '../src/components/ChoiceChip';
@@ -22,21 +28,22 @@ type Step = 'start' | 'info' | 'rating';
 type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
   const auth = useAuth();
-  const { entryId } = useLocalSearchParams<{entryId?:string}>();
+  const { entryId, productId } = useLocalSearchParams<{entryId?:string;productId?:string}>();
   if (auth.status === 'loading') return <View style={{ flex:1, backgroundColor:colors.background }} />;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
-  return <RecordComposer key={`${auth.session.user.id}-${entryId??'new'}`} owner={auth.session.user.id} entryId={entryId} />;
+  return <RecordComposer key={`${auth.session.user.id}-${entryId??productId??'new'}`} owner={auth.session.user.id} entryId={entryId} productId={productId} />;
 }
-export function RecordComposer({ owner, entryId, previewEntry }: { owner:string; entryId?:string; previewEntry?:RepeatEntry }) {
+export function RecordComposer({ owner, entryId, productId, previewEntry, previewCandidates }: { owner:string; entryId?:string; productId?:string; previewEntry?:RepeatEntry; previewCandidates?:EntryCandidate[] }) {
   const router = useRouter();
   const ownerRef = useRef<string | null>(owner);
   useEffect(() => { ownerRef.current = owner; return () => { ownerRef.current = null; }; }, [owner]);
   const busyRef = useRef(false);
   const [saving, setSaving] = useState(false);
-  const [restoring, setRestoring] = useState(!previewEntry);
+  const [restoring, setRestoring] = useState(!previewEntry&&!previewCandidates);
   const [pending, setPending] = useState<PendingRecord | null>(null);
-  const [step, setStep] = useState<Step>(previewEntry?'info':'start');
+  const [step, setStep] = useState<Step>(previewEntry||previewCandidates?'info':'start');
   const [repeatEntry, setRepeatEntry] = useState<RepeatEntry|null>(previewEntry??null);
+  const [separateName,setSeparateName]=useState<string|null>(null);
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [name, setName] = useState(previewEntry?.name??'');
@@ -55,11 +62,12 @@ export function RecordComposer({ owner, entryId, previewEntry }: { owner:string;
   const [error, setError] = useState('');
   useEffect(() => {
     let active = true;
-    if(previewEntry)return;
+    if(previewEntry||previewCandidates)return;
     if (owner) void readPending(owner).then(async value => {
       if (!active) return;
       if(!value){
         if(entryId){const client=getSupabase();if(!client)throw new Error('Missing backend');const entry=await loadRepeatEntry(client,owner,entryId);if(active){setRepeatEntry(entry);setName(entry.name??'');setCategory(entry.category);setStep('info');}}
+        else { const initial=discoveryPrefill(productId);if(initial&&active){setName(initial.name);setCategory(initial.category);setVintageMode(initial.vintageMode);setVintageYear(initial.vintageYear);setVintage(initial.vintageYear || (initial.vintageMode==='NV'?'NV':initial.category==='와인'?'모름':''));setStep('info');} }
         return;
       }
       setPending(value); setName(value.input.enteredName ?? '');
@@ -73,23 +81,17 @@ export function RecordComposer({ owner, entryId, previewEntry }: { owner:string;
       setStep('rating');
     }).catch(() => { if (active) {setRestoreFailed(true);setError('기록을 준비하지 못했어요. 술장으로 돌아가 다시 열어주세요.');} }).finally(() => { if (active) setRestoring(false); });
     return () => { active = false; };
-  }, [owner, entryId, previewEntry]);
+  }, [owner, entryId, productId, previewEntry, previewCandidates]);
   const close = () => { if (!busyRef.current) router.back(); };
   const back = () => { if (busyRef.current) return; if (pending) { setError('저장 중인 기록을 먼저 완료해주세요.'); return; } if (step === 'start') close(); else setStep(step === 'rating' ? 'info' : 'start'); };
+  useScreenBack(back);
   const dateLabel = `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')}.`;
-  async function pickPhoto(camera = false) {
-    setError('');
-    try {
-      if (camera && !(await ImagePicker.requestCameraPermissionsAsync()).granted) { setError('촬영하려면 카메라 접근을 허용해주세요.'); return; }
-      const options = { mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: false, quality: 0.85 };
-      const result = camera ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
-      if (!result.canceled && result.assets[0]) { setPhoto(result.assets[0]); setStep('info'); }
-    } catch { setError('사진을 열지 못했어요. 접근 권한을 확인하고 다시 시도해주세요.'); }
-  }
+  const picker=usePhotoPicker(asset=>{setPhoto(asset);setStep('info');});
+  const pickPhoto=(camera=false)=>{if(!busyRef.current&&!pending)void picker.open(camera);};
 
   async function saveRecord(withNote = false) {
     if (busyRef.current) return;
-    if(previewEntry){setError('개발 시안에서는 서버에 저장하지 않아요.');return;}
+    if(previewEntry||previewCandidates){setError('개발 시안에서는 서버에 저장하지 않아요.');return;}
     if(restoreFailed)return;
     if (!owner) { router.push('/login'); return; }
     if (!pending && !photo && !name.trim()) { setError('사진이나 술 이름을 남겨주세요.'); return; }
@@ -140,6 +142,7 @@ export function RecordComposer({ owner, entryId, previewEntry }: { owner:string;
     <View style={styles.summaryText}>{step === 'info' ? <><Text style={styles.title}>오늘의 한 잔</Text><Text style={styles.body}>{photo ? '사진으로 가볍게 남겨요.' : '이름으로 가볍게 남겨요.'}</Text><Button label={photo ? "사진 변경" : "사진 추가"} variant="text" onPress={() => pickPhoto()} style={styles.changePhoto} /></> : <><Text style={styles.caption}>{category ?? '종류 미정'}</Text><Text style={styles.title} numberOfLines={3}>{name || '이름 없는 술'}</Text><Text style={styles.caption}>{dateLabel}{category === '와인' && vintage ? ` · ${vintage}` : ''}</Text></>}</View>
   </View>;
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <PhotoAccessSheet access={picker.access} busy={picker.busy} onClose={picker.close} onContinue={picker.proceed} onDismiss={picker.onDismiss}/>
     <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (repeatEntry || pending?.entryId || category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
     <ScrollView pointerEvents={saving ? 'none' : 'auto'} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       {step === 'start' ? <View style={styles.start}>
@@ -151,7 +154,7 @@ export function RecordComposer({ owner, entryId, previewEntry }: { owner:string;
         {(repeatEntry||pending?.entryId)&&<Text style={[styles.caption,{marginBottom:12}]}>같은 술에 새로운 한 잔을 남겨요.</Text>}
         {pending&&<Text style={[styles.caption,{marginBottom:12}]}>이전에 저장 중이던 기록을 먼저 완료해주세요.</Text>}
         {summary}
-        {step === 'info' ? <><View style={styles.fields}><View><Text style={styles.label}>술 이름</Text><TextInput accessibilityLabel="술 이름" maxLength={200} value={name} onChangeText={setName} placeholder="술 이름을 입력해주세요" placeholderTextColor={colors.muted} style={styles.input} /></View>
+        {step === 'info' ? <><View style={styles.fields}><View><Text style={styles.label}>술 이름</Text><TextInput accessibilityLabel="술 이름" maxLength={200} value={name} onChangeText={text=>{setName(text);if(repeatEntry)setRepeatEntry(null);setSeparateName(null);}} placeholder="술 이름을 입력해주세요" placeholderTextColor={colors.muted} style={styles.input} />{!pending&&(repeatEntry||separateName!==name)&&<ExistingDrinkChoice owner={owner} query={name} selected={repeatEntry} fixtures={previewCandidates} onSelect={entry=>{Keyboard.dismiss();setRepeatEntry(entry);setName(entry.name??name);setCategory(entry.category);setSeparateName(null);}} onSeparate={()=>{setRepeatEntry(null);setSeparateName(name);}}/>}</View>
           <View><Text style={styles.label}>술 종류</Text><Button label={`${category ?? '종류 선택'}  ›`} variant="secondary" onPress={() => setSheet('category')} /></View>
           {category === '와인' && <View><Text style={styles.label}>빈티지 · 선택</Text><Button label={`${vintage || '연도 · NV · 모름'}  ›`} variant="secondary" onPress={() => setSheet('vintage')} /></View>}
           <View><Text style={styles.label}>언제 마셨나요?</Text><Button label={`${dateLabel}  ›`} variant="secondary" onPress={() => { setMonth(new Date(date)); setSheet('date'); }} /></View></View>
@@ -161,11 +164,11 @@ export function RecordComposer({ owner, entryId, previewEntry }: { owner:string;
           <View style={[styles.bottomAction, { marginBottom: 4 }]}><Text style={styles.connection}>{pending ? '저장 중인 원래 기록으로 다시 시도해요.' : '내 계정에 안전하게 보관해요.'}</Text><Button label={owner ? '기록 저장' : '로그인하고 저장'} loading={saving} onPress={() => saveRecord()} /><Button label="저장하고 테이스팅 노트 쓰기" variant="secondary" disabled={saving} onPress={() => saveRecord(true)} /></View>
         </>}
       </View>}
-      {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+      {!!picker.error&&<Text accessibilityRole="alert" style={styles.body}>{picker.error}</Text>}{!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     </ScrollView>
     <Modal visible={sheet !== null} transparent animationType="slide" onRequestClose={() => setSheet(null)}><View style={styles.modalRoot}><Pressable accessibilityLabel="선택 닫기" accessibilityRole="button" style={styles.scrim} onPress={() => setSheet(null)} /><View accessibilityViewIsModal style={styles.sheet}><View style={styles.handle} />
       <Text style={styles.title}>{activeSheet === 'category' ? '어떤 종류의 술인가요?' : activeSheet === 'date' ? '언제 마셨나요?' : '어느 해의\n와인인가요?'}</Text>
-      {activeSheet === 'category' ? <View style={styles.sheetOptions}>{([...categories, '기타'] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => setCategory(value)} style={{ minHeight: 44, paddingVertical: 10 }} />)}</View> : activeSheet === 'vintage' ? <View style={styles.vintageForm}><Text style={styles.caption}>빈티지</Text><View style={styles.vintageModes}>{([['year', '연도 입력'], ['NV', 'NV'], ['unknown', '모름']] as const).map(([value, label]) => <ChoiceChip key={value} label={label} selected={vintageMode === value} onPress={() => setVintageMode(value)} style={{ flex: 1, minHeight: 44, paddingVertical: 10, paddingHorizontal: 8 }} />)}</View>{vintageMode === 'year' && <><Text style={[styles.caption, { marginTop: 8 }]}>생산연도 · 예: 2020</Text><TextInput accessibilityLabel="빈티지 연도" value={vintageYear} onChangeText={text => setVintageYear(text.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="연도 입력" style={styles.vintageInput} /></>}</View> : <View style={styles.calendar}>
+      {activeSheet === 'category' ? <View style={styles.sheetOptions}>{([...categories, '기타'] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => {setCategory(value);if(repeatEntry&&repeatEntry.category!==value){setRepeatEntry(null);setSeparateName(name);}}} style={{ minHeight: 44, paddingVertical: 10 }} />)}</View> : activeSheet === 'vintage' ? <View style={styles.vintageForm}><Text style={styles.caption}>빈티지</Text><View style={styles.vintageModes}>{([['year', '연도 입력'], ['NV', 'NV'], ['unknown', '모름']] as const).map(([value, label]) => <ChoiceChip key={value} label={label} selected={vintageMode === value} onPress={() => setVintageMode(value)} style={{ flex: 1, minHeight: 44, paddingVertical: 10, paddingHorizontal: 8 }} />)}</View>{vintageMode === 'year' && <><Text style={[styles.caption, { marginTop: 8 }]}>생산연도 · 예: 2020</Text><TextInput accessibilityLabel="빈티지 연도" value={vintageYear} onChangeText={text => setVintageYear(text.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="연도 입력" style={styles.vintageInput} /></>}</View> : <View style={styles.calendar}>
         <View style={styles.monthRow}><Pressable accessibilityRole="button" accessibilityLabel="이전 달" onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><Text style={styles.monthArrow}>‹</Text></Pressable><Text style={styles.label}>{month.getFullYear()}년 {month.getMonth() + 1}월</Text><Pressable accessibilityRole="button" accessibilityLabel="다음 달" onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><Text style={styles.monthArrow}>›</Text></Pressable></View>
         <View style={styles.days}>{['일', '월', '화', '수', '목', '금', '토'].map(day => <Text key={day} style={styles.dayLabel}>{day}</Text>)}{Array.from({ length: new Date(month.getFullYear(), month.getMonth(), 1).getDay() }, (_, i) => <View key={`blank-${i}`} style={styles.day} />)}{Array.from({ length: new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate() }, (_, i) => { const day = i + 1; const selected = date.getDate() === day && date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear(); return <Pressable key={day} accessibilityRole="button" accessibilityLabel={`${month.getFullYear()}년 ${month.getMonth() + 1}월 ${day}일`} accessibilityState={{ selected }} style={styles.day} onPress={() => setDate(new Date(month.getFullYear(), month.getMonth(), day))}><Text style={[styles.dayText, selected && styles.daySelected]}>{day}</Text></Pressable>; })}</View>
       </View>}

@@ -66,3 +66,22 @@ Noto Sans KR를 사용한다. Figma의 Display 40, Heading1 28, Heading2 24, Hea
 ## 기본 수정 구현 · 2026-10-22
 
 Chrome에서 22(4:4343) 원본을 다시 확인했다. 24px 좌우 여백, 24px 제목, 84×112 세로 사진, 16px 카드 간격, 52px 공통 저장 버튼과 원본 컬러를 사용한다. 원본 ‘이름 변경’ 영역에 실제 편집 입력을 제공하고 날짜는 현지 YYYY-MM-DD 입력으로 연결했다. 별점·빈티지·실패/충돌 상태는 스크롤 영역의 확장 상태이며 원본 400×868 픽셀 일치로 주장하지 않는다. 사진 교체/주종 변경/다른 술로 이동은 아직 제공하지 않는다.
+
+## 기존 술 후보 · 2026-10-23
+
+기록 정보 폼의 기존 이름 입력과 공통 Button을 재사용한다. 후보 영역은 원본 record-info.svg에 없는 확장 상태이며, surface/border·radius16·padding16·fieldLabel/caption 토큰으로 이름 입력 바로 아래 제공한다. 자동 팝업 없이 선택/별도 술 행동을 명시한다. 원본 픽셀 일치 검증으로 주장하지 않는다.
+
+## 사진 접근 안내 · 2026-10-23
+
+모구 원본 벡터와 cream/surface/burgundy 토큰, sheetTitle/body/caption, 공통 Button으로 카메라 사전 안내·앨범 선택 안내·카메라 접근 차단 안내를 구성했다. 하단 모달은 radius24·좌우24·handle36×4이고 큰 글자에서도 내부 스크롤한다. OS 자체 권한창은 변경하지 않는다. 원본에 없던 신규 상태라 원본 Figma 픽셀 일치로 주장하지 않는다.
+
+## 취향 요약 구현 · 2026-10-23
+Chrome에서 최신 28(9:7442), 29(9:7517), 31 첫 근거 화면을 확인했다. 400×868 원본, 352 콘텐츠/24 좌우 여백, 카드 없는 짧은 요약·모구·선택 칩·세로 근거 사진·공통 CTA/바텀탭을 따른다. 29의 Content · Auto layout(9:7521), AITasteSummary, Preference chips, 대표 기록 사진, 취향 CTA 구성을 확인했다. 원본 screenshot은 docs/verification/figma-reference/taste-original.png. MCP 재인증 필요 및 Chrome FigmaScript 로드 실패로 레이어 JSON 자동 추출은 불가했다. 기존 토큰/공통 컴포넌트와 원본 UI 수치를 기준으로 구현했으며 픽셀 완전 일치라고 주장하지 않는다. 로딩/오류/키 미설정/stale/서로 다른 술 수는 원본 외 확장 상태다. 다음 한 잔/메뉴판 추천은 미연결임을 표시한다.
+
+## 다음 한 잔 연결 · 2026-10-24
+
+43(19:784)/45(19:972)의 보관한 고해상도 context와 렌더를 기반으로 추천 목록·저장 목록을 연결했다. 원본 SVG, 공통 Button/outlined ChoiceChip/BottomTabBar를 사용한다. 좁은 화면·긴 이름은 고정 canvas 폭 대신 flex/가로 필터 스크롤을 사용한다. bookmark 선택·목록 내 근거 펼침·실패 상태는 확장 상태이며 44 독립 상세 화면의 구현/픽셀 일치를 주장하지 않는다. 검증은 docs/verification/discovery-ui/README.md에 있다.
+
+### 다음 한 잔 추천 이유 · 2026-10-24
+
+44(19:926)의 고해상도 context와 렌더를 새로 확보해 독립 상세를 구현했다. 목록 펼침을 대체하고 공통 Button·원본88px DrinkIllustration·24/16/8 토큰·고정 저장 CTA를 사용한다. 이 상세에는 바텀탭이 없다. 실제 출처/근거에 맞춘 문구와 기록 없음·반대 평가·근거 펼침·오류는 확장 상태다. docs/verification/discovery-reason/README.md에 원본과 검증 범위를 분리했다.
