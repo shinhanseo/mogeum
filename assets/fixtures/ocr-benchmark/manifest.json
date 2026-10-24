@@ -1,0 +1,529 @@
+[
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "light",
+    "label" : "밝은 배경",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "dark",
+    "label" : "어두운 배경",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "small",
+    "label" : "작은 글씨",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      },
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "dense",
+    "label" : "촘촘한 12항목",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "two-columns",
+    "label" : "두 열 메뉴",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "offset-price",
+    "label" : "가격이 다음 줄",
+    "parseable" : false
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "landscape",
+    "label" : "가로 메뉴",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "downscale",
+    "label" : "큰 원본 축소",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "low-contrast",
+    "label" : "약한 대비",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "serif",
+    "label" : "세리프 영문",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "wrapped",
+    "label" : "줄바꿈 이름",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "skew",
+    "label" : "8도 기울임",
+    "parseable" : true
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024"
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "no-price",
+    "label" : "가격 없음",
+    "parseable" : false
+  },
+  {
+    "expected" : [
+      {
+        "name" : "글렌피딕 12년",
+        "price" : 15000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "클라우디 베이 소비뇽 블랑 2024",
+        "price" : 90000
+      },
+      {
+        "name" : "Sierra Nevada Pale Ale",
+        "price" : 9000,
+        "serving" : "330ml"
+      },
+      {
+        "name" : "화요 25",
+        "price" : 25000,
+        "serving" : "375ml"
+      },
+      {
+        "name" : "메이커스 마크",
+        "price" : 12000,
+        "serving" : "30ml"
+      },
+      {
+        "name" : "Guinness Draught",
+        "price" : 9000,
+        "serving" : "500ml"
+      }
+    ],
+    "id" : "ambiguous-price",
+    "label" : "잔·병 두 가격",
+    "parseable" : false
+  }
+]

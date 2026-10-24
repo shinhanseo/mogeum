@@ -9,15 +9,25 @@ import {
   newMenu,
   persistMenu,
   prepareMenuPhoto,
+  prepareMenuPhotoBatch,
   readMenuPhoto,
   restoreMenu,
   type MenuDraft,
   type DevicePhoto,
 } from "./device";
-import { tastePhotoUrls } from "../taste/repository";
-import { mergeMenuReview } from "./review";
+import {
+  mergeMenuReview,
+  activeExclusions,
+  excludeMenuItem,
+  menuSource,
+} from "./review";
 import { submitMenu } from "./submission";
-import { menuRequest, saveMenuSession, type MenuResult } from "./repository";
+import {
+  menuRequest,
+  saveMenuSession,
+  loadMenuEvidence,
+  type MenuResult,
+} from "./repository";
 import { getSupabase } from "../../lib/supabase";
 import { usePhotoPicker } from "../records/usePhotoPicker";
 import { PhotoAccessSheet } from "../records/PhotoAccessSheet";
@@ -27,6 +37,7 @@ import {
 } from "../../../supabase/functions/_shared/menu-domain";
 
 type Adapter = {
+  restore?: typeof restoreMenu;
   parse: (photos: MenuPhoto[]) => Promise<MenuItem[]>;
   recommend: (photos: MenuPhoto[], items: MenuItem[]) => Promise<MenuResult>;
   save: (d: MenuDraft, photos: MenuPhoto[]) => Promise<number>;
@@ -56,20 +67,27 @@ export function MenuFlow({
   const epoch = useRef(0);
   const lock = useRef(false);
   const replacement = useRef<string | undefined>(undefined);
+  const preparing = useRef<number | null>(null);
   const restored = useRef(false);
+  const [restoreState, setRestoreState] = useState<
+    "loading" | "ready" | "failed"
+  >("loading");
+  const restoreRequest = useRef(0);
+  const restoreLoader = useRef(adapter?.restore ?? restoreMenu);
   const writes = useRef(Promise.resolve());
   const latestResult = useRef<MenuResult | null>(null);
+  const evidenceRefresh = useRef(0);
+  const evidenceFocused = useRef(false);
   const demo = !!adapter;
   const commit = (d: MenuDraft) => {
+    d = { ...d, exclusions: activeExclusions(d.exclusions, d.photos) };
     current.current = d;
     if (alive.current) {
       setDraft(d);
       setResult(null);
     }
     if (restored.current) {
-      const write = writes.current
-        .catch(() => {})
-        .then(() => persistMenu(owner, d));
+      const write = persistMenu(owner, d);
       writes.current = write;
       void write.catch(() => {
         if (alive.current)
@@ -79,54 +97,96 @@ export function MenuFlow({
       });
     }
   };
+  const loadDraft = useCallback(async () => {
+    if (!alive.current) return;
+    const request = ++restoreRequest.current;
+    restored.current = false;
+    setRestoreState("loading");
+    setError("");
+    const result = await restoreLoader
+      .current(owner)
+      .catch(() => ({ status: "failed" as const }));
+    if (!alive.current || request !== restoreRequest.current) return;
+    if (result.status === "failed") {
+      setRestoreState("failed");
+      setError(
+        "이전 메뉴판을 불러오지 못했어요. 원래 입력은 덮어쓰지 않았어요. 다시 불러오거나 잠시 후 다시 열어주세요.",
+      );
+      return;
+    }
+    if (result.status === "ready") {
+      current.current = result.draft;
+      setDraft(result.draft);
+      setStep("photos");
+    }
+    restored.current = true;
+    setRestoreState("ready");
+  }, [owner]);
+  const stopRestore = useCallback(() => {
+    alive.current = false;
+    restoreRequest.current++;
+    epoch.current++;
+  }, []);
   useEffect(() => {
     alive.current = true;
-    void restoreMenu(owner).then((d) => {
-      if (!alive.current) return;
-      if (d) {
-        current.current = d;
-        setDraft(d);
-        setStep("photos");
-      }
-      restored.current = true;
+    const generation = ++restoreRequest.current;
+    void Promise.resolve().then(() => {
+      if (alive.current && restoreRequest.current === generation)
+        void loadDraft();
     });
-    return () => {
-      alive.current = false;
-    };
-  }, [owner]);
+    return stopRestore;
+  }, [loadDraft, stopRestore]);
   useEffect(() => {
     latestResult.current = result;
   }, [result]);
   const checkEvidence = useCallback(async () => {
     const previous = latestResult.current;
-    if (!previous || demo) return;
+    if (
+      !previous ||
+      demo ||
+      !evidenceFocused.current ||
+      AppState.currentState !== "active"
+    )
+      return;
     const client = getSupabase();
     if (!client) return;
+    const request = ++evidenceRefresh.current;
+    const active = () =>
+      alive.current &&
+      evidenceFocused.current &&
+      AppState.currentState === "active" &&
+      latestResult.current === previous &&
+      request === evidenceRefresh.current;
     try {
-      const { data, error } = await client.rpc("taste_summary_context");
-      if (error) throw error;
-      if (
-        alive.current &&
-        latestResult.current === previous &&
-        data.snapshot.hash !== previous.tasteHash
-      ) {
+      const value = await loadMenuEvidence(client, owner, previous, active);
+      if (!active() || value.status === "cancelled") return;
+      if (value.status === "stale") {
         setResult(null);
+        setEvidencePhotos({});
         setStep("review");
         setError("내 기록이 바뀌었어요. 최신 기록으로 다시 추천받아 주세요.");
-      }
+      } else setEvidencePhotos(value.photos);
     } catch {
-      if (alive.current && latestResult.current === previous) {
+      if (active()) {
         setResult(null);
+        setEvidencePhotos({});
         setStep("review");
         setError(
           "최신 취향을 확인하지 못했어요. 연결 후 다시 추천받아 주세요.",
         );
       }
     }
-  }, [demo]);
+  }, [demo, owner]);
   useFocusEffect(
     useCallback(() => {
+      evidenceFocused.current = true;
       void checkEvidence();
+      const timer = setInterval(() => void checkEvidence(), 240000);
+      return () => {
+        clearInterval(timer);
+        evidenceFocused.current = false;
+        evidenceRefresh.current++;
+      };
     }, [checkEvidence]),
   );
   useEffect(() => {
@@ -163,6 +223,13 @@ export function MenuFlow({
         if (!valid(version)) return;
         commit({
           ...current.current,
+          items: current.current.items.filter(
+            (item) =>
+              item.photoId !== id ||
+              item.id.includes(":manual:") ||
+              menuSource(item, photo.ocr ? [photo.ocr] : []) ===
+                menuSource(item, [read.ocr!]),
+          ),
           photos: current.current.photos.map((p) =>
             p.id === id && p.imageRevision === read.imageRevision ? read : p,
           ),
@@ -182,7 +249,7 @@ export function MenuFlow({
     }
   }
   async function addAssets(assets: ImagePickerAsset[]) {
-    if (lock.current || !restored.current) return;
+    if (lock.current || preparing.current !== null || !restored.current) return;
     const replace = replacement.current;
     replacement.current = undefined;
     const room = replace ? 1 : 5 - current.current.photos.length;
@@ -191,32 +258,41 @@ export function MenuFlow({
     setBusy(true);
     setError("");
     const version = ++epoch.current;
+    preparing.current = version;
     try {
-      const next: DevicePhoto[] = [];
-      for (const asset of assets.slice(0, room)) {
-        const old = current.current.photos.find((p) => p.id === replace);
-        const photo = await prepareMenuPhoto(
-          owner,
-          current.current.id,
-          asset.uri,
-          old?.id,
-          old ? old.imageRevision + 1 : 1,
-        );
-        if (!valid(version)) return;
-        next.push(photo);
-      }
-      const keep = current.current.photos.filter((p) => p.id !== replace);
-      const photos = replace
-        ? current.current.photos.map((p) => (p.id === replace ? next[0] : p))
-        : [...keep, ...next];
-      commit({
-        ...current.current,
-        photos,
-        items: current.current.items.filter(
-          (i) => !next.some((p) => p.id === i.photoId),
-        ),
+      const selected = assets.slice(0, room);
+      const sessionId = current.current.id;
+      const old = current.current.photos.find((p) => p.id === replace);
+      const next = await prepareMenuPhotoBatch(owner, sessionId, {
+        count: selected.length,
+        active: () => valid(version),
+        prepare: (index) =>
+          prepareMenuPhoto(
+            owner,
+            sessionId,
+            selected[index].uri,
+            old?.id,
+            old ? old.imageRevision + 1 : 1,
+          ),
+        commit(next) {
+          const keep = current.current.photos.filter((p) => p.id !== replace);
+          const photos = replace
+            ? current.current.photos.map((p) =>
+                p.id === replace ? next[0] : p,
+              )
+            : [...keep, ...next];
+          commit({
+            ...current.current,
+            photos,
+            items: current.current.items.filter(
+              (i) => !next.some((p) => p.id === i.photoId),
+            ),
+          });
+          setStep("photos");
+        },
       });
-      setStep("photos");
+      if (preparing.current === version) preparing.current = null;
+      if (!next || !valid(version)) return;
       await recognize(
         next.map((p) => p.id),
         version,
@@ -225,6 +301,7 @@ export function MenuFlow({
       if (valid(version))
         setError("사진을 준비하지 못했어요. 다시 골라주세요.");
     } finally {
+      if (preparing.current === version) preparing.current = null;
       if (valid(version)) {
         lock.current = false;
         setBusy(false);
@@ -293,7 +370,12 @@ export function MenuFlow({
         if (!valid(version)) return;
         commit({
           ...current.current,
-          items: mergeMenuReview(items, current.current.items, photos),
+          items: mergeMenuReview(
+            items,
+            current.current.items,
+            photos,
+            current.current.exclusions,
+          ),
         });
         setStep("review");
       } else {
@@ -310,20 +392,21 @@ export function MenuFlow({
         const value = await backend.recommend(photos, d.items);
         if (!valid(version)) return;
         const client = getSupabase();
-        const urls = adapter
-          ? Object.fromEntries(
-              value.evidenceRecords.map((r) => [
-                r.id,
-                fixtureEvidenceUri ?? "",
-              ]),
-            )
-          : client
-            ? await tastePhotoUrls(
-                client,
-                owner,
-                value.evidenceRecords.map((r) => r.id),
-              ).catch(() => ({}))
-            : {};
+        let urls: Record<string, string> = {};
+        if (adapter)
+          urls = Object.fromEntries(
+            value.evidenceRecords.map((r) => [r.id, fixtureEvidenceUri ?? ""]),
+          );
+        else {
+          if (!client) throw new Error("NO_BACKEND");
+          const evidence = await loadMenuEvidence(client, owner, value, () =>
+            valid(version),
+          );
+          if (evidence.status === "cancelled") return;
+          if (evidence.status === "stale")
+            throw new Error("MENU_EVIDENCE_STALE");
+          urls = evidence.photos;
+        }
         if (!valid(version)) return;
         setEvidencePhotos(urls);
         setResult(value);
@@ -387,6 +470,8 @@ export function MenuFlow({
     <>
       <MenuScreen
         draft={draft}
+        restoreState={restoreState}
+        onRestoreRetry={() => void loadDraft()}
         step={step}
         result={result}
         evidencePhotos={evidencePhotos}
@@ -394,7 +479,7 @@ export function MenuFlow({
         error={error || picker.error}
         onStep={navigate}
         onAdd={(camera, id) => {
-          if (lock.current) return;
+          if (lock.current || preparing.current !== null) return;
           replacement.current = id;
           if (fixtureUri)
             void addAssets([
@@ -418,10 +503,11 @@ export function MenuFlow({
         }}
         onDeleteItem={(id) => {
           cancel();
-          commit({
-            ...current.current,
-            items: current.current.items.filter((i) => i.id !== id),
-          });
+          try {
+            commit(excludeMenuItem(current.current, id));
+          } catch {
+            setError("제외한 메뉴를 보관하지 못했어요. 다시 시도해주세요.");
+          }
         }}
         onEdit={(item) =>
           commit({

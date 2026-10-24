@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { restoreMenu } from "../../src/features/menu/device";
 import { Image, Text, View } from "react-native";
 import { Redirect, useLocalSearchParams } from "expo-router";
 import { MenuFlow } from "../../src/features/menu/MenuFlow";
@@ -38,11 +40,13 @@ const snapshot: TasteSnapshot = {
   })),
 };
 export default function DevMenu() {
-  const { picker, catalog, failure } = useLocalSearchParams<{
+  const { picker, catalog, failure, runId } = useLocalSearchParams<{
     picker?: string;
     catalog?: string;
     failure?: string;
+    runId?: string;
   }>();
+  const restoreAttempts = useRef(0);
   if (!__DEV__) return <Redirect href="/" />;
   return (
     <View style={{ flex: 1 }}>
@@ -57,14 +61,17 @@ export default function DevMenu() {
         개발 검증 · 실제 기기 OCR / 합성 취향 / 서버 호출 없음
       </Text>
       <MenuFlow
+        key={`${runId ?? ""}:${picker ?? ""}:${catalog ?? ""}:${failure ?? ""}`}
         owner={
-          failure === "catalog"
-            ? "menu-catalog-mismatch-fixture"
-            : catalog === "1"
-              ? "menu-catalog-fixture"
-              : picker === "1"
-                ? "menu-picker-fixture"
-                : "menu-ocr-fixture"
+          runId && /^[a-z0-9_-]{1,40}$/i.test(runId)
+            ? `menu-preparation-fixture-${runId}`
+            : failure === "catalog"
+              ? "menu-catalog-mismatch-fixture"
+              : catalog === "1"
+                ? "menu-catalog-fixture"
+                : picker === "1"
+                  ? "menu-picker-fixture"
+                  : "menu-ocr-fixture"
         }
         fixtureEvidenceUri={
           Image.resolveAssetSource(
@@ -81,8 +88,14 @@ export default function DevMenu() {
               )!.uri
         }
         adapter={{
+          restore: async (owner) => {
+            if (failure === "restore" && restoreAttempts.current++ === 0)
+              return { status: "failed" as const };
+            return restoreMenu(owner);
+          },
           parse: async (photos) => {
             if (failure === "catalog") throw new Error("MENU_CATALOG_MISMATCH");
+            if (failure === "capacity") throw new Error("MENU_ITEM_LIMIT");
             return parseMenu(photos);
           },
           save: async (d) => d.revision + 1,

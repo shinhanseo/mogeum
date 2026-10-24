@@ -21,9 +21,10 @@ public class MenuOcrModule: Module {
      let lines=(request.results ?? []).compactMap { observation -> [String:Any]? in
       guard let candidate=observation.topCandidates(1).first else { return nil }
       let points=[observation.topLeft,observation.topRight,observation.bottomRight,observation.bottomLeft]
-      return ["text":candidate.string,"confidence":Double(candidate.confidence),"polygon":points.map { ["x":Double($0.x),"y":Double(1-$0.y)] }]
+      guard points.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) else { return nil }
+      return ["text":candidate.string,"confidence":Double(candidate.confidence),"polygon":points.map { ["x":max(0,min(1,Double($0.x))),"y":max(0,min(1,Double(1-$0.y)))] }]
      }
-     promise.resolve(["width":cg.width,"height":cg.height,"engine":"apple-vision-v1","lines":lines])
+     promise.resolve(["width":cg.width,"height":cg.height,"engine":"apple-vision-v2","lines":lines])
     } catch { promise.reject("OCR_FAILED", "Text recognition failed") }
    }
   }

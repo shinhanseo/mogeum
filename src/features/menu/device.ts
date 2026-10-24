@@ -1,3 +1,7 @@
+import { type MenuRestoreResult } from "./restore";
+import { createMenuStore } from "./storage";
+import { createPhotoPreparationQueue } from "./preparation";
+import { type MenuExclusion } from "./review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -5,7 +9,6 @@ import { randomUUID } from "expo-crypto";
 import { recognizeMenu } from "../../../modules/menu-ocr";
 import {
   validatePhotos,
-  validateItems,
   type MenuPhoto,
   type MenuItem,
 } from "../../../supabase/functions/_shared/menu-domain";
@@ -23,11 +26,34 @@ export type MenuDraft = {
   revision: number;
   photos: DevicePhoto[];
   items: MenuItem[];
+  exclusions?: MenuExclusion[];
   pendingSave?: { revision: number; photos: MenuPhoto[]; items: MenuItem[] };
 };
+export const MENU_PHOTO_PIPELINE = "jpeg-cache-cleanup-v1";
 const key = (owner: string) => `mogeum:menu:v1:${owner}`;
 export function newMenu(): MenuDraft {
   return { id: randomUUID(), revision: 0, photos: [], items: [] };
+}
+const preparationQueue = createPhotoPreparationQueue();
+/** Keep the queue until cancelled files are removed, so a remounted screen cannot reuse a revision path too early. */
+export function prepareMenuPhotoBatch(
+  owner: string,
+  sessionId: string,
+  ports: {
+    count: number;
+    active: () => boolean;
+    prepare: (index: number) => Promise<DevicePhoto>;
+    commit: (photos: DevicePhoto[]) => void;
+  },
+) {
+  return preparationQueue.run(owner, {
+    ...ports,
+    async discard(photo) {
+      const canonical = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/${photo.id}-${photo.imageRevision}.jpg`;
+      if (photo.uri !== canonical) throw new Error("INVALID_UNCOMMITTED_PHOTO");
+      await FileSystem.deleteAsync(canonical, { idempotent: true });
+    },
+  });
 }
 export async function prepareMenuPhoto(
   owner: string,
@@ -36,42 +62,65 @@ export async function prepareMenuPhoto(
   id = randomUUID(),
   imageRevision = 1,
 ): Promise<DevicePhoto> {
-  const image = await ImageManipulator.manipulateAsync(uri, [], {
-    compress: 0.9,
-    format: ImageManipulator.SaveFormat.JPEG,
-  });
-  const longest = Math.max(image.width, image.height);
-  const sized =
-    longest > 2200
-      ? await ImageManipulator.manipulateAsync(
-          image.uri,
-          [
-            {
-              resize:
-                image.width >= image.height
-                  ? { width: 2200 }
-                  : { height: 2200 },
-            },
-          ],
-          { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+  const temporary = new Set<string>();
+  try {
+    const image = await ImageManipulator.manipulateAsync(uri, [], {
+      compress: 0.9,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+    temporary.add(image.uri);
+    const longest = Math.max(image.width, image.height);
+    const sized =
+      longest > 2200
+        ? await ImageManipulator.manipulateAsync(
+            image.uri,
+            [
+              {
+                resize:
+                  image.width >= image.height
+                    ? { width: 2200 }
+                    : { height: 2200 },
+              },
+            ],
+            { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG },
+          )
+        : image;
+    temporary.add(sized.uri);
+    const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/`;
+    await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+    const target = `${directory}${id}-${imageRevision}.jpg`;
+    await FileSystem.copyAsync({ from: sized.uri, to: target });
+    return {
+      id,
+      imageRevision,
+      uri: target,
+      width: sized.width,
+      height: sized.height,
+      state: "waiting",
+      ocr: null,
+    };
+  } finally {
+    // Only these manipulation results are ours; preserve the selected source and durable drafts.
+    await Promise.all(
+      [...temporary]
+        .filter(
+          (file) =>
+            file !== uri &&
+            !!FileSystem.cacheDirectory &&
+            file.startsWith(FileSystem.cacheDirectory),
         )
-      : image;
-  const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${sessionId}/`;
-  await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-  const target = `${directory}${id}-${imageRevision}.jpg`;
-  await FileSystem.copyAsync({ from: sized.uri, to: target });
-  return {
-    id,
-    imageRevision,
-    uri: target,
-    width: sized.width,
-    height: sized.height,
-    state: "waiting",
-    ocr: null,
-  };
+        .map((file) =>
+          FileSystem.deleteAsync(file, { idempotent: true }).catch(() => {}),
+        ),
+    );
+  }
 }
-export async function readMenuPhoto(photo: DevicePhoto): Promise<DevicePhoto> {
+export async function readMenuPhoto(
+  photo: DevicePhoto,
+  observeNative?: (result: Awaited<ReturnType<typeof recognizeMenu>>) => void,
+): Promise<DevicePhoto> {
   const result = await recognizeMenu(photo.uri);
+  observeNative?.(result);
   if (result.width !== photo.width || result.height !== photo.height)
     throw new Error("OCR_ORIENTATION");
   const ocr: MenuPhoto = {
@@ -91,68 +140,27 @@ export async function readMenuPhoto(photo: DevicePhoto): Promise<DevicePhoto> {
   if (!ocr.lines.length) throw new Error("OCR_EMPTY");
   return { ...photo, state: "ready", ocr };
 }
-export async function persistMenu(owner: string, draft: MenuDraft) {
-  await AsyncStorage.setItem(key(owner), JSON.stringify(draft));
-  // Prune superseded local image revisions only after the new draft is durable.
-  const directory = `${FileSystem.documentDirectory}menu-drafts/${owner}/${draft.id}/`;
-  const keep = new Set(draft.photos.map((p) => p.uri));
-  try {
-    for (const name of await FileSystem.readDirectoryAsync(directory)) {
-      const uri = directory + name;
-      if (/^[0-9a-f-]+-\d+\.jpg$/i.test(name) && !keep.has(uri))
-        await FileSystem.deleteAsync(uri, { idempotent: true });
-    }
-  } catch {
-    /* Storage cleanup does not discard a successfully written draft. */
-  }
-}
-export async function restoreMenu(owner: string): Promise<MenuDraft | null> {
-  try {
-    const raw = await AsyncStorage.getItem(key(owner));
-    if (!raw) return null;
-    const d = JSON.parse(raw) as MenuDraft;
-    if (
-      !/^[0-9a-f-]{36}$/i.test(d.id) ||
-      !Number.isInteger(d.revision) ||
-      d.revision < 0 ||
-      !Array.isArray(d.photos) ||
-      d.photos.length > 5 ||
-      !Array.isArray(d.items)
-    )
-      return null;
+const menuStore = createMenuStore({
+  directory: FileSystem.documentDirectory!,
+  read: (owner) => AsyncStorage.getItem(key(owner)),
+  write: (owner, raw) => AsyncStorage.setItem(key(owner), raw),
+  list: (directory) => FileSystem.readDirectoryAsync(directory),
+  remove: (uri) => FileSystem.deleteAsync(uri, { idempotent: true }),
+  async hydrate(d) {
     for (const p of d.photos) {
-      if (
-        !/^[0-9a-f-]{36}$/i.test(p.id) ||
-        !Number.isInteger(p.imageRevision) ||
-        p.imageRevision < 1 ||
-        !["waiting", "reading", "ready", "failed"].includes(p.state) ||
-        p.uri !==
-          `${FileSystem.documentDirectory}menu-drafts/${owner}/${d.id}/${p.id}-${p.imageRevision}.jpg`
-      )
-        return null;
-      if (p.ocr) {
-        validatePhotos([p.ocr]);
-        if (p.ocr.id !== p.id || p.ocr.imageRevision !== p.imageRevision)
-          return null;
-      }
       const exists = await FileSystem.getInfoAsync(p.uri);
       if (!exists.exists) {
         p.state = "failed";
         p.ocr = null;
-      }
-      if (p.state === "reading") p.state = "waiting";
-    }
-    if (d.pendingSave) {
-      validatePhotos(d.pendingSave.photos);
-      validateItems(d.pendingSave.items, d.pendingSave.photos);
-      if (
-        !Number.isInteger(d.pendingSave.revision) ||
-        d.pendingSave.revision < 0
-      )
-        return null;
+      } else if (p.state === "reading") p.state = "waiting";
+      else if (p.state === "ready" && !p.ocr) p.state = "failed";
     }
     return d;
-  } catch {
-    return null;
-  }
+  },
+});
+export function persistMenu(owner: string, draft: MenuDraft): Promise<void> {
+  return menuStore.save(owner, draft);
+}
+export function restoreMenu(owner: string): Promise<MenuRestoreResult> {
+  return menuStore.load(owner);
 }
