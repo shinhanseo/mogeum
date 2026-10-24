@@ -29,6 +29,33 @@ const labels: Record<string, Category> = {
 export function createCellarRepository(client: SupabaseClient, owner: string) {
   if (!uuid.test(owner)) throw new Error("INVALID_OWNER");
   return {
+    async refreshPhoto(
+      id: string,
+      active: () => boolean,
+    ): Promise<string | null> {
+      if (!uuid.test(id)) throw new Error("INVALID_CELLAR_ENTRY");
+      if (!active()) return null;
+      const { data, error } = await client
+        .from("cellar_overview")
+        .select("id,user_id,photo_path")
+        .eq("user_id", owner)
+        .eq("id", id)
+        .abortSignal(AbortSignal.timeout(20000))
+        .maybeSingle();
+      if (error) throw new Error("CELLAR_PHOTO_UNAVAILABLE");
+      const path = data?.photo_path;
+      if (
+        !active() ||
+        !data ||
+        data.user_id !== owner ||
+        typeof path !== "string" ||
+        !path.startsWith(`${owner}/records/`) ||
+        path.split("/").some((part) => part === ".." || part === ".")
+      )
+        return null;
+      const urls = await signPhotoBatch(client, [path]);
+      return active() ? (urls.get(path) ?? null) : null;
+    },
     async page(
       filter: CellarFilter,
       cursor: CellarCursor | null,

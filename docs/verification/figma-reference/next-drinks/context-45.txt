@@ -1,0 +1,148 @@
+const imgDrinkIllustration = "assets/45-imgDrinkIllustration.svg";
+const imgDrinkIllustration1 = "assets/45-imgDrinkIllustration1.svg";
+const imgDrinkIllustration2 = "assets/45-imgDrinkIllustration2.svg";
+const imgIcon = "assets/45-imgIcon.svg";
+const imgFrame = "assets/45-imgFrame.svg";
+const imgIcon1 = "assets/45-imgIcon1.svg";
+
+type ButtonProps = {
+  className?: string;
+  label?: string;
+  state?: "Default";
+  type?: "Secondary" | "Text";
+};
+
+function Button({ className, label = "다음", state = "Default", type = "Secondary" }: ButtonProps) {
+  const isTextAndDefault = type === "Text" && state === "Default";
+  return (
+    <div className={className || `${String.raw`content-stretch flex items-center justify-center relative rounded-[var(--radius\/16,16px)] `}${isTextAndDefault ? "h-[var(--size-text-action,44px)] w-[180px]" : String.raw`bg-[var(--surface\/selected,#f2e5e8)] h-[var(--size\/button,52px)] overflow-clip px-[24px] w-[352px]`}`} id={isTextAndDefault ? "node-4_4967" : "node-6_5329"}>
+      <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--action\/primary,#783f4b)] text-center whitespace-nowrap" data-node-id="4:5215">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+export default function Component45() {
+  return (
+    <div className="bg-[var(--background\/default,#faf7f2)] content-stretch flex flex-col items-start overflow-clip relative rounded-[30px] size-full" data-node-id="19:972" data-name="45 · 마셔보고 싶은 술 — 저장 목록">
+      <div className="[word-break:break-word] content-stretch flex font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal h-[44px] items-center justify-between leading-[var(--font\/line\/caption,18px)] px-[24px] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] w-[400px]" data-node-id="19:973" data-name="Status bar">
+        <p className="relative shrink-0 text-[length:var(--font\/size\/caption,12px)] w-[90px]" data-node-id="19:974">
+          9:41
+        </p>
+        <p className="relative shrink-0 text-[12px] text-right w-[70px]" data-node-id="19:975">
+          ​
+        </p>
+      </div>
+      <div className="content-stretch flex flex-col h-[739px] items-start overflow-x-clip overflow-y-auto relative shrink-0 w-[400px]" data-node-id="19:976" data-name="스크롤 영역">
+        <div className="content-stretch flex flex-col gap-[var(--space\/16,16px)] items-start overflow-clip p-[var(--space\/24,24px)] relative shrink-0 w-[400px]" data-node-id="19:977" data-name="Content · Auto layout">
+          <Button className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[120px]" label="‹  내 취향" type="Text" />
+          <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Bold')] font-bold leading-[var(--font\/line\/heading2,36px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/heading2,24px)] w-[352px]" data-node-id="19:1000">
+            마셔보고 싶은 술
+          </p>
+          <p className="[word-break:break-word] font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[var(--font\/line\/bodysmall,22px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/bodysmall,14px)] w-[352px] whitespace-pre-wrap" data-node-id="19:1001">{`궁금했던 한 잔, 여기 모아뒀어요.  3`}</p>
+          <div className="bg-[var(--surface\/card,#fffdfa)] content-stretch flex gap-[var(--space\/12,12px)] h-[112px] items-center p-[var(--space\/16,16px)] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" data-node-id="19:1002" data-name="모금/WishlistDrinkRow">
+            <div className="relative shrink-0 size-[64px]" data-node-id="I19:1002;17:211" data-name="모금/DrinkIllustration">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDrinkIllustration} />
+            </div>
+            <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--space\/4,4px)] items-start overflow-clip relative shrink-0 w-[144px]" data-node-id="I19:1002;17:223" data-name="술 정보">
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Medium')] font-medium leading-[var(--font\/line\/label,20px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/label,14px)] w-[144px]" data-node-id="I19:1002;17:224">
+                글렌리벳 12년
+              </p>
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal h-[20px] leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[144px]" data-node-id="I19:1002;17:225">
+                위스키 · 싱글몰트
+              </p>
+            </div>
+            <a className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[88px]" data-node-id="I19:1002;17:226" data-name="마셨어요 · 기록 시작">
+              <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--action\/primary,#783f4b)] text-center whitespace-nowrap" data-node-id="I19:1002;17:226;4:5219">
+                마셨어요
+              </p>
+            </a>
+          </div>
+          <div className="bg-[var(--surface\/card,#fffdfa)] content-stretch flex gap-[var(--space\/12,12px)] h-[112px] items-center p-[var(--space\/16,16px)] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" data-node-id="19:1032" data-name="모금/WishlistDrinkRow">
+            <div className="relative shrink-0 size-[64px]" data-node-id="I19:1032;17:211" data-name="모금/DrinkIllustration">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDrinkIllustration1} />
+            </div>
+            <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--space\/4,4px)] items-start overflow-clip relative shrink-0 w-[144px]" data-node-id="I19:1032;17:223" data-name="술 정보">
+              <div className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Medium')] font-medium leading-[0] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/label,14px)] w-[144px]" data-node-id="I19:1032;17:224">
+                <p className="leading-[var(--font\/line\/label,20px)] mb-0">오이스터 베이</p>
+                <p className="leading-[var(--font\/line\/label,20px)]">소비뇽 블랑</p>
+              </div>
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal h-[20px] leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[144px]" data-node-id="I19:1032;17:225">
+                와인 · 화이트
+              </p>
+            </div>
+            <a className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[88px]" data-node-id="I19:1032;17:226" data-name="마셨어요 · 기록 시작">
+              <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--action\/primary,#783f4b)] text-center whitespace-nowrap" data-node-id="I19:1032;17:226;4:5219">
+                마셨어요
+              </p>
+            </a>
+          </div>
+          <div className="bg-[var(--surface\/card,#fffdfa)] content-stretch flex gap-[var(--space\/12,12px)] h-[112px] items-center p-[var(--space\/16,16px)] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" data-node-id="19:1050" data-name="모금/WishlistDrinkRow">
+            <div className="relative shrink-0 size-[64px]" data-node-id="I19:1050;17:211" data-name="모금/DrinkIllustration">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDrinkIllustration2} />
+            </div>
+            <div className="[word-break:break-word] content-stretch flex flex-col gap-[var(--space\/4,4px)] items-start overflow-clip relative shrink-0 w-[144px]" data-node-id="I19:1050;17:223" data-name="술 정보">
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Medium')] font-medium leading-[var(--font\/line\/label,20px)] relative shrink-0 text-[color:var(--text\/primary,#332d2b)] text-[length:var(--font\/size\/label,14px)] w-[144px]" data-node-id="I19:1050;17:224">
+                복순도가 손막걸리
+              </p>
+              <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal h-[20px] leading-[var(--font\/line\/caption,18px)] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/caption,12px)] w-[144px]" data-node-id="I19:1050;17:225">
+                전통주 · 탁주
+              </p>
+            </div>
+            <a className="content-stretch cursor-pointer flex h-[44px] items-center justify-center relative rounded-[var(--radius\/16,16px)] shrink-0 w-[88px]" data-node-id="I19:1050;17:226" data-name="마셨어요 · 기록 시작">
+              <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[24px] relative shrink-0 text-[15px] text-[color:var(--action\/primary,#783f4b)] text-center whitespace-nowrap" data-node-id="I19:1050;17:226;4:5219">
+                마셨어요
+              </p>
+            </a>
+          </div>
+          <div className="[word-break:break-word] bg-[var(--surface\/selected,#f2e5e8)] content-stretch flex flex-col gap-[var(--space\/8,8px)] items-start overflow-clip p-[var(--space\/16,16px)] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" data-node-id="19:1068" data-name="마신 뒤 기록 안내">
+            <p className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Medium')] font-medium leading-[var(--font\/line\/label,20px)] relative shrink-0 text-[color:var(--text\/brand,#783f4b)] text-[length:var(--font\/size\/label,14px)] w-[320px]" data-node-id="19:1069">
+              마셨을 때, 내 느낌을 남겨요.
+            </p>
+            <div className="font-[family-name:var(--font\/family,'Noto_Sans_KR:Regular')] font-normal leading-[0] relative shrink-0 text-[color:var(--text\/secondary,#776b65)] text-[length:var(--font\/size\/bodysmall,14px)] w-[320px]" data-node-id="19:1070">
+              <p className="leading-[var(--font\/line\/bodysmall,22px)] mb-0">사진만으로도 기록할 수 있어요.</p>
+              <p className="leading-[var(--font\/line\/bodysmall,22px)]">남긴 느낌은 다음 추천에 반영돼요.</p>
+            </div>
+          </div>
+          <Button className="bg-[var(--surface\/selected,#f2e5e8)] content-stretch cursor-pointer flex h-[52px] items-center justify-center overflow-clip px-[24px] relative rounded-[var(--radius\/16,16px)] shrink-0 w-[352px]" label="다른 술도 찾아보기" />
+        </div>
+      </div>
+      <div className="content-stretch flex flex-col h-[85px] items-start pb-[6px] relative shrink-0 w-[400px]" data-node-id="21:1097" data-name="BottomTabBar · 내 취향">
+        <div className="absolute bg-[var(--background\/default,#faf7f2)] h-[78px] left-0 top-[7px] w-[400px]" data-node-id="I21:1097;4:5249" data-name="Navigation surface" />
+        <div className="absolute bg-[var(--color\/border,#e6ddd4)] h-px left-0 top-[7px] w-[400px]" data-node-id="I21:1097;4:5250" data-name="Top divider" />
+        <div className="content-stretch flex h-[64px] items-end justify-between px-[var(--space\/24,24px)] relative shrink-0 w-[400px]" data-node-id="I21:1097;4:5251" data-name="Navigation items">
+          <div className="content-stretch flex flex-col h-[44px] items-center justify-between relative shrink-0 w-[88px]" data-node-id="I21:1097;4:5252" data-name="나의 술장">
+            <div className="relative shrink-0 size-[20px]" data-node-id="I21:1097;4:5253" data-name="Icon">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIcon} />
+            </div>
+            <p className="[word-break:break-word] font-['Noto_Sans_KR:Regular'] font-normal leading-[14px] relative shrink-0 text-[10px] text-[color:var(--text\/secondary,#776b65)] whitespace-nowrap" data-node-id="I21:1097;4:5256">
+              나의 술장
+            </p>
+          </div>
+          <div className="content-stretch flex flex-col h-[64px] items-center relative shrink-0 w-[56px]" data-node-id="I21:1097;4:5257" data-name="Record action — opens composer">
+            <a className="bg-[var(--action\/primary,#783f4b)] content-stretch cursor-pointer flex items-center justify-center relative rounded-[var(--radius-full,999px)] shrink-0 size-[56px]" data-node-id="I21:1097;4:5258" data-name="Record +">
+              <div className="relative shrink-0 size-[22px]" data-node-id="I21:1097;4:5259" data-name="Frame">
+                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgFrame} />
+              </div>
+            </a>
+          </div>
+          <div className="content-stretch flex flex-col h-[44px] items-center justify-between relative shrink-0 w-[88px]" data-node-id="I21:1097;4:5261" data-name="내 취향">
+            <div className="h-[22px] relative shrink-0 w-[28px]" data-node-id="I21:1097;4:5262" data-name="Icon">
+              <div className="absolute inset-[-6.6%_0_-0.26%_0]">
+                <img alt="" className="block max-w-none size-full" src={imgIcon1} />
+              </div>
+            </div>
+            <p className="[word-break:break-word] font-['Noto_Sans_KR:Bold'] font-bold leading-[14px] relative shrink-0 text-[10px] text-[color:var(--action\/primary,#783f4b)] whitespace-nowrap" data-node-id="I21:1097;4:5264">
+              내 취향
+            </p>
+          </div>
+        </div>
+        <div className="h-[11px] relative shrink-0 w-[400px]" data-node-id="I21:1097;4:5265" data-name="Safe area spacing" />
+        <div className="content-stretch flex h-[4px] items-start justify-center relative shrink-0 w-[400px]" data-node-id="I21:1097;4:5266" data-name="Home indicator row">
+          <div className="bg-[var(--text\/primary,#332d2b)] h-[4px] relative rounded-[2px] shrink-0 w-[114px]" data-node-id="I21:1097;4:5267" data-name="Rectangle" />
+        </div>
+      </div>
+    </div>
+  );
+}

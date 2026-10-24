@@ -37,6 +37,7 @@ export function useCellar(owner: string | null, filter: CellarFilter) {
           }
         },
         total,
+        repository.refreshPhoto,
       );
       pager.current = current;
       setSnapshot({
@@ -67,9 +68,12 @@ export function useCellar(owner: string | null, filter: CellarFilter) {
   const retry = useCallback(() => {
     void pager.current?.retry();
   }, []);
+  const refreshPhoto = useCallback((id: string, uri: string) => {
+    void pager.current?.refreshPhoto(id, uri);
+  }, []);
   const state =
     snapshot?.owner === owner
       ? snapshot.state
       : { ...emptyCellarState(), loading: !!owner };
-  return { ...state, next, retry };
+  return { ...state, next, retry, refreshPhoto };
 }

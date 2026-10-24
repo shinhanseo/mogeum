@@ -109,3 +109,84 @@ test("canceling an in-flight page never publishes its data", async () => {
   assert.equal(seen.length, 1);
   assert.equal(seen[0].loading, true);
 });
+
+test("photo renewal is limited to one attempt per entry and cannot refresh unknown or superseded URLs", async () => {
+  let calls = 0,
+    current!: CellarPageState;
+  const pager = createCellarPager(
+    async () => ({
+      items: [{ ...item("a"), photoUri: "expired" }],
+      next: null,
+      total: 1,
+    }),
+    (s) => {
+      current = s;
+    },
+    0,
+    async () => {
+      calls++;
+      return "renewed";
+    },
+  );
+  await pager.reset({ query: "", category: "전체" });
+  await pager.refreshPhoto("other", "expired");
+  await pager.refreshPhoto("a", "not-current");
+  assert.equal(calls, 0);
+  await Promise.all([
+    pager.refreshPhoto("a", "expired"),
+    pager.refreshPhoto("a", "expired"),
+  ]);
+  assert.equal(calls, 1);
+  assert.equal(current.items[0].photoUri, "renewed");
+  await pager.refreshPhoto("a", "renewed");
+  assert.equal(calls, 1);
+});
+test("late photo renewal after cancel cannot publish into another session", async () => {
+  let finish!: (uri: string) => void, current!: CellarPageState;
+  const pager = createCellarPager(
+    async () => ({
+      items: [{ ...item("a"), photoUri: "expired" }],
+      next: null,
+      total: 1,
+    }),
+    (s) => {
+      current = s;
+    },
+    0,
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  await pager.reset({ query: "", category: "전체" });
+  const pending = pager.refreshPhoto("a", "expired");
+  pager.cancel();
+  finish("late");
+  await pending;
+  assert.equal(current.items[0].photoUri, "expired");
+});
+test("photo renewal failure does not lose records or start an automatic retry loop", async () => {
+  let calls = 0,
+    current!: CellarPageState;
+  const pager = createCellarPager(
+    async () => ({
+      items: [{ ...item("a"), photoUri: "expired" }],
+      next: null,
+      total: 1,
+    }),
+    (s) => {
+      current = s;
+    },
+    0,
+    async () => {
+      calls++;
+      throw new Error("offline");
+    },
+  );
+  await pager.reset({ query: "", category: "전체" });
+  await pager.refreshPhoto("a", "expired");
+  await pager.refreshPhoto("a", "expired");
+  assert.equal(calls, 1);
+  assert.equal(current.items[0].photoUri, "expired");
+  assert.equal(current.error, false);
+});

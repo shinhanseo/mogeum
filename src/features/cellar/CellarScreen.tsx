@@ -6,16 +6,16 @@ import { Icon } from '../../components/Icon';
 import { colors, fonts, typography, layout } from '../../theme/tokens';
 import { categories, shelfRows, type Category, type CellarItem } from './model';
 
-function PhotoCard({ item, onPress }: { item: CellarItem; onPress: () => void }) {
+function PhotoCard({ item, onPress, onPhotoError }: { item: CellarItem; onPress: () => void; onPhotoError?: (id: string, uri: string) => void }) {
   const [failedUri, setFailedUri] = useState<string | null>(null);
   return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name ?? '이름 없는 술'} 기록 보기`} onPress={onPress} style={styles.card}>
-    {item.photoUri && item.photoUri !== failedUri ? <Image source={{ uri: item.photoUri }} onError={() => setFailedUri(item.photoUri)} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>사진 없음</Text></View>}
+    {item.photoUri && item.photoUri !== failedUri ? <Image source={{ uri: item.photoUri }} onError={() => { setFailedUri(item.photoUri); if (item.photoUri) onPhotoError?.(item.id, item.photoUri); }} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>{item.photoUri ? "사진을 못 불러왔어요" : "사진 없음"}</Text></View>}
     <Text numberOfLines={2} style={styles.name}>{item.name || '이름 없는 술'}</Text>
     <Text style={styles.category}>{item.category || '종류 미정'}{item.recordCount>1?` · 기록 ${item.recordCount}회`:''}</Text>
   </Pressable>;
 }
-export function CellarScreen({ items, totalCount, loading, error, onNext, onRetry, category, onCategory, query, onQuery, onRecord, onOpen }: {
-  items: CellarItem[]; totalCount: number; loading: boolean; error: boolean; onNext: () => void; onRetry: () => void;
+export function CellarScreen({ items, totalCount, loading, error, onNext, onRetry, onPhotoError, category, onCategory, query, onQuery, onRecord, onOpen }: {
+  items: CellarItem[]; totalCount: number; loading: boolean; error: boolean; onNext: () => void; onRetry: () => void; onPhotoError?: (id: string, uri: string) => void;
   category: Category | '전체'; onCategory: (value: Category | '전체') => void; query: string; onQuery: (value: string) => void;
   onRecord: () => void; onOpen: (entryId: string) => void;
 }) {
@@ -33,7 +33,7 @@ export function CellarScreen({ items, totalCount, loading, error, onNext, onRetr
     </View>
     {(loading || error) && !items.length ? status : !empty && filtered.length === 0 ? <View style={styles.noResults}><Text style={styles.emptyTitle}>찾는 술이 없어요</Text><Button label="검색 조건 지우기" variant="secondary" onPress={() => { onCategory('전체'); onQuery(''); }} /></View> :
       <FlatList key={`${category}:${query}`} onEndReached={onNext} onEndReachedThreshold={0.5} ListFooterComponent={(loading || error) && items.length ? status : undefined} data={shelfRows(filtered)} keyExtractor={(_, index) => `shelf-${index}`} showsVerticalScrollIndicator={false} contentContainerStyle={styles.list} renderItem={({ item: row, index }) => <View style={styles.shelf}>
-        <View style={styles.slots}>{row.map((item, column) => <View key={item?.id ?? `empty-${column}`} style={styles.slot}>{item && <PhotoCard item={item} onPress={() => onOpen(item.id)} />}</View>)}</View>
+        <View style={styles.slots}>{row.map((item, column) => <View key={item?.id ?? `empty-${column}`} style={styles.slot}>{item && <PhotoCard item={item} onPhotoError={onPhotoError} onPress={() => onOpen(item.id)} />}</View>)}</View>
         {empty && index === 0 && <View style={styles.empty}><Text style={styles.emptyTitle}>아직 비어 있어도 괜찮아.</Text><Text style={styles.emptyBody}>마신 한 잔의 사진부터 모아볼까요?</Text><Button label="첫 사진 남기기" onPress={onRecord} style={{ marginTop: 4, marginHorizontal: 20 }} /></View>}
         <View style={styles.shelfTop} /><View style={styles.shelfFront} />
       </View>} />}
