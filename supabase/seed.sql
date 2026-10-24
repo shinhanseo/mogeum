@@ -1,0 +1,2 @@
+-- Deliberately no demo users, personal photos or unverified common products.
+-- Synthetic identities live in tests/fixtures and database.test.ts only.

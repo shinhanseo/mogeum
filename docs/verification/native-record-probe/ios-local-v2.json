@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "platform": "ios",
+  "runId": "ios-native-local-v2",
+  "startedAt": "2026-10-23T06:41:58.517Z",
+  "status": "completed",
+  "phase": "completed",
+  "passed": [
+    "real_local_auth_two_owners",
+    "native_upload_rpc_durable_replay",
+    "real_binary_read_and_foreign_owner_denied",
+    "photo_only_has_no_sensory_evidence",
+    "stored_operation_file_only_cleanup",
+    "real_record_delete_and_storage_cleanup"
+  ],
+  "finishedAt": "2026-10-23T06:41:59.151Z"
+}
