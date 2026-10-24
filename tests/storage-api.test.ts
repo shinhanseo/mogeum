@@ -1,6 +1,15 @@
+import { createCellarRepository } from "../src/features/cellar/repository";
+import { loadTasteContext, tastePhotoUrls } from '../src/features/taste/repository';
+import { applyAttachment, type PendingAttachment } from '../src/features/records/attachment';
+import { findEntryCandidates } from '../src/features/records/candidates';
+import { loadRecordDetail } from '../src/features/records/detail';
+import { saveBasicEdit, editInitial, deleteExperience, drainPhotoDeletions } from '../src/features/records/edit';
 import { submitPending, type PendingRecord } from '../src/features/records/pending';
 import { createClient } from '@supabase/supabase-js';
 import { createRecordRepository } from '../src/features/records/repository';
+import { tastingRepository } from '../src/features/tasting/repository';
+import { newTastingDraft, setAnswer } from '../src/features/tasting/draft';
+import { composeNote } from '../src/features/tasting/answers';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -47,7 +56,7 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.ok(!(await request(`/storage/v1/object/record-photos/${storagePath}`, b.token, {
     method: 'POST', headers: { 'Content-Type': 'image/png', 'x-upsert': 'true' }, body: png,
   })).ok, 'B cannot overwrite A photo');
-  const payload = { p_operation_id: operationId, p_record: { photo: { storagePath, width: 1, height: 1 } } };
+  const payload = { p_operation_id: operationId, p_record: { category:'whisky' as const, photo: { storagePath, width: 1, height: 1 } } };
   const create = () => request('/rest/v1/rpc/create_tasting_record', a.token, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   });
@@ -63,10 +72,33 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   assert.equal((persisted as PendingRecord | null)?.saved?.recordId,saved.recordId);
   const retry = await json<Saved>(await create(), 'Record retry');
   assert.equal(retry.recordId, saved.recordId); assert.equal(retry.replayed, true);
+  const notes=tastingRepository(sdk);let noteDraft=newTastingDraft(a.id,saved.recordId,'whisky','light');
+  noteDraft=setAnswer(noteDraft,'nose',{status:'answered',descriptors:['fruit'],intensity:null,freeText:''});
+  const noteOperation=randomUUID();const noteText=composeNote(noteDraft);
+  const savedNote=await notes.save(noteDraft,noteOperation,saved.revision,noteText,false);
+  assert.equal(savedNote.recordId,saved.recordId);assert.equal(savedNote.replayed,false);
+  assert.equal((await notes.save(noteDraft,noteOperation,saved.revision,noteText,false)).replayed,true);
+  const storedNotes=await json<{confirmed_note:string}[]>(await request(`/rest/v1/record_notes?record_id=eq.${saved.recordId}`,a.token),'Own note read');
+  assert.equal(storedNotes[0].confirmed_note,noteText);
+  assert.equal((await json<unknown[]>(await request(`/rest/v1/record_notes?record_id=eq.${saved.recordId}`,b.token),'Foreign note read')).length,0);
   assert.ok((await repository.listCellar()).some(row => row.id === saved.cellarEntryId));
+  const batchUrls = await repository.photoUrls(a.id, [storagePath, storagePath, "foreign/records/secret/photo.jpg"]);
+  assert.equal(batchUrls.size, 1);
+  assert.ok((await fetch(batchUrls.get(storagePath)!)).ok);
+  const expiredLink = await sdk.storage.from('record-photos').createSignedUrl(storagePath, 1);
+  assert.equal(expiredLink.error, null);
+  await new Promise(resolve => setTimeout(resolve, 2100));
+  assert.ok(!(await fetch(expiredLink.data!.signedUrl)).ok, 'Expired photo link is rejected');
+  const renewed = await createCellarRepository(sdk, a.id).refreshPhoto(saved.cellarEntryId, () => true);
+  assert.ok(renewed && (await fetch(renewed)).ok, 'Owner-scoped renewal reads real binary');
+
+
   assert.ok((await fetch(await repository.photoUrl(storagePath))).ok);
   const ownRows = await json<{ id: string; record_count: number; photo_path: string }[]>(await request(`/rest/v1/cellar_overview?id=eq.${saved.cellarEntryId}`, a.token), 'Own cellar read');
   assert.equal(ownRows.length, 1); assert.equal(Number(ownRows[0].record_count), 1); assert.equal(ownRows[0].photo_path, storagePath);
+  const batchLinks = await tastePhotoUrls(sdk,a.id,[saved.recordId,saved.recordId]);
+  assert.equal(Object.keys(batchLinks).length,1);
+  assert.ok((await fetch(batchLinks[saved.recordId])).ok,'Batch-signed own photo is readable');
   const foreignRows = await json<unknown[]>(await request(`/rest/v1/tasting_records?id=eq.${saved.recordId}`, b.token), 'Foreign record read');
   assert.equal(foreignRows.length, 0);
   const signed = await json<{ signedURL: string }>(await request(`/storage/v1/object/sign/record-photos/${storagePath}`, a.token, {
@@ -82,10 +114,61 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
     method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: [storagePath] }),
   });
   assert.ok((await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`, a.token)).ok, 'A referenced photo survives a premature file-delete request');
-  const deletion = await request(`/rest/v1/tasting_records?id=eq.${saved.recordId}`, a.token, { method: 'DELETE' });
-  assert.ok(deletion.ok, `Record delete: HTTP ${deletion.status}`);
-  await json(await request('/storage/v1/object/record-photos', a.token, {
-    method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: [storagePath] }),
-  }), 'Unreferenced binary cleanup');
+  const detail=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(detail.record.record_notes?.confirmed_note,noteText);
+  await saveBasicEdit(sdk,detail.record,{...editInitial(detail.record),name:'Edited synthetic whisky',rating:3,revisit:'again'});
+  const edited=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(edited.record.entered_name,'Edited synthetic whisky');
+  assert.equal((await repository.listCellar()).find(row=>row.id===saved.cellarEntryId)?.display_name,'Edited synthetic whisky');
+  const taste=await loadTasteContext(sdk);assert.equal(taste.snapshot.records.some(r=>r.id===saved.recordId),true);assert.equal(taste.cached,null);
+  const blocked=await request('/functions/v1/taste-summary',a.token,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  assert.equal(blocked.status,503);assert.equal((await blocked.json()).code,'AI_NOT_CONFIGURED');
+  assert.equal((await request('/functions/v1/taste-summary','not-a-valid-jwt',{method:'POST',body:'{}'})).status,401);
+  const candidates=await findEntryCandidates(sdk,a.id,'Edited synthetic');
+  assert.equal(candidates[0].id,saved.cellarEntryId);
+  const sdkB=createClient(base,apiKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{headers:{Authorization:`Bearer ${b.token}`}}});
+  assert.deepEqual(await tastePhotoUrls(sdkB,b.id,[saved.recordId]),{},'B cannot obtain A evidence photos through batch signing');
+  assert.deepEqual(await tastePhotoUrls(sdkB,a.id,[saved.recordId]),{},'Wrong owner argument cannot bypass photo RLS');
+  assert.equal((await findEntryCandidates(sdkB,b.id,'Edited synthetic')).length,0);
+  const repeat=await repository.save(randomUUID(),{enteredName:'Edited synthetic whisky',category:'whisky'},candidates[0].id);
+  assert.notEqual(repeat.recordId,saved.recordId);
+  const repeated=await loadRecordDetail(sdk,a.id,{recordId:repeat.recordId});
+  assert.equal(repeated.record.record_notes,null);
+  assert.equal(repeated.record.rating,null);
+  assert.equal(repeated.history.length,2);
+  await deleteExperience(sdk,a.id,repeated.record);
+
+  const photoOperation=randomUUID();const newPath=`${a.id}/records/${photoOperation}/photo.jpg`;
+  await repository.uploadPhoto(newPath,new Uint8Array(png).buffer,'image/png');
+  const attachment:PendingAttachment={version:1,owner:a.id,recordId:saved.recordId,operationId:photoOperation,expectedRevision:edited.record.revision,change:{kind:'photo',storagePath:newPath,width:1,height:1}};
+  await applyAttachment(sdk,attachment);
+  assert.equal((await applyAttachment(sdk,attachment)).replayed,true);
+  await drainPhotoDeletions(sdk,a.id);
+  assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`,a.token)).ok,'Replacement cleans the previous binary');
+  const replaced=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(replaced.record.record_notes?.confirmed_note,noteText);
+  assert.equal(replaced.record.record_photos[0].storage_path,newPath);
+  const target=await repository.save(randomUUID(),{enteredName:'Other synthetic',category:'whisky'});
+  const move:PendingAttachment={version:1,owner:a.id,recordId:saved.recordId,operationId:randomUUID(),expectedRevision:replaced.record.revision,change:{kind:'move',entryId:target.cellarEntryId}};
+  await assert.rejects(applyAttachment(sdkB,{...move,owner:b.id}));
+  await applyAttachment(sdk,move);
+  assert.notEqual((await loadTasteContext(sdk)).snapshot.hash,taste.snapshot.hash);
+  assert.equal((await loadTasteContext(sdkB)).snapshot.records.length,0);
+  const moved=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(moved.record.cellar_entry_id,target.cellarEntryId);
+  assert.equal(moved.history.length,2);assert.equal(moved.record.record_notes?.confirmed_note,noteText);
+  const split={...move,operationId:randomUUID(),expectedRevision:moved.record.revision,change:{kind:'split' as const,name:'Separated synthetic'}};
+  const splitResult=await applyAttachment(sdk,split);
+  assert.equal((await applyAttachment(sdk,split)).cellarEntryId,splitResult.cellarEntryId);
+  const separated=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
+  assert.equal(separated.history.length,1);assert.equal(separated.record.rating,3);
+  assert.equal(separated.record.record_notes?.confirmed_note,noteText);
+  await deleteExperience(sdk,a.id,(await loadRecordDetail(sdk,a.id,{recordId:target.recordId})).record);
+  await deleteExperience(sdk,a.id,separated.record);
+  await deleteExperience(sdk,a.id,separated.record); // lost response replay
+  await drainPhotoDeletions(sdk,a.id);
+  const jobs=await json<{status:string}[]>(await request(`/rest/v1/photo_deletion_jobs?storage_path=eq.${encodeURIComponent(storagePath)}`,a.token),'Deletion receipt');
+  assert.equal(jobs[0].status,'done');
   assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`, a.token)).ok, 'Deleted binary is no longer downloadable');
+  assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${newPath}`,a.token)).ok,'Replacement binary is also deleted after record deletion');
 });

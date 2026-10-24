@@ -1,6 +1,7 @@
 export const colors = {
   apple: '#252322', kakao: '#FEE500', background: '#FAF7F2', surface: '#FFFDFA', primary: '#783F4B', selected: '#F2E5E8',
   text: '#332D2B', muted: '#776B65', border: '#E6DDD4', chip: '#F0EBE2', illustration: '#EEE5D7', disabled: '#E7E1DD',
+  scrim: '#00000055',
   cabinet: { back: '#EDE5DB', side: '#D9CBB9', front: '#E2D6C6', top: '#F3EDE4', shadow: '#CCBDA9' },
 };
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, huge: 48 };
@@ -17,5 +18,10 @@ export const typography = {
  caption: { fontSize: 12, lineHeight: 18, fontFamily: fonts.regular },
  button: { fontSize: 15, lineHeight: 24, fontFamily: fonts.bold },
  filter: { fontSize: 11, lineHeight: 18, fontFamily: fonts.bold },
+ question: { fontSize:24,lineHeight:36,fontFamily:fonts.bold },
+ questionNav: { fontSize:14,lineHeight:20,fontFamily:fonts.medium },
+ fieldLabel: { fontSize:14,lineHeight:20,fontFamily:fonts.medium },
+ modeTitle: { fontSize:18,lineHeight:26,fontFamily:fonts.bold },
+ sheetTitle: { fontSize:24,lineHeight:34,fontFamily:fonts.bold },
 };
 export const layout = { screenPadding: 24, shelfInset: 16, shelfHeight: 228, cellarHeader: 176, buttonHeight: 52, buttonRadius: 16 };
