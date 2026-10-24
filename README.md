@@ -16,6 +16,8 @@
 
 내 취향의 갱신 실패 시 이전 요약/사진을 숨기고 재시도를 제공합니다. Android의 실제 로컬 API 연결 단절→복구를 확인했습니다. [내 취향 복구 검증](docs/verification/taste-refresh/README.md).
 
+메뉴판 사진 준비 중 취소·부분 실패는 미반영 파일만 정리하고 다음 준비 작업과 순서를 맞춥니다. [사진 준비/교체 검증과 제약](docs/verification/menu-preparation/README.md).
+
 ## 출시 범위
 
 - 사진만으로 기록 → 질문형 테이스팅 노트 → 술장·검색·상세·수정·삭제·재음용 기록
