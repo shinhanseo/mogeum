@@ -9,17 +9,20 @@ import { Button } from "../../src/components/Button";
 import { colors, typography } from "../../src/theme/tokens";
 import manifest from "../../assets/fixtures/ocr-benchmark/manifest.json";
 import type { BenchmarkCase } from "../../src/features/menu/benchmark-metrics";
-const ocrBenchmarkFixtures = manifest as BenchmarkCase[];
 import { benchmarkMetrics } from "../../src/features/menu/benchmark-metrics";
 import {
+  MENU_PHOTO_PIPELINE,
   prepareMenuPhoto,
   readMenuPhoto,
 } from "../../src/features/menu/device";
 import { parseMenu } from "../../supabase/functions/_shared/menu-domain";
+const ocrBenchmarkFixtures = manifest as BenchmarkCase[];
 type Result = {
   id: string;
   engine?: string;
   prepareMs?: number;
+  sourcePreserved?: boolean;
+  newTemporaryFiles?: number;
   ocrMs?: number;
   parseMs?: number;
   metrics?: ReturnType<typeof benchmarkMetrics>;
@@ -37,6 +40,7 @@ type Result = {
 type Report = {
   version: 1;
   synthetic: true;
+  photoPipeline: string;
   platform: string;
   osVersion: string;
   runId: string;
@@ -67,6 +71,7 @@ export default function OcrBenchmark() {
     const value: Report = {
       version: 1,
       synthetic: true,
+      photoPipeline: MENU_PHOTO_PIPELINE,
       platform: Platform.OS,
       osVersion: String(Platform.Version),
       runId,
@@ -91,21 +96,39 @@ export default function OcrBenchmark() {
           break;
         }
         const result: Result = { id: fixture.id };
-        const source = `http://127.0.0.1:8765/${fixture.id}.png`;
+        const source = `http://${Platform.OS === "ios" ? "localhost" : "127.0.0.1"}:8765/${fixture.id}.png`;
         const cache = `${FileSystem.cacheDirectory}ocr-benchmark-${runId}-${fixture.id}.png`;
         try {
           const prepareStart = performance.now();
           let local = source;
           if (/^https?:/.test(source)) {
-            await FileSystem.downloadAsync(source, cache);
+            await FileSystem.downloadAsync(source, cache, {
+              sessionType: FileSystem.FileSystemSessionType.FOREGROUND,
+            });
             local = cache;
           }
+          const temporaryDirectory = `${FileSystem.cacheDirectory}ImageManipulator/`;
+          const before = new Set(
+            await FileSystem.readDirectoryAsync(temporaryDirectory).catch(
+              () => [],
+            ),
+          );
           const prepared = await prepareMenuPhoto(
             "ocr-benchmark-fixture",
             session,
             local,
           );
           result.prepareMs = elapsed(prepareStart);
+          result.sourcePreserved = (
+            await FileSystem.getInfoAsync(local)
+          ).exists;
+          const after = await FileSystem.readDirectoryAsync(
+            temporaryDirectory,
+          ).catch(() => null);
+          if (after)
+            result.newTemporaryFiles = after.filter(
+              (file) => !before.has(file),
+            ).length;
           const ocrStart = performance.now(),
             read = await readMenuPhoto(prepared, (raw) => {
               result.rawNative = raw;

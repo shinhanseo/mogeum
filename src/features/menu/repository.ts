@@ -41,6 +41,7 @@ export async function menuRequest(
   const scoped = await menuClient(client, owner);
   const { data, error } = await scoped.functions.invoke("menu-recommend", {
     body: { action: items ? "recommend" : "parse", photos, items },
+    timeout: 30000,
   });
   if (error) {
     let code: unknown;
@@ -71,12 +72,14 @@ export async function saveMenuSession(
   validatePhotos(photos);
   validateItems(items, photos, "stored");
   const scoped = await menuClient(client, owner);
-  const { data, error } = await scoped.rpc("save_menu_session", {
-    p_id: id,
-    p_revision: revision,
-    p_photos: photos,
-    p_items: items,
-  });
+  const { data, error } = await scoped
+    .rpc("save_menu_session", {
+      p_id: id,
+      p_revision: revision,
+      p_photos: photos,
+      p_items: items,
+    })
+    .abortSignal(AbortSignal.timeout(20000));
   if (error) throw error;
   if (!Number.isInteger(data)) throw new Error("INVALID_REVISION");
   return data as number;
@@ -92,7 +95,9 @@ export async function loadMenuEvidence(
   return refreshMenuEvidence(result.tasteHash, {
     active,
     async hash() {
-      const { data, error } = await scoped.rpc("taste_summary_context");
+      const { data, error } = await scoped
+        .rpc("taste_summary_context")
+        .abortSignal(AbortSignal.timeout(20000));
       if (error) throw error;
       return data?.snapshot?.hash;
     },

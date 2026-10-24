@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "platform": "android",
+  "runId": "pkce-android-v3",
+  "rfc7636Vector": true,
+  "sdkMethod": "s256",
+  "sdkChallengeMatchesDigest": true,
+  "challengeLength": 43,
+  "accountCreated": false,
+  "browserOpened": false,
+  "checkedAt": "2026-10-24T03:36:07.303Z"
+}
