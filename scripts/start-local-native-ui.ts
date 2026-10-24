@@ -10,7 +10,8 @@ const status = JSON.parse(
 );
 if (
   status.API_URL !== "http://127.0.0.1:54321" ||
-  typeof status.ANON_KEY !== "string"
+  typeof status.PUBLISHABLE_KEY !== "string" ||
+  !status.PUBLISHABLE_KEY.startsWith("sb_publishable_")
 )
   throw new Error("Isolated local project required");
 const child = spawn(
@@ -21,13 +22,16 @@ const child = spawn(
     "--dev-client",
     "--port",
     "8081",
+    "--max-workers",
+    "2",
+    "--clear",
   ],
   {
     stdio: "inherit",
     env: {
       ...process.env,
       EXPO_PUBLIC_SUPABASE_URL: status.API_URL,
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: status.ANON_KEY,
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: status.PUBLISHABLE_KEY,
     },
   },
 );

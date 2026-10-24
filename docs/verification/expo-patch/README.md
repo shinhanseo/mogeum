@@ -16,7 +16,10 @@ PR67/68의 App checks가 Expo 원격 호환 목록과의 버전 차이로 실패
 - npx expo install --check: 온라인 호환 검사 통과.
 - npm run check: 전체241개 중235 통과, 실제 환경 전용6 skip.
 - npx expo export --platform all: iOS/Android Hermes·Web 정적 내보내기 통과.
-- native 재빌드/실행은 진행 중이며 최종 결과를 이어 기록한다. 이전 패치의 native 성공을 새 패치 성공으로 간주하지 않는다.
+- iOS 새 패치 재빌드 성공(0 errors, 2 warnings), 설치 후 실제 저장 UI E2E 통과.
+- Android 전체 ABI assembleDebug 성공(25분52초). 기존 Pixel7 저장 공간 부족으로 설치가 실패해 기존 사용자 데이터를 삭제하지 않고 전용 AVD를 생성했다. arm64 재빌드 성공(20초)·설치·실행 후 실제 저장 UI E2E 통과.
+- PR70·71 App checks / Database policies 모두 통과. 실제 UI 증거는 ../wishlist-edit/에 있다.
+- iOS Simulator·Android Emulator 결과이며 실기기 검증을 대체하지 않는다.
 
 처음 iOS pod install은 ExpoModulesWorklets/Core/FileSystem의 로컬 podspec과 Podfile.lock 충돌로 중단됐다. 기존 폴더를 지우지 않고 Expo/Core/Worklets/WorkletsAdapter/JSI/FileSystem/Font/dev-client/dev-launcher를 지정해 pod update --no-repo-update를 실행했다.
 
