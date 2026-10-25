@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { accountStorage as AsyncStorage } from "../auth/account-storage";
 import { randomUUID } from "expo-crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createWishlistQueue, type WishlistOperation } from "./wishlist";

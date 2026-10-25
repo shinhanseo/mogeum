@@ -1,3 +1,4 @@
+import { requestAccountDeletion } from "../src/features/auth/deletion-device";
 import { ActivityIndicator } from "react-native";
 import { Redirect, useRouter } from "expo-router";
 import { useAuth } from "../src/features/auth/AuthProvider";
@@ -15,6 +16,7 @@ export default function AccountRoute() {
     <AccountScreen
       key={auth.session.user.id}
       onBack={() => router.back()}
+      onDelete={() => requestAccountDeletion(auth.session.user.id)}
       onLogout={async () => {
         const client = getSupabase();
         if (!client) throw Error("NO_BACKEND");

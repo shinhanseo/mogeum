@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-25T03:15:55.999Z",
+  "projectRef": "vsckzjfgzdpzkzuumldf",
+  "syntheticOnly": true,
+  "humanAccountChanged": false,
+  "deleteBuild": "delete-account-01ce2a2f7e3722a6",
+  "discoveryBuild": "next-drinks-68e91384a6bb2061",
+  "rawEmptyRecommendationCount": 0,
+  "summary": {
+    "state": "not_requested"
+  },
+  "positiveRecommendations": 19,
+  "accountDeletion": {
+    "physicalPhotoRemoved": true,
+    "recordsRemoved": true,
+    "notesRemoved": true,
+    "authRemoved": true,
+    "otherAccountPreserved": true,
+    "lostResponseReplay": true
+  },
+  "syntheticCleanupComplete": true
+}

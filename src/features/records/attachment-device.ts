@@ -1,7 +1,7 @@
 import { recordRequestQueue } from "./request-queue";
 import { decodePreparedAttachment } from "./attachment-restore";
 import { isPreparedRecordPhoto } from "./draft-photo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { accountStorage as AsyncStorage } from "../auth/account-storage";
 import { createClient } from "@supabase/supabase-js";
 import * as FileSystem from "expo-file-system/legacy";
 import { Platform } from "react-native";

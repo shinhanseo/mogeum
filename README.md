@@ -6,7 +6,7 @@
 
 ## 현재 상태
 
-**실제 Supabase 개발 프로젝트에 기록 DB를 적용하고 앱 연결을 구현 중입니다.** Figma 기준 로그인·술장·기록 UI, 공통 컴포넌트와 사진/주종/날짜/평가/빈티지 입력이 있습니다. 기본 저장 버튼은 인증 세션의 사진 업로드→기록 RPC→술장 재조회로 연결했고 저장 요청 재시도를 보관합니다. Apple·카카오 provider와 콜백 등록을 완료했고 실제 사용자 로그인 및 관리형 프로젝트에서 앱 저장 성공 검증은 진행 중입니다. 4주종의 가볍게 5문항·심화 9/11/10/8문항, 문장 미리보기·직접 수정과 동일 기록에 노트를 보충하는 RPC도 연결했습니다. 저장 후 상세와 재음용·기본 수정/삭제를 연결했습니다. 내 취향 요약·근거 UI와 집계/캐시/AI 서버 호출부를 연결했습니다. Gemini 서버 키 등록과 합성 기록의 실제 모델 호출을 검증했으며, 관리형 인증 세션을 통한 전체 요약 흐름 검증은 남아 있습니다. 여러 장 메뉴판의 기기 OCR·확인/수정·제한된 출처 카탈로그와 기록 비교 추천도 연결했습니다. [메뉴판 구현과 현재 지원 범위](docs/verification/menu-ocr.md)를 참고하세요. [노트 구현·iOS 검증과 남은 범위](docs/verification/tasting-notes.md)를 참고하세요. [현재 연결·검증과 제약](docs/verification/live-records.md), [개발 로드맵](docs/milestones.md), [이슈 지도](docs/issue-map.md)를 참고하세요.
+**실제 Supabase 개발 프로젝트에 기록 DB를 적용하고 앱 연결을 구현 중입니다.** Figma 기준 로그인·술장·기록 UI, 공통 컴포넌트와 사진/주종/날짜/평가/빈티지 입력이 있습니다. 기본 저장 버튼은 인증 세션의 사진 업로드→기록 RPC→술장 재조회로 연결했고 저장 요청 재시도를 보관합니다. Apple·카카오 실제 iOS 로그인과 Apple 재실행 세션 복원을 확인했습니다. 관리형 임시 계정의 실제 사진/기록/노트 저장도 검증했으며 양 플랫폼 전체 앱 검증은 진행 중입니다. 4주종의 가볍게 5문항·심화 9/11/10/8문항, 문장 미리보기·직접 수정과 동일 기록에 노트를 보충하는 RPC도 연결했습니다. 저장 후 상세와 재음용·기본 수정/삭제를 연결했습니다. 내 취향 요약·근거 UI와 집계/캐시/AI 서버 호출부를 연결했습니다. Gemini 서버 키 등록과 합성 기록의 실제 모델 호출을 검증했으며, 관리형 임시 인증 계정의 기록→실제 모델→DB 요약 저장도 검증했습니다. 여러 장 메뉴판의 기기 OCR·확인/수정·제한된 출처 카탈로그와 기록 비교 추천도 연결했습니다. [메뉴판 구현과 현재 지원 범위](docs/verification/menu-ocr.md)를 참고하세요. [노트 구현·iOS 검증과 남은 범위](docs/verification/tasting-notes.md)를 참고하세요. [현재 연결·검증과 제약](docs/verification/live-records.md), [개발 로드맵](docs/milestones.md), [이슈 지도](docs/issue-map.md)를 참고하세요.
 
 다음 한 잔은 좋게 남긴 감각이 제품 특징과 실제로 연결될 때만 추천합니다. 기록 0개·사진만 있는 상태에는 카탈로그를 자동으로 노출하지 않고 기록 안내를 제공합니다. [추천 근거 없는 목록 수정](docs/verification/discovery-no-evidence/README.md).
 
@@ -27,6 +27,8 @@ iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메�
 기록 저장·사진 교체의 동시 요청과 완료 정리를 계정/기록별로 직렬화합니다. [보관 요청 동시 실행 검증](docs/verification/record-request-order.md).
 
 술 상세도 앱 복귀 시 기록·사진·이력을 재확인하고, 만료/실패한 사진 URL은 한 번만 재발급합니다. [iOS 실제 수정·삭제 복귀 검증과 제약](docs/verification/detail-refresh/README.md). 상세 DB 조회는 20초, 사진 서명 UI 대기는 10초로 제한하며 사진 없음/불러오기 실패를 구분합니다. [대기 제한·실패 검증](docs/verification/detail-deadlines/README.md).
+
+계정 관리에 기기 로그아웃과 영구 삭제 확인·재시도 흐름을 추가했습니다. 삭제 API는 로컬 임시 계정의 실제 Auth/Storage로 검증했고 관리형 배포·임시 계정 E2E는 확인했고 외부 OAuth 해제와 양 플랫폼 전체 삭제 UI 검증은 남아 있습니다. [계정 삭제 검증과 남은 범위](docs/verification/account-deletion/README.md).
 
 ## 출시 범위
 
@@ -149,3 +151,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 취향 요약·메뉴 추천 근거는 사진 준비 후 기록 버전을 재확인합니다. 취향 근거 화면도 앱 복귀 때 수정·삭제를 다시 읽습니다. [회귀 및 iOS 실제 복귀 검증](docs/verification/evidence-snapshot-window/README.md).
 
 2026-10-25 Apple·카카오 OAuth 공급자 활성화, 모금 전용 Gemini 서버 secret 등록 및 실제 provider 호출을 확인했습니다. [연결 상태·갱신 일정·검증 제약](docs/verification/auth-ai-connection/README.md).
+
+[관리형 배포·Gemini·삭제 및 iOS Apple 실제 검증](docs/verification/managed-account-rollout/README.md).

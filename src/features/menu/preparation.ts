@@ -1,7 +1,12 @@
 /** Serialize uncommitted photo preparation across screen mounts for the same account. */
 export function createPhotoPreparationQueue() {
   const queues = new Map<string, Promise<unknown>>();
+  const frozen = new Set<string>();
   return {
+    async freeze(owner: string) {
+      frozen.add(owner);
+      await queues.get(owner)?.catch(() => {});
+    },
     run<T>(
       owner: string,
       ports: {
@@ -12,6 +17,8 @@ export function createPhotoPreparationQueue() {
         discard: (photo: T) => Promise<void>;
       },
     ): Promise<T[] | null> {
+      if (frozen.has(owner))
+        return Promise.reject(new Error("ACCOUNT_DELETING"));
       const work = (queues.get(owner) ?? Promise.resolve())
         .catch(() => {})
         .then(async () => {
@@ -19,12 +26,12 @@ export function createPhotoPreparationQueue() {
           let committed = false;
           try {
             for (let index = 0; index < ports.count; index++) {
-              if (!ports.active()) return null;
+              if (frozen.has(owner) || !ports.active()) return null;
               const photo = await ports.prepare(index);
               prepared.push(photo);
-              if (!ports.active()) return null;
+              if (frozen.has(owner) || !ports.active()) return null;
             }
-            if (!ports.active()) return null;
+            if (frozen.has(owner) || !ports.active()) return null;
             ports.commit(prepared);
             committed = true;
             return prepared;
@@ -44,3 +51,5 @@ export function createPhotoPreparationQueue() {
     },
   };
 }
+
+export const menuPhotoPreparationQueue = createPhotoPreparationQueue();

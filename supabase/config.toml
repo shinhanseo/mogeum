@@ -425,3 +425,7 @@ verify_jwt = false
 [functions.next-drinks]
 # The handler validates the signed user JWT through Auth.getUser.
 verify_jwt = false
+
+[functions.delete-account]
+# Auth.getUser verifies the user; hashed receipt only acknowledges a previously completed deletion.
+verify_jwt = false
