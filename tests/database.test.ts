@@ -365,6 +365,33 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await db.query('select * from public.deleted_record_operations where user_id=$1',[owner])).rows.length,0);
       await as(a);
     });
+    await t.test('account deletion freezes writes, isolates receipts, requires binary cleanup, and recovers a lost final response', async () => {
+      const owner='10000000-0000-4000-8000-000000000504',hash='a'.repeat(64),lease=operation(504);
+      await db.exec('reset role');await db.query('insert into auth.users(id,email) values($1,$2)',[owner,'account-delete@example.test']);
+      await as(owner);if(!databaseUrl)await uploadMetadata(owner,504);const record=await saved(504,{enteredName:'Delete only this synthetic account',...(!databaseUrl?{photo:photo(owner,504)}:{})});
+      await code('select public.begin_account_deletion($1,$2,$3)',[owner,hash,lease],'42501');
+      await code('select * from private.account_deletions',[],'42501');
+      const service=async()=>{await as(null);await db.exec('reset role;set role service_role');};
+      await service();assert.equal((await db.query('select public.begin_account_deletion($1,$2,$3) result',[owner,hash,lease])).rows[0].result,true);
+      assert.equal((await db.query('select public.begin_account_deletion($1,$2,$3) result',[owner,hash,operation(505)])).rows[0].result,false);
+      await as(owner);assert.equal((await db.query('select public.account_deletion_status() result')).rows[0].result,'pending');
+      await code("select public.create_tasting_record($1,$2::jsonb)",[operation(505),{enteredName:'late write'}],'42501');
+      await code('insert into storage.objects(bucket_id,name,owner_id) values($1,$2,$3)',['record-photos',path(owner,505),owner],'42501');
+      await as(b);assert.equal((await db.query('select public.account_deletion_status() result')).rows[0].result,null);
+      await service();
+      if(!databaseUrl){
+        assert.equal(((await db.query('select public.account_deletion_files($1,$2) result',[owner,lease])).rows[0].result as string[])[0],path(owner,504));
+        await assert.rejects(db.query('select public.purge_account_data($1,$2)',[owner,lease]),/PHOTOS_REMAIN/);
+        await db.exec('reset role');await db.query('delete from storage.objects where bucket_id=$1 and name=$2',['record-photos',path(owner,504)]);
+      }else assert.deepEqual((await db.query('select public.account_deletion_files($1,$2) result',[owner,lease])).rows[0].result,[]);
+      await service();await db.query('select public.purge_account_data($1,$2)',[owner,lease]);
+      await db.exec('reset role');await db.query('delete from auth.users where id=$1',[owner]);
+      await service();assert.equal((await db.query('select public.completed_account_deletion($1) result',[hash])).rows[0].result,true);
+      assert.equal((await db.query('select public.completed_account_deletion($1) result',['b'.repeat(64)])).rows[0].result,false);
+      await db.exec('reset role');assert.equal((await db.query('select id from public.tasting_records where id=$1',[record.recordId])).rows.length,0);
+      assert.equal((await db.query('select id from public.photo_deletion_jobs where user_id=$1',[owner])).rows.length,0);
+      await as(a);
+    });
     await t.test('unverified common products are not client-readable or writable', async () => {
       await db.exec('reset role');
       await db.query("insert into public.drinks(canonical_name,category,verification_status) values ('Unverified','wine','unverified'),('Verified','beer','verified')");

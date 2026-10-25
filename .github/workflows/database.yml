@@ -6,6 +6,7 @@ on:
       - 'src/features/records/**'
       - 'src/features/taste/**'
       - 'src/features/cellar/**'
+      - 'tests/account-deletion-api.test.ts'
       - 'tests/cellar-api.test.ts'
       - 'tests/next-drinks-api.test.ts'
       - 'tests/taste-summary.test.ts'
@@ -56,6 +57,12 @@ jobs:
           done
           cat /tmp/mogeum-edge.log
           exit 1
+      - name: Typecheck and exercise account deletion through real Auth and Storage
+        run: |
+          npx -y deno check supabase/functions/delete-account/index.ts
+          npx tsx --test tests/account-deletion-api.test.ts
+        env:
+          MOGEUM_TEST_SUPABASE_HTTP: '1'
       - name: Typecheck the original menu function
         run: npx -y deno check supabase/functions/menu-recommend/index.ts
       - name: Typecheck the next-drinks endpoint

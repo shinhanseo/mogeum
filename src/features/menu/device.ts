@@ -1,9 +1,9 @@
 import { menuRequestQueue } from "./request-queue";
 import { type MenuRestoreResult } from "./restore";
 import { createMenuStore } from "./storage";
-import { createPhotoPreparationQueue } from "./preparation";
+import { menuPhotoPreparationQueue } from "./preparation";
 import { type MenuExclusion } from "./review";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { accountStorage as AsyncStorage } from "../auth/account-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
 import { randomUUID } from "expo-crypto";
@@ -35,7 +35,7 @@ const key = (owner: string) => `mogeum:menu:v1:${owner}`;
 export function newMenu(): MenuDraft {
   return { id: randomUUID(), revision: 0, photos: [], items: [] };
 }
-const preparationQueue = createPhotoPreparationQueue();
+const preparationQueue = menuPhotoPreparationQueue;
 /** Keep the queue until cancelled files are removed, so a remounted screen cannot reuse a revision path too early. */
 export function prepareMenuPhotoBatch(
   owner: string,

@@ -3,7 +3,7 @@ import { decodePendingRecord } from "./pending-restore";
 import { isPreparedRecordPhoto } from "./draft-photo";
 import { createClient } from "@supabase/supabase-js";
 import { getBackendState } from "../../lib/env";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { accountStorage as AsyncStorage } from "../auth/account-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { Platform } from "react-native";
