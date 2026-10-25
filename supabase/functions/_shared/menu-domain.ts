@@ -201,8 +201,17 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
           labelText.match(
             /\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b|한\s*잔|글라스|바틀|보틀|glass|bottle/iu,
           )?.[0] ?? null;
+        // OCR can damage one of two prices (15,000% / 150,000), making the
+        // valid-price filter see only one. Preserve the ambiguity before filtering.
+        const amountHints = [
+          ...text.matchAll(/\d{1,3}(?:,\d{3})+[\p{L}\p{N}%％]*/gu),
+        ];
+        const uncertainAmounts =
+          amountHints.length > 1 ||
+          amountHints.some((m) => !priceCell.test(m[0]));
         const price =
           prices.length === 1 &&
+          !uncertainAmounts &&
           !damaged.length &&
           !/[$€¥]|\b(?:USD|EUR|JPY)\b/i.test(text)
             ? Number(prices[0][0].replace(/[^0-9]/g, ""))
