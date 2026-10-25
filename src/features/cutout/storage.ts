@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import * as FS from "expo-file-system/legacy";
 import * as Crypto from "expo-crypto";
 import { accountStorage } from "../auth/account-storage";
@@ -32,6 +33,24 @@ export async function readLocalCutout(owner: string, source: string) {
   const uri = `${FS.cacheDirectory}cellar-cutouts/${owner}/${value.file}`;
   return (await FS.getInfoAsync(uri)).exists ? uri : null;
 }
+async function requireLivePhoto(owner: string, source: string) {
+  const client = getSupabase();
+  if (!client) throw Error("NO_BACKEND");
+  const { data, error } = await client
+    .from("record_photos")
+    .select("storage_path")
+    .eq("user_id", owner)
+    .eq("storage_path", source)
+    .eq("upload_status", "ready")
+    .abortSignal(AbortSignal.timeout(15000))
+    .maybeSingle();
+  if (error || !data) throw Error("SOURCE_PHOTO_REMOVED");
+}
+/** A durable server photo-deletion job authorizes removing its matching local derivative. */
+export async function forgetPhotoCutout(owner: string, source: string) {
+  if (Platform.OS === "web") return;
+  await saveLocalCutout(owner, source, null);
+}
 export function saveLocalCutout(
   owner: string,
   source: string,
@@ -47,6 +66,7 @@ export function saveLocalCutout(
       const directory = `${FS.cacheDirectory}cellar-cutouts/${owner}/`,
         target = `${directory}${id}.png`;
       if (value) {
+        await requireLivePhoto(owner, source);
         if (!value.uri.startsWith(`${FS.cacheDirectory}background-removal/`))
           throw Error("INVALID_DERIVATIVE");
         await FS.makeDirectoryAsync(directory, { intermediates: true });
@@ -58,6 +78,7 @@ export function saveLocalCutout(
         throw Error("ACCOUNT_CHANGED");
       }
       try {
+        if (value) await requireLivePhoto(owner, source);
         await accountStorage.setItem(
           localCutoutKey(owner),
           JSON.stringify(items),
