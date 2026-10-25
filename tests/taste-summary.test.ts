@@ -51,3 +51,10 @@ test('client generation pins the action owner JWT and rejects a switched account
  let calls=0;let owner='owner';const fake={auth:{getSession:async()=>({data:{session:{user:{id:owner},access_token:'synthetic-token'}}})},functions:{invoke:async(_name:string,options:{headers:{Authorization:string}})=>{calls++;assert.equal(options.headers.Authorization,'Bearer synthetic-token');return {data:{state:'ready',hash:'fixture'},error:null};}}} as unknown as SupabaseClient;
  await generateTasteSummary(fake,'owner');assert.equal(calls,1);owner='other';await assert.rejects(generateTasteSummary(fake,'owner'));assert.equal(calls,1);
 });
+
+test('provider timeouts release the lease, never cache a summary, and return only a safe retry code',async()=>{
+ for(const name of ['TimeoutError','AbortError']){
+ const h=harness();let selections=0;h.ports.select=async()=>{selections++;throw Object.assign(new Error('private provider response'),{name});};
+ const response=await tasteHandler(h.ports)(request());assert.equal(response.status,502);assert.equal(response.headers.get('cache-control'),'no-store');assert.deepEqual(await response.json(),{code:'ANALYSIS_TIMEOUT',retryable:true});assert.equal(h.finished(),null);assert.equal(selections,1);
+ }
+});

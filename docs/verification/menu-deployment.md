@@ -25,3 +25,7 @@ Apple·카카오 provider 등록과 실제 관리형 계정의 로그인→메�
 ## 후속 배포 · 2026-10-24
 
 최신 geometry-v3를 build `menu-cb7ea451e5d61969`로 배포했다. 위 v2 항목은 이전 배포 이력이다. [최신 배포 검증](discovery-deployment/README.md).
+
+## CLI 소스 배포 갱신 · 2026-10-26
+
+Galaxy 합성 OCR에서 확인한 손상된 잔·병 가격 미확정 변경을 개발 프로젝트 menu-recommend에 배포했다. iOS 원문2장·저장/추천·Galaxy 원문 모호한 가격4개 미확정의 실제 관리형 검증은 [AI 시간 초과와 분리한 검증](summary-timeout/README.md)에 있다. CLI source 배포는 source-development header와 함수 버전으로 구분하며 이전 dashboard 번들 hash라고 주장하지 않는다.
