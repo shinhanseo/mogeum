@@ -153,3 +153,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 2026-10-25 Apple·카카오 OAuth 공급자 활성화, 모금 전용 Gemini 서버 secret 등록 및 실제 provider 호출을 확인했습니다. [연결 상태·갱신 일정·검증 제약](docs/verification/auth-ai-connection/README.md).
 
 [관리형 배포·Gemini·삭제 및 iOS Apple 실제 검증](docs/verification/managed-account-rollout/README.md).
+
+[iOS·Android 네이티브 OCR부터 관리형 메뉴 저장·추천까지 실제 검증](docs/verification/managed-native-menu/README.md). 합성 이미지/임시 계정 전용이며 실사 메뉴판 품질·권한 UI·출시 빌드 검증은 별도입니다.

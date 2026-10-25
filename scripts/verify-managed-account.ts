@@ -1,3 +1,8 @@
+import { validateItems } from "../supabase/functions/_shared/menu-domain";
+import {
+  requireCatalogVersion,
+  validateMenuResult,
+} from "../src/features/menu/result-contract";
 /** Explicitly approved Mogeum development project only. Create/tag/clean synthetic accounts; never enumerate or touch human accounts. */
 import { createClient } from "@supabase/supabase-js";
 import { readFile, writeFile, unlink, mkdir } from "node:fs/promises";
@@ -206,6 +211,90 @@ async function main() {
         ),
     );
     report.positiveRecommendations = personal.recommendations.length;
+    step = "managed-native-ocr-fixture-menu";
+    // Replay already captured native OCR evidence; this does not claim a new camera/OCR run.
+    const capture = JSON.parse(
+      await readFile(
+        "docs/verification/ocr-benchmark/ios-normalized-v2.json",
+        "utf8",
+      ),
+    );
+    const photos = ["light", "two-columns"].map((id) => {
+      const raw = capture.cases.find(
+        (c: { id: string }) => c.id === id,
+      )?.rawNative;
+      ensure(raw && Array.isArray(raw.lines));
+      const photoId = randomUUID();
+      return {
+        ...raw,
+        id: photoId,
+        imageRevision: 1,
+        lines: raw.lines.map((line: object, index: number) => ({
+          ...line,
+          id: `${photoId}:1:${index}`,
+        })),
+      };
+    });
+    const parse = await call("menu-recommend", a.token, {
+      action: "parse",
+      photos,
+    });
+    ensure(parse.status === 200);
+    const parsed = await parse.json();
+    requireCatalogVersion(parsed);
+    ensure(parsed.parser === "geometry-v3");
+    const items = validateItems(parsed.items, photos);
+    ensure(
+      photos.every((photo) => items.some((item) => item.photoId === photo.id)),
+    );
+    const chosen = items.find((item) => /글렌|glen/i.test(item.name));
+    ensure(chosen);
+    const confirmed = {
+      ...chosen!,
+      name: "글렌리벳 12년",
+      productId: "glenlivet-12",
+      confirmed: true,
+    };
+    const reviewed = validateItems(
+        items.map((item) => (item.id === chosen!.id ? confirmed : item)),
+        photos,
+      ),
+      sessionId = randomUUID();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const saved = await a.client.rpc("save_menu_session", {
+        p_id: sessionId,
+        p_revision: 0,
+        p_photos: photos,
+        p_items: reviewed,
+      });
+      ensure(!saved.error && saved.data === 1);
+    }
+    const hidden = await b.client
+      .from("menu_sessions")
+      .select("id")
+      .eq("id", sessionId);
+    ensure(!hidden.error && hidden.data?.length === 0);
+    const recommendation = await call("menu-recommend", a.token, {
+      action: "recommend",
+      photos,
+      items: [confirmed],
+    });
+    ensure(recommendation.status === 200);
+    const compared = validateMenuResult(await recommendation.json(), [
+      confirmed,
+    ]);
+    ensure(compared.recommendations.length > 0);
+    report.menu = {
+      build: parse.headers.get("x-mogeum-build"),
+      source: "previously-captured-ios-native-ocr",
+      photoCount: photos.length,
+      parsedItems: items.length,
+      parser: parsed.parser,
+      sessionSaved: true,
+      idempotentReplay: true,
+      otherAccountReadDenied: true,
+      recommendations: compared.recommendations.length,
+    };
     step = "managed-account-delete";
     const deleted = await call("delete-account", a.token, { confirm: true });
     ensure(
