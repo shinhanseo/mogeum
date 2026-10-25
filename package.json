@@ -25,10 +25,12 @@
     "build:discovery-function": "tsx scripts/build-next-drinks-function.ts",
     "test:discovery-deploy": "tsx scripts/verify-next-drinks-function.ts",
     "build:account-function": "tsx scripts/build-account-deletion-function.ts",
-    "test:account-deploy": "tsx scripts/verify-account-deletion-function.ts"
+    "test:account-deploy": "tsx scripts/verify-account-deletion-function.ts",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "0.4.4",
+    "@rbayuokt/expo-background-removal": "0.1.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "2.118.0",
     "expo": "~58.0.19",
@@ -62,6 +64,7 @@
     "eslint": "9.39.5",
     "eslint-config-expo": "58.0.4",
     "jose": "6.2.13",
+    "patch-package": "8.0.1",
     "postgres": "3.4.9",
     "supabase": "2.121.0",
     "tsx": "4.23.15",

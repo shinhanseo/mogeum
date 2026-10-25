@@ -1,3 +1,4 @@
+import { clearLocalCutouts } from "../cutout/storage";
 import type { DeletionEvent } from "./deletion-events";
 import { resolveDeletionRequest } from "./deletion-request";
 import { menuPhotoPreparationQueue } from "../menu/preparation";
@@ -52,6 +53,7 @@ export async function currentDeletionStatus(owner: string) {
 }
 async function cleanup(owner: string) {
   await accountStorage.freeze(owner);
+  await clearLocalCutouts(owner);
   await menuPhotoPreparationQueue.freeze(owner);
   const keys = deletedAccountKeys(owner, await AsyncStorage.getAllKeys());
   for (const storageKey of keys) {

@@ -8,8 +8,8 @@ import { categories, shelfRows, type Category, type CellarItem } from './model';
 
 function PhotoCard({ item, onPress, onPhotoError }: { item: CellarItem; onPress: () => void; onPhotoError?: (id: string, uri: string) => void }) {
   const [failedUri, setFailedUri] = useState<string | null>(null);
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name ?? '이름 없는 술'} 기록 보기`} onPress={onPress} style={styles.card}>
-    {item.photoUri && item.photoUri !== failedUri ? <Image source={{ uri: item.photoUri }} onError={() => { setFailedUri(item.photoUri); if (item.photoUri) onPhotoError?.(item.id, item.photoUri); }} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>{item.photoUri ? "사진을 못 불러왔어요" : "사진 없음"}</Text></View>}
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${item.name ?? '이름 없는 술'} 기록 보기`} onPress={onPress} style={[styles.card,item.cutoutUri&&styles.cutoutCard]}>
+    {item.cutoutUri&&item.cutoutUri!==failedUri?<Image source={{uri:item.cutoutUri}} onError={()=>setFailedUri(item.cutoutUri??null)} resizeMode="contain" style={styles.photo} accessibilityLabel="배경을 분리한 술 사진"/>:item.photoUri && item.photoUri !== failedUri ? <Image source={{ uri: item.photoUri }} onError={() => { setFailedUri(item.photoUri); if (item.photoUri) onPhotoError?.(item.id, item.photoUri); }} resizeMode="cover" style={styles.photo} accessibilityLabel={`${item.name ?? '이름 없는 술'} 사진`} /> : <View style={[styles.photo, styles.fallback]}><Icon name="photo" /><Text style={styles.category}>{item.photoUri ? "사진을 못 불러왔어요" : "사진 없음"}</Text></View>}
     <Text numberOfLines={2} style={styles.name}>{item.name || '이름 없는 술'}</Text>
     <Text style={styles.category}>{item.category || '종류 미정'}{item.recordCount>1?` · 기록 ${item.recordCount}회`:''}</Text>
   </Pressable>;
@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 24 }, shelf: { minHeight: 228, backgroundColor: colors.cabinet.back, borderLeftWidth: 10, borderRightWidth: 10, borderColor: colors.cabinet.side },
   slots: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 6, paddingTop: 20, minHeight: 212 }, slot: { flex: 1, minWidth: 0 },
   card: { padding: 4, backgroundColor: colors.surface, borderRadius: 3, gap: 4 }, photo: { width: '100%', aspectRatio: 3 / 4 },
+  cutoutCard: { backgroundColor: 'transparent' },
   fallback: { backgroundColor: colors.cabinet.top, alignItems: 'center', justifyContent: 'center', gap: 8 },
   name: { minHeight: 32, fontSize: 11, lineHeight: 16, fontFamily: fonts.bold, color: colors.text, textAlign: 'center' }, category: { fontSize: 10, lineHeight: 16, fontFamily: fonts.regular, color: colors.muted, textAlign: 'center' },
   shelfTop: { height: 6, backgroundColor: colors.cabinet.top }, shelfFront: { height: 10, backgroundColor: colors.cabinet.front, borderBottomWidth: 2, borderBottomColor: colors.cabinet.shadow },

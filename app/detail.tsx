@@ -89,6 +89,7 @@ function ConnectedDetail({
     return (
       <RecordDetailScreen
         {...value}
+        onCutout={() => router.push({pathname:"/cutout",params:{recordId:value.record.id}})}
         onPhotoError={(uri) => {
           if (focused.current && AppState.currentState === "active")
             void loader.refreshPhoto(uri);
