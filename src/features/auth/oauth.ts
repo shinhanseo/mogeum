@@ -1,3 +1,4 @@
+import { oauthOptions } from './options';
 import { exchangeOAuthCode } from './exchange';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -15,7 +16,7 @@ export async function signIn(provider: 'apple' | 'kakao') {
   const settings = await response.json() as { external?: Record<string,boolean> };
   if (!settings.external?.[provider]) throw new Error('PROVIDER_NOT_CONFIGURED');
   const redirectTo = Platform.OS === 'web' ? `${window.location.origin}/auth/callback` : Linking.createURL('auth/callback');
-  const { data, error } = await client.auth.signInWithOAuth({ provider, options: { redirectTo, skipBrowserRedirect: true } });
+  const { data, error } = await client.auth.signInWithOAuth({ provider, options: oauthOptions(provider, redirectTo) });
   if (error || !data.url) throw new Error('로그인 연결을 시작하지 못했어요. 잠시 후 다시 시도해주세요.');
   if (Platform.OS === 'web') { window.location.assign(data.url); return; }
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
