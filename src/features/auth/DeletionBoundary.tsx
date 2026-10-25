@@ -1,9 +1,11 @@
+import { deletionOwnerAfterEvent } from "./deletion-events";
 import { useEffect, useState, useRef, type ReactNode } from "react";
 import { AppState, ActivityIndicator, View } from "react-native";
 import { usePathname } from "expo-router";
 import { useAuth } from "./AuthProvider";
 import {
   currentDeletionStatus,
+  latestDeletionTask,
   observeDeletion,
   requestAccountDeletion,
   storedDeletionOwners,
@@ -21,11 +23,13 @@ export function DeletionBoundary({ children }: { children: ReactNode }) {
     [checked, setChecked] = useState(false);
   useEffect(
     () =>
-      observeDeletion((owner) => {
+      observeDeletion((event) => {
         inspectionVersion.current++;
-        setPending(owner);
+        setPending((current) =>
+          deletionOwnerAfterEvent(current, activeOwner, event),
+        );
       }),
-    [],
+    [activeOwner],
   );
   useEffect(() => {
     let alive = true;
@@ -90,9 +94,11 @@ export function DeletionBoundary({ children }: { children: ReactNode }) {
           ) : owner ? (
             <DeletionScreen
               key={owner}
+              initialTask={latestDeletionTask(owner)}
               onRetry={async () => {
                 const result = await requestAccountDeletion(owner);
-                if (result === "complete") setPending(null);
+                if (result === "complete")
+                  setPending((current) => (current === owner ? null : current));
                 return result;
               }}
               onLogin={signIn}

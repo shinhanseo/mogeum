@@ -1,3 +1,4 @@
+import type { DeletionEvent } from "./deletion-events";
 import { resolveDeletionRequest } from "./deletion-request";
 import { menuPhotoPreparationQueue } from "../menu/preparation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -97,11 +98,14 @@ async function cleanup(owner: string) {
   await AsyncStorage.multiRemove(keys);
 }
 const pending = new Map<string, Promise<"running" | "complete">>();
+const latest = new Map<string, Promise<"running" | "complete">>();
+export const latestDeletionTask = (owner: string) => latest.get(owner);
 export function requestAccountDeletion(owner: string) {
   const old = pending.get(owner);
   if (old) return old;
   const work = perform(owner);
   pending.set(owner, work);
+  latest.set(owner, work);
   void work
     .finally(() => {
       if (pending.get(owner) === work) pending.delete(owner);
@@ -128,7 +132,7 @@ async function perform(owner: string): Promise<"running" | "complete"> {
   }
   await AsyncStorage.setItem(key(owner), JSON.stringify(receipt));
   await accountStorage.freeze(owner);
-  notifyDeletion(owner);
+  notifyDeletion({ owner, active: true });
   if (!receipt.complete) {
     const result = await resolveDeletionRequest(
       receipt.tokens,
@@ -164,15 +168,16 @@ async function perform(owner: string): Promise<"running" | "complete"> {
     if (result.error) throw Error("LOCAL_SIGNOUT_FAILED");
   }
   await AsyncStorage.removeItem(key(owner));
-  notifyDeletion(null);
+  latest.delete(owner);
+  notifyDeletion({ owner, active: false });
   return "complete";
 }
 
-const listeners = new Set<(owner: string | null) => void>();
-function notifyDeletion(owner: string | null) {
-  for (const listener of listeners) listener(owner);
+const listeners = new Set<(event: DeletionEvent) => void>();
+function notifyDeletion(event: DeletionEvent) {
+  for (const listener of listeners) listener(event);
 }
-export function observeDeletion(listener: (owner: string | null) => void) {
+export function observeDeletion(listener: (event: DeletionEvent) => void) {
   listeners.add(listener);
   return () => {
     listeners.delete(listener);

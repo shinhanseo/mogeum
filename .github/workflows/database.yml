@@ -60,7 +60,7 @@ jobs:
       - name: Typecheck and exercise account deletion through real Auth and Storage
         run: |
           npx -y deno check supabase/functions/delete-account/index.ts
-          npx tsx --test tests/account-deletion-api.test.ts
+          npm run test:account-deploy
         env:
           MOGEUM_TEST_SUPABASE_HTTP: '1'
       - name: Typecheck the original menu function

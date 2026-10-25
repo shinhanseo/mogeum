@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
@@ -7,14 +7,41 @@ import { colors, radius, space, typography } from "../../theme/tokens";
 export function DeletionScreen({
   onRetry,
   onLogin,
+  initialTask,
 }: {
   onRetry: () => Promise<"running" | "complete">;
+  initialTask?: Promise<"running" | "complete">;
   onLogin?: (provider: "apple" | "kakao") => Promise<void>;
 }) {
   const [state, setState] = useState<
     "ready" | "busy" | "running" | "error" | "login" | "complete"
-  >("ready");
+  >(initialTask ? "busy" : "ready");
   const lock = useRef(false);
+  useEffect(() => {
+    if (!initialTask) return;
+    let alive = true;
+    lock.current = true;
+    void initialTask
+      .then(
+        (result) => {
+          if (alive) setState(result);
+        },
+        (error) => {
+          if (alive)
+            setState(
+              error instanceof Error && error.message === "LOGIN_REQUIRED"
+                ? "login"
+                : "error",
+            );
+        },
+      )
+      .finally(() => {
+        if (alive) lock.current = false;
+      });
+    return () => {
+      alive = false;
+    };
+  }, [initialTask]);
   async function submit() {
     if (lock.current) return;
     lock.current = true;

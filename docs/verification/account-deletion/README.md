@@ -26,7 +26,7 @@
 
 ## 아직 완료하지 않은 범위
 
-- 관리형 개발 DB의 11번 마이그레이션과 `delete-account` 배포 및 관리형 임시 계정 E2E.
+- 관리형 개발 DB와 `delete-account` 배포·임시 계정 API E2E는 완료했다. [실제 결과](../managed-account-rollout/README.md)를 참고한다.
 - iOS/Android의 실제 삭제 → 앱 재실행 → 로그인 복귀 전체 검증. 사용자가 로그인한 실제 계정을 삭제하거나 로그아웃하지 않았다.
 - Apple/Kakao OAuth 제공자 grant·토큰 해제. 현재 Supabase Auth 제거를 외부 제공자 토큰 revoke 완료로 표현하지 않는다. Apple 출시 전 이 항목을 별도로 구현·검증해야 한다.
 - 앱이 삭제 도중 종료되면 사용자가 앱을 다시 열어 재시도를 눌러야 한다. 앱과 무관하게 계속되는 별도 예약 worker는 아직 없다.

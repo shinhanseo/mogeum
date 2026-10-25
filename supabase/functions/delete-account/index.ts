@@ -1,6 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import { deleteAccount } from "../_shared/account-deletion.ts";
 import { readMenuBody } from "../_shared/menu-body.ts";
+declare const __MOGEUM_BUILD_ID__: string | undefined;
+const buildId =
+  typeof __MOGEUM_BUILD_ID__ === "string"
+    ? __MOGEUM_BUILD_ID__
+    : "source-development";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -10,7 +15,11 @@ const cors = {
 const reply = (value: unknown, status = 200) =>
   Response.json(value, {
     status,
-    headers: { ...cors, "Cache-Control": "no-store" },
+    headers: {
+      ...cors,
+      "Cache-Control": "no-store",
+      "X-Mogeum-Build": buildId,
+    },
   });
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS")

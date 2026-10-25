@@ -23,7 +23,9 @@
     "build:menu-function": "tsx scripts/build-menu-function.ts",
     "test:menu-deploy": "tsx scripts/verify-menu-function.ts",
     "build:discovery-function": "tsx scripts/build-next-drinks-function.ts",
-    "test:discovery-deploy": "tsx scripts/verify-next-drinks-function.ts"
+    "test:discovery-deploy": "tsx scripts/verify-next-drinks-function.ts",
+    "build:account-function": "tsx scripts/build-account-deletion-function.ts",
+    "test:account-deploy": "tsx scripts/verify-account-deletion-function.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "0.4.4",
