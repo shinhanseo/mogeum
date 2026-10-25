@@ -65,6 +65,8 @@ jobs:
           MOGEUM_TEST_SUPABASE_HTTP: '1'
       - name: Typecheck the original menu function
         run: npx -y deno check supabase/functions/menu-recommend/index.ts
+      - name: Typecheck provider credential endpoint
+        run: npx -y deno check supabase/functions/provider-credentials/index.ts
       - name: Typecheck the next-drinks endpoint
         run: npx -y deno check supabase/functions/next-drinks/index.ts
       - name: Verify generated deployment through real Auth, Storage binary and Data API

@@ -24,6 +24,7 @@
     "supabase/functions/taste-summary/provider.ts",
     "supabase/functions/menu-recommend/index.ts",
     "supabase/functions/next-drinks/index.ts",
-    "supabase/functions/delete-account/index.ts"
+    "supabase/functions/delete-account/index.ts",
+    "supabase/functions/provider-credentials/index.ts"
   ]
 }

@@ -429,3 +429,7 @@ verify_jwt = false
 [functions.delete-account]
 # Auth.getUser verifies the user; hashed receipt only acknowledges a previously completed deletion.
 verify_jwt = false
+
+[functions.provider-credentials]
+# Verifies the Supabase user and refreshed provider identity before storing encrypted material.
+verify_jwt = false

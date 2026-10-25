@@ -365,6 +365,29 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await db.query('select * from public.deleted_record_operations where user_id=$1',[owner])).rows.length,0);
       await as(a);
     });
+    await t.test('provider credentials are service-only, identity-bound, frozen after deletion, and erased after revoke receipt',async()=>{
+      const owner='10000000-0000-4000-8000-000000000612',lease=operation(612),generation=operation(613),ciphertext='v1.'+'x'.repeat(80);
+      await db.exec('reset role');await db.query('insert into auth.users(id,email) values($1,$2)',[owner,'provider-fixture@example.test']);
+      await db.query("insert into auth.identities(user_id,provider,provider_id,identity_data) values($1,'apple','synthetic-subject',$2::jsonb)",[owner,{sub:'synthetic-subject'}]);
+      await as(owner);
+      await code('select * from private.provider_credentials',[],'42501');
+      await code('select public.store_provider_credential($1,$2,$3,$4,$5)',[owner,'apple','synthetic-subject',ciphertext,generation],'42501');
+      const service=async()=>{await as(null);await db.exec('reset role;set role service_role');};
+      await service();
+      await code('select public.store_provider_credential($1,$2,$3,$4,$5)',[owner,'apple','other-subject',ciphertext,generation],'42501');
+      await db.query('select public.store_provider_credential($1,$2,$3,$4,$5)',[owner,'apple','synthetic-subject',ciphertext,generation]);
+      await code('select public.deletion_provider_credentials($1,$2)',[owner,lease],'42501');
+      await db.query('select public.begin_account_deletion($1,$2,$3)',[owner,'d'.repeat(64),lease]);
+      await code('select public.store_provider_credential($1,$2,$3,$4,$5)',[owner,'apple','synthetic-subject',ciphertext,generation],'42501');
+      const rows=(await db.query<{result:{generation:string;ciphertext:string;revoked:boolean}[]}>('select public.deletion_provider_credentials($1,$2) result',[owner,lease])).rows[0].result;
+      assert.equal(rows[0].ciphertext,ciphertext);assert.equal(rows[0].revoked,false);
+      await assert.rejects(db.query('select public.mark_provider_revoked($1,$2,$3,$4)',[owner,'apple',operation(614),lease]),/GENERATION_CHANGED/);
+      await db.query('select public.mark_provider_revoked($1,$2,$3,$4)',[owner,'apple',generation,lease]);
+      const updated=(await db.query<{result:{ciphertext:string;revoked:boolean}[]}>('select public.deletion_provider_credentials($1,$2) result',[owner,lease])).rows[0].result;
+      assert.equal(updated[0].revoked,true);assert.notEqual(updated[0].ciphertext,ciphertext);
+      await db.exec('reset role');await db.query('delete from auth.users where id=$1',[owner]);
+      assert.equal((await db.query('select * from private.provider_credentials where user_id=$1',[owner])).rows.length,0);await as(a);
+    });
     await t.test('account deletion freezes writes, isolates receipts, requires binary cleanup, and recovers a lost final response', async () => {
       const owner='10000000-0000-4000-8000-000000000504',hash='a'.repeat(64),lease=operation(504);
       await db.exec('reset role');await db.query('insert into auth.users(id,email) values($1,$2)',[owner,'account-delete@example.test']);
