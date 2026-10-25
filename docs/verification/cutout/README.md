@@ -57,3 +57,9 @@ CI의 계정 삭제 API 검사가2회 `502 !== 401`로 실패했고, 같은 번�
 이 변경의 `npm run check`:325개 중318개 통과,7개 환경 의존 skip. Android emulator에서 실제 ML Kit와 로컬 Auth/Storage/DB를 연결했다. iPhone·Galaxy 실기기 품질 검증과 서버 누끼 동기화는 남아 있다.
 
 CI HTTP harness는 Node 환경이라 Expo native filesystem을 로드할 수 없다. 해당 harness에 명시적인 derivative adapter를 주입해 소유자/경로 경계와 실제 서버 원본 삭제를 검사한다. native 파일 삭제 자체는 위 Android12단계 probe에서 별도로 확인했다. 정리 실패를 무시하고 원본을 지우도록 앱 코드를 완화하지 않는다.
+
+### iOS Simulator 실제 실행 제약 (2026-10-26)
+
+iPhone17 Pro/iOS26.5 Simulator에 배경 분리 모듈이 포함된 기존 성공 빌드를 덮어 설치하고, 계정·서버 쓰기가 없는 bundled sample probe를 실행했다. Apple Vision은 `Could not create inference context` 및 CPU fallback이 없어 Simulator에서 foreground segmentation을 실행할 수 없다는 오류를 반환했다. 컴파일 성공과 실제 Vision 실행 성공은 다르다. iPhone 물리 기기 검증은 여전히 남아 있다. 로그인·기록·서버 삭제 검증 전체가 물리 기기를 요구하는 것은 아니다.
+
+누끼 오류 안내는 플랫폼별로 구분한다. Simulator에는 실제 iPhone/원본 사용 안내, 일반 iOS 실패에는 사진 재시도/원본 안내를 표시한다. Android 첫 모델 다운로드 안내는 Android에만 유지한다. 기존 토큰·레이아웃·공통 컴포넌트는 변경하지 않았다. 사용자 계정 삭제·로그아웃·실제 사진 처리는 하지 않았다.
