@@ -1,0 +1,26 @@
+diff --git a/node_modules/@rbayuokt/expo-background-removal/ios/BackgroundRemovalError.swift b/node_modules/@rbayuokt/expo-background-removal/ios/BackgroundRemovalError.swift
+index dbdb065..461a30b 100644
+--- a/node_modules/@rbayuokt/expo-background-removal/ios/BackgroundRemovalError.swift
++++ b/node_modules/@rbayuokt/expo-background-removal/ios/BackgroundRemovalError.swift
+@@ -17,11 +17,11 @@ internal enum BackgroundRemovalErrorCode: String {
+  */
+ internal final class BackgroundRemovalException: Exception {
+   private let errorCode: String
+-  private let message: String
++  private let detailMessage: String
+ 
+   init(_ code: BackgroundRemovalErrorCode, _ message: String, cause: Error? = nil) {
+     self.errorCode = code.rawValue
+-    self.message = message
++    self.detailMessage = message
+     super.init()
+     self.cause = cause
+   }
+@@ -31,6 +31,6 @@ internal final class BackgroundRemovalException: Exception {
+   }
+ 
+   override var reason: String {
+-    message
++    detailMessage
+   }
+ }

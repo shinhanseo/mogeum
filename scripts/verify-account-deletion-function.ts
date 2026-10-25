@@ -1,3 +1,4 @@
+import { waitForStableFunction } from "./stable-function-runtime";
 /** Verify the generated artifact on isolated local Supabase, restoring the source even when tests fail. */
 import { execFileSync, spawnSync } from "node:child_process";
 import {
@@ -48,27 +49,31 @@ async function main() {
       readFileSync(`${output}.manifest.json`, "utf8"),
     );
     writeFileSync(entry, readFileSync(output));
-    let matched = false;
-    for (let attempt = 0; attempt < 40; attempt++) {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:54321/functions/v1/delete-account",
-          { method: "POST", body: "{}", signal: AbortSignal.timeout(2000) },
-        );
-        if (
-          response.status === 401 &&
-          response.headers.get("X-Mogeum-Build") === manifest.buildId
-        ) {
-          matched = true;
-          break;
-        }
-      } catch {
-        /* Wait for the local worker to reload; never print request metadata. */
-      }
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-    if (!matched)
-      throw new Error("Local runtime did not load the deployment artifact");
+    await waitForStableFunction(
+      {
+        probe: async () => {
+          const response = await fetch(
+            "http://127.0.0.1:54321/functions/v1/delete-account",
+            {
+              method: "POST",
+              headers: {
+                apikey: status.ANON_KEY,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ confirm: true }),
+              signal: AbortSignal.timeout(2000),
+            },
+          );
+          return {
+            status: response.status,
+            build: response.headers.get("X-Mogeum-Build"),
+          };
+        },
+        now: () => Date.now(),
+        pause: () => new Promise((resolve) => setTimeout(resolve, 200)),
+      },
+      manifest.buildId,
+    );
     console.log(`Verified runtime build: ${manifest.buildId}`);
     const tests = spawnSync(
       process.execPath,
