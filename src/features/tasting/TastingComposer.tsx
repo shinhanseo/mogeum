@@ -7,7 +7,7 @@ import { ChoiceChip } from '../../components/ChoiceChip';
 import { colors, fonts, typography } from '../../theme/tokens';
 import { aromaCatalogs, type NoteMode } from './catalog';
 import { changeAroma, emptyAroma } from './aroma';
-import { aromaLabel, choose, composeNote, emptyAnswer } from './answers';
+import { aromaLabel, choose, composeNote, emptyAnswer, textAnswer } from './answers';
 import { setAnswer, switchMode, type TastingDraft } from './draft';
 import { isFieldVisible, questionsFor, type Field } from './questions';
 import { ModeSheet } from './ModeSheet';
@@ -28,16 +28,39 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const focusedInput=useRef<string|null>(null);
   const inputs=useRef<Record<string,ComponentRef<typeof TextInput>|null>>({});
+  const scrollY=useRef(0);
+  const focusOrigin=useRef<number|null>(null);
   const revealInput=useCallback(()=>{
-    const inner=scroll.current?.getInnerViewRef();
     const input=focusedInput.current?inputs.current[focusedInput.current]:null;
-    if(inner&&input)input.measureLayout(inner,(_x,y)=>scroll.current?.scrollTo({y:Math.max(0,y-16),animated:true}),()=>{});
+    const keyboard=Keyboard.metrics();
+    const focusId=focusedInput.current;
+    if(!input||!keyboard||!scroll.current)return;
+    scroll.current.measureInWindow((_sx,sy,_sw,sh)=>{
+      input.measureInWindow((_x,y,_w,h)=>{
+        if(focusedInput.current!==focusId||!Keyboard.isVisible())return;
+        const visibleBottom=Math.min(sy+sh,keyboard.screenY);
+        const overlap=y+h+16-visibleBottom;
+        if(overlap>0)scroll.current?.scrollTo({y:scrollY.current+overlap,animated:true});
+      });
+    });
   },[]);
   useEffect(()=>{
-    const listener=Keyboard.addListener('keyboardDidShow',revealInput);
-    return ()=>listener.remove();
+    const shown=Keyboard.addListener('keyboardDidShow',revealInput);
+    const hidden=Keyboard.addListener('keyboardDidHide',()=>{
+      const origin=focusOrigin.current;
+      focusOrigin.current=null;
+      focusedInput.current=null;
+      if(origin!==null)scroll.current?.scrollTo({y:origin,animated:true});
+    });
+    return ()=>{shown.remove();hidden.remove();};
   },[revealInput]);
-  function focusInput(id:string){focusedInput.current=id;revealInput();}
+  function focusInput(id:string){
+    if(focusOrigin.current===null)focusOrigin.current=scrollY.current;
+    focusedInput.current=id;revealInput();
+  }
+  function dismissInput(){
+    focusedInput.current=null;focusOrigin.current=null;Keyboard.dismiss();
+  }
   const questions = questionsFor(draft.category, draft.mode);
   const modeDraft = draft.modes[draft.mode];
   const index = Math.max(0, questions.findIndex(q => q.id === modeDraft.currentQuestion));
@@ -47,6 +70,7 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
   const label = draft.mode === 'light' ? '가볍게' : '자세히';
   function update(value: TastingDraft) { setDraft(value); onChange(value); }
   function move(next: number, value = draft) {
+    dismissInput();
     const target = questions[next];
     if (!target) { showPreview(value); return; }
     update({ ...value, modes:{ ...value.modes,[value.mode]:{ ...value.modes[value.mode],currentQuestion:target.id } } });
@@ -80,6 +104,7 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
     finally { busy.current=false;setSaving(false); }
   }
   function selectMode(mode: NoteMode) {
+    dismissInput();
     const next=switchMode(draft,mode);update(next);setSheet(false);setView('questions');scroll.current?.scrollTo({y:0,animated:false});
   }
   function back() {
@@ -115,13 +140,13 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
       update(value);
     };
     return <View key={field.id} style={styles.field}>{!!field.label&&!field.id.startsWith('appearance.color')&&!(draft.mode==='light'&&field.kind==='text')&&<Text style={styles.label}>{field.label}</Text>}
-      {field.kind==='text'?<TextInput ref={node=>{inputs.current[field.id]=node;}} onFocus={()=>focusInput(field.id)} onBlur={()=>{focusedInput.current=null;}} accessibilityLabel={field.label} placeholder={draft.mode==='light'?field.label:'내 말로 남기기'} placeholderTextColor={colors.muted} value={answer.freeText} multiline maxLength={2000} onChangeText={text=>answerChange({...emptyAnswer(),status:text.trim()?'answered':'unanswered',freeText:text})} style={styles.input}/>:<View style={styles.grid}>{field.options?.map(option=><ChoiceChip key={option.code} label={option.label} swatch={option.color} selected={option.code==='unknown'?answer.status==='unknown':option.code==='none'?answer.status==='none':answer.descriptors.includes(option.code)} onPress={()=>answerChange(choose(answer,field,option.code))} style={[styles.halfChip,{width:field.intensity?intensityWidth:choiceWidth,minHeight:draft.mode==='deep'?44:48,paddingVertical:draft.mode==='deep'?8:10},!!option.color&&{minHeight:92,paddingVertical:10}]}/>)}</View>}
+      {field.kind==='text'?<TextInput ref={node=>{inputs.current[field.id]=node;}} onFocus={()=>focusInput(field.id)} onBlur={()=>{focusedInput.current=null;}} accessibilityLabel={field.label} placeholder={draft.mode==='light'?field.label:'내 말로 남기기'} placeholderTextColor={colors.muted} value={answer.freeText} multiline maxLength={2000} onChangeText={text=>answerChange(textAnswer(text))} style={styles.input}/>:<View style={styles.grid}>{field.options?.map(option=><ChoiceChip key={option.code} label={option.label} swatch={option.color} selected={option.code==='unknown'?answer.status==='unknown':option.code==='none'?answer.status==='none':answer.descriptors.includes(option.code)} onPress={()=>answerChange(choose(answer,field,option.code))} style={[styles.halfChip,{width:field.intensity?intensityWidth:choiceWidth,minHeight:draft.mode==='deep'?44:48,paddingVertical:draft.mode==='deep'?8:10},!!option.color&&{minHeight:92,paddingVertical:10}]}/>)}</View>}
     </View>;
   }
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS==='ios'?'padding':undefined}>
     {!!previewOnly&&<Text style={styles.fixture}>개발용 화면 미리보기 · 실제 계정/저장과 무관</Text>}
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="뒤로" onPress={back} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable><Text style={styles.nav}>테이스팅 노트</Text><Pressable accessibilityRole="button" accessibilityLabel="기록 방식 변경" onPress={()=>{if(!saving&&!retryOnly)setSheet(true);}} style={styles.mode}><Text style={styles.modeText}>{label} ▾</Text></Pressable></View>
-    <ScrollView ref={scroll} onLayout={revealInput} keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content,draft.mode==='deep'&&view==='questions'&&{gap:16}]} showsVerticalScrollIndicator={false} pointerEvents={saving?'none':'auto'}>
+    <ScrollView ref={scroll} onScroll={event=>{scrollY.current=event.nativeEvent.contentOffset.y;}} scrollEventThrottle={16} onLayout={revealInput} keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content,draft.mode==='deep'&&view==='questions'&&{gap:16}]} showsVerticalScrollIndicator={false} pointerEvents={saving?'none':'auto'}>
       {view==='questions'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label}{draft.mode==='deep'?' 남기기':''} · {index+1} / {questions.length}</Text><View style={styles.progress}>{questions.map((q,i)=><View key={q.id} style={[styles.segment,i<=index&&styles.done]}/>)}</View><Text style={styles.title}>{question.title}</Text><Text style={[styles.hint,draft.mode==='deep'&&typography.body]}>{question.hint}</Text>{question.fields.filter(f=>isFieldVisible(f,modeDraft.answers)).map(renderField)}<Text style={styles.hint}>떠오르는 게 없다면 넘어가도 괜찮아요.</Text></>:view==='preview'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><Text style={styles.title}>내가 느낀 만큼,{`\n`}한 잔의 기록.</Text><View style={styles.noteCard}><Text style={styles.note}>{note||'아직 남긴 느낌이 없어요. 기본 기록은 그대로 보관돼요.'}</Text></View><Text style={styles.hint}>{edited?'내 말로 다듬은 노트예요.':'선택한 답변만 문장으로 정리했어요.'}</Text><Button label="문장 직접 수정  ›" disabled={retryOnly} variant="text" onPress={()=>{setEditText(note);setView('edit');}}/></>:<><Text style={styles.title}>내 말로{`\n`}다듬어볼까요?</Text><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><TextInput ref={node=>{inputs.current.editor=node;}} onFocus={()=>focusInput('editor')} onBlur={()=>{focusedInput.current=null;}} accessibilityLabel="노트 문장 직접 수정" value={editText} onChangeText={text=>{setEditText(text);update({...draft,composition:{text:note,edited,sourceRevision:draft.revision,editBuffer:text}});}} multiline maxLength={10000} style={[styles.input,styles.editor]}/><Text style={styles.hint}>선택한 감각을 바꾸려면 답변 수정을 이용해요.</Text></>}
       {!!error&&<Text accessibilityRole="alert" style={styles.caption}>{error}</Text>}
     </ScrollView>
