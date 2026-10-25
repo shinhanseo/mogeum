@@ -36,10 +36,12 @@ export async function deleteExperience(client:SupabaseClient,owner:string,record
  if(remaining)throw Object.assign(new Error('Record changed'),{code:'40001'});
  // An already completed delete after a lost response is safe to acknowledge.
 }
-export async function drainPhotoDeletions(client:SupabaseClient,owner:string){
+export async function drainPhotoDeletions(client:SupabaseClient,owner:string,removeDerivative:(owner:string,path:string)=>Promise<void>=(owner,path)=>import("../cutout/storage").then(module=>module.forgetPhotoCutout(owner,path))){
  const {data,error}=await client.from('photo_deletion_jobs').select('id,storage_path').eq('user_id',owner).neq('status','done').order('id').limit(20);
  if(error)throw error;
  for(const job of data??[]){
+  if(typeof job.storage_path!=="string"||!job.storage_path.startsWith(`${owner}/records/`)||job.storage_path.split("/").some((part:string)=>part===".."||part==="."))continue;
+  try{await removeDerivative(owner,job.storage_path);}catch{continue;}
   const {error:removeError}=await client.storage.from('record-photos').remove([job.storage_path]);
   if(removeError)continue;
   // Server rechecks owner and object absence. Failed acknowledgements remain retryable.

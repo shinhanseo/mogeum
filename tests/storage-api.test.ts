@@ -143,7 +143,11 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   const attachment:PendingAttachment={version:1,owner:a.id,recordId:saved.recordId,operationId:photoOperation,expectedRevision:edited.record.revision,change:{kind:'photo',storagePath:newPath,width:1,height:1}};
   await applyAttachment(sdk,attachment);
   assert.equal((await applyAttachment(sdk,attachment)).replayed,true);
-  await drainPhotoDeletions(sdk,a.id);
+  // Node HTTP harness has no native filesystem. Assert the derivative adapter boundary;
+  // actual Expo filesystem deletion is exercised by the Android storage probe.
+  await drainPhotoDeletions(sdk,a.id,async(owner,path)=>{
+    assert.equal(owner,a.id);assert.equal(path,storagePath);
+  });
   assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`,a.token)).ok,'Replacement cleans the previous binary');
   const replaced=await loadRecordDetail(sdk,a.id,{recordId:saved.recordId});
   assert.equal(replaced.record.record_notes?.confirmed_note,noteText);
@@ -166,7 +170,9 @@ test('real Auth JWT → private photo → record RPC → scoped read → binary 
   await deleteExperience(sdk,a.id,(await loadRecordDetail(sdk,a.id,{recordId:target.recordId})).record);
   await deleteExperience(sdk,a.id,separated.record);
   await deleteExperience(sdk,a.id,separated.record); // lost response replay
-  await drainPhotoDeletions(sdk,a.id);
+  await drainPhotoDeletions(sdk,a.id,async(owner,path)=>{
+    assert.equal(owner,a.id);assert.equal(path,newPath);
+  });
   const jobs=await json<{status:string}[]>(await request(`/rest/v1/photo_deletion_jobs?storage_path=eq.${encodeURIComponent(storagePath)}`,a.token),'Deletion receipt');
   assert.equal(jobs[0].status,'done');
   assert.ok(!(await request(`/storage/v1/object/authenticated/record-photos/${storagePath}`, a.token)).ok, 'Deleted binary is no longer downloadable');
