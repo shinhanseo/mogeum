@@ -40,12 +40,12 @@ export async function signIn(provider: "apple" | "kakao") {
     );
   if (Platform.OS === "web") {
     window.location.assign(data.url);
-    return;
+    return true;
   }
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
   if (result.type !== "success") {
     await clearProviderFlow();
-    return;
+    return false;
   }
   const url = new URL(result.url);
   const expected = new URL(redirectTo);
@@ -59,4 +59,5 @@ export async function signIn(provider: "apple" | "kakao") {
   const code = url.searchParams.get("code");
   if (!code) throw new Error("로그인 응답을 확인하지 못했어요.");
   await exchangeOAuthCode(client, code);
+  return true;
 }

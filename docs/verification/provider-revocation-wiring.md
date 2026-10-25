@@ -24,3 +24,7 @@
 13번째 migration은 로컬 DB에 적용했고 개발 중 보완한 store 함수 정의도 로컬에 동기화했다. **관리형 Supabase에는12/13 migration, provider-credentials 새 함수/신규 revoke 연결, provider 복호화 키를 아직 등록·배포하지 않았다.** 현재 관리형 delete-account 동작과 이 branch의 revoke 연결은 구분한다.
 
 SecureStore가 들어간 Android/iOS native 재빌드는 누끼 작업 중 컴파일 성공했지만, 이 branch의 Apple/Kakao 실제 로그인→서버 capture·unlink 전체 흐름은 별도로 검증해야 한다. 정상 사용자 grant를 테스트 목적으로 해제하지 않는다. 해당 검증 전 #4/#21을 닫지 않는다.
+
+## 재인증 취소 경계 추가
+
+탈퇴 중 제공자 로그인 창을 취소하면 재인증 성공으로 처리하지 않는다. 인증을 마쳐도 pending 삭제 소유자와 현재 로그인 계정이 다르면 삭제 재개를 막는다. SecureStore capture는 런타임에도 Apple/Kakao만 허용한다. 추가 변경 후 check338개 중330개 통과/8개 환경 의존 skip. 실제 제공자 탈퇴 호출·운영 배포는 이 검증에 포함하지 않는다.

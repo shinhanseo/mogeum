@@ -15,6 +15,7 @@ export function parsePendingProvider(
   if (raw.length > 100000) throw Error("INVALID_PROVIDER_PENDING");
   const value = JSON.parse(raw);
   if (
+    !["apple", "kakao"].includes(provider) ||
     !validOwner(owner) ||
     value?.version !== 1 ||
     value.owner !== owner ||

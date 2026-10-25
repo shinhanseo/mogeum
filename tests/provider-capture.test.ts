@@ -84,3 +84,15 @@ test("corrupt/foreign pending credentials remain stored and never reach the prov
   assert.equal(h.data.size, 1);
   assert.throws(() => parsePendingProvider("null", owner, "apple"));
 });
+
+test("runtime callers cannot stage an unsupported provider even with a matching payload", () => {
+  assert.throws(
+    () =>
+      parsePendingProvider(
+        JSON.stringify({ ...value, provider: "google" }),
+        owner,
+        "google" as never,
+      ),
+    /INVALID_PROVIDER_PENDING/,
+  );
+});

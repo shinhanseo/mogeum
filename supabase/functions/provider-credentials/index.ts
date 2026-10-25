@@ -90,7 +90,9 @@ Deno.serve(async (request) => {
       },
     );
     return reply("STORED");
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "PROVIDER_IDENTITY_MISMATCH")
+      return reply("PROVIDER_IDENTITY_MISMATCH", 403);
     return reply("PROVIDER_CREDENTIAL_RETRY_REQUIRED", 503);
   }
 });
