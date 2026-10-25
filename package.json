@@ -25,7 +25,8 @@
     "build:discovery-function": "tsx scripts/build-next-drinks-function.ts",
     "test:discovery-deploy": "tsx scripts/verify-next-drinks-function.ts",
     "build:account-function": "tsx scripts/build-account-deletion-function.ts",
-    "test:account-deploy": "tsx scripts/verify-account-deletion-function.ts"
+    "test:account-deploy": "tsx scripts/verify-account-deletion-function.ts",
+    "test:provider-db": "tsx --test tests/provider-credential-db.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "0.4.4",

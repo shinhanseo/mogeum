@@ -7,6 +7,7 @@ on:
       - 'src/features/taste/**'
       - 'src/features/cellar/**'
       - 'tests/account-deletion-api.test.ts'
+      - 'tests/provider-*.test.ts'
       - 'tests/cellar-api.test.ts'
       - 'tests/next-drinks-api.test.ts'
       - 'tests/taste-summary.test.ts'
@@ -44,6 +45,10 @@ jobs:
         run: npx supabase db reset --local
       - name: Exercise policies, transactions and concurrent requests on PostgreSQL
         run: npm run test:db
+        env:
+          MOGEUM_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      - name: Exercise provider capture receipts and lease recovery on PostgreSQL
+        run: npm run test:provider-db
         env:
           MOGEUM_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - name: Serve the authenticated taste endpoint without a provider key

@@ -157,3 +157,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 [iOS·Android 네이티브 OCR부터 관리형 메뉴 저장·추천까지 실제 검증](docs/verification/managed-native-menu/README.md). 합성 이미지/임시 계정 전용이며 실사 메뉴판 품질·권한 UI·출시 빌드 검증은 별도입니다.
 
 테이스팅 노트의 공백 직접 입력 오류와 키보드 이동을 보정했습니다. [수정·회귀 검증 및 실기기 잔여 범위](docs/verification/tasting-input-keyboard.md).
+
+외부 로그인 토큰 보관·연결 해제·재로그인 복구를 앱과 서버에 연결했습니다. [로컬 검증과 관리형 미배포 범위](docs/verification/provider-revocation-wiring.md). 실제 사용자 OAuth 연결 해제 검증은 포함하지 않습니다.

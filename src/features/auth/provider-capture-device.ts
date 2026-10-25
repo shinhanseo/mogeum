@@ -10,13 +10,18 @@ import {
 } from "./provider-capture";
 const options = {
   keychainService: "mogeum-provider-capture-v1",
-  keychainAccessible: 4,
 };
 // Optional loading keeps an older development client readable until its native rebuild is installed.
 async function secure() {
   if (Platform.OS === "web" || !requireOptionalNativeModule("ExpoSecureStore"))
     throw Error("SECURE_STORE_UNAVAILABLE");
   return import("expo-secure-store");
+}
+async function keychainOptions() {
+  return {
+    ...options,
+    keychainAccessible: (await secure()).AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+  };
 }
 function prefix() {
   const state = getBackendState();
@@ -27,18 +32,23 @@ const key = (owner: string, provider: CaptureProvider) =>
   `${prefix()}.${owner}.${provider}`;
 const queue = createProviderCaptureQueue({
   read: async (owner, provider) =>
-    (await secure()).getItemAsync(key(owner, provider), options),
+    (await secure()).getItemAsync(
+      key(owner, provider),
+      await keychainOptions(),
+    ),
   write: async (value) => {
     await (
       await secure()
     ).setItemAsync(
       key(value.owner, value.provider),
       JSON.stringify(value),
-      options,
+      await keychainOptions(),
     );
   },
   remove: async (owner, provider) => {
-    await (await secure()).deleteItemAsync(key(owner, provider), options);
+    await (
+      await secure()
+    ).deleteItemAsync(key(owner, provider), await keychainOptions());
   },
   active: async (owner) => {
     const client = getSupabase();
@@ -82,18 +92,20 @@ export async function rememberProviderFlow(provider: CaptureProvider) {
   ).setItemAsync(
     `${prefix()}.flow`,
     JSON.stringify({ provider, operation: randomUUID() }),
-    options,
+    await keychainOptions(),
   );
 }
 export async function clearProviderFlow() {
   if (Platform.OS === "web") return;
-  await (await secure()).deleteItemAsync(`${prefix()}.flow`, options);
+  await (
+    await secure()
+  ).deleteItemAsync(`${prefix()}.flow`, await keychainOptions());
 }
 export async function captureExchangedSession(session: Session) {
   if (Platform.OS === "web" || !session.provider_refresh_token) return;
   const store = await secure(),
     flowKey = `${prefix()}.flow`,
-    raw = await store.getItemAsync(flowKey, options);
+    raw = await store.getItemAsync(flowKey, await keychainOptions());
   if (!raw) return;
   const flow = JSON.parse(raw);
   if (
@@ -107,8 +119,8 @@ export async function captureExchangedSession(session: Session) {
     provider: flow.provider,
     refreshToken: session.provider_refresh_token,
   });
-  if ((await store.getItemAsync(flowKey, options)) === raw)
-    await store.deleteItemAsync(flowKey, options);
+  if ((await store.getItemAsync(flowKey, await keychainOptions())) === raw)
+    await store.deleteItemAsync(flowKey, await keychainOptions());
   void queue.resume(session.user.id).catch(() => {});
 }
 export async function captureExistingSession(session: Session) {

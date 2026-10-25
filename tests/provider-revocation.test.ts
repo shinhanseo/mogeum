@@ -98,9 +98,12 @@ test("Kakao token rotation is durable before unlink and verifies the new subject
 test("lost unlink response followed by revoked refresh never becomes false completion", async () => {
   const f = fixture();
   f.ports.fetch = (async (url) =>
-    new Response(null, {
-      status: String(url).includes("/unlink") ? 401 : 400,
-    })) as typeof fetch;
+    String(url).includes("/unlink")
+      ? new Response(null, { status: 401 })
+      : Response.json(
+          { error: "invalid_grant" },
+          { status: 400 },
+        )) as typeof fetch;
   await assert.rejects(
     revokeAccountProviders([kakao], [row(kakao)], config, f.ports),
     (error) =>
@@ -117,4 +120,26 @@ test("provider outage keeps its receipt incomplete", async () => {
     /REVOKE_FAILED/,
   );
   assert.deepEqual(f.events, []);
+});
+
+test("refresh outage or configuration rejection does not demand a new login or mark revoked", async () => {
+  for (const [status, body] of [
+    [503, { error: "temporarily_unavailable" }],
+    [429, { error: "rate_limited" }],
+    [400, { error: "invalid_client" }],
+  ] as const) {
+    const f = fixture();
+    f.ports.fetch = (async (url) =>
+      String(url).includes("/unlink")
+        ? new Response(null, { status: 401 })
+        : Response.json(body, { status })) as typeof fetch;
+    await assert.rejects(
+      revokeAccountProviders([kakao], [row(kakao)], config, f.ports),
+      (e) =>
+        e instanceof Error &&
+        e.message === "PROVIDER_REFRESH_RETRY_REQUIRED" &&
+        !(e instanceof ProviderLoginRequired),
+    );
+    assert.ok(!f.events.includes("mark-kakao"));
+  }
 });

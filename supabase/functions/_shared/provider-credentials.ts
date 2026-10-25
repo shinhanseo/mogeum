@@ -79,7 +79,12 @@ export async function validateProviderCredential(
       redirect: "error",
     },
   );
-  if (!response.ok) throw Error("PROVIDER_TOKEN_REJECTED");
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    if (response.status === 400 && errorBody?.error === "invalid_grant")
+      throw Error("PROVIDER_TOKEN_REJECTED");
+    throw Error("PROVIDER_REFRESH_RETRY_REQUIRED");
+  }
   const body = await response.json();
   if (!token(body.access_token)) throw Error("INVALID_PROVIDER_RESPONSE");
   if (apple) {
@@ -97,7 +102,10 @@ export async function validateProviderCredential(
         redirect: "error",
       },
     );
-    if (!info.ok) throw Error("PROVIDER_TOKEN_REJECTED");
+    if (!info.ok) {
+      if (info.status === 401) throw Error("PROVIDER_TOKEN_REJECTED");
+      throw Error("PROVIDER_REFRESH_RETRY_REQUIRED");
+    }
     const identity = await info.json();
     if (
       String(identity.id) !== subject ||
