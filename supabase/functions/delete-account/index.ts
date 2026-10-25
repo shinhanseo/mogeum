@@ -1,3 +1,17 @@
+import { createRemoteJWKSet, jwtVerify } from "npm:jose@6.2.13";
+import {
+  providerSubjects,
+  decryptProviderCredential,
+  encryptProviderCredential,
+} from "../_shared/provider-credentials.ts";
+import {
+  revokeAccountProviders,
+  ProviderLoginRequired,
+  type StoredProvider,
+} from "../_shared/provider-revocation.ts";
+const appleKeys = createRemoteJWKSet(
+  new URL("https://appleid.apple.com/auth/keys"),
+);
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import { deleteAccount } from "../_shared/account-deletion.ts";
 import { readMenuBody } from "../_shared/menu-body.ts";
@@ -64,6 +78,7 @@ Deno.serve(async (request) => {
     if (error) throw Error("DELETION_STEP_FAILED");
     return data;
   }
+  let identities: ReturnType<typeof providerSubjects> = [];
   try {
     const result = await deleteAccount(
       {
@@ -72,6 +87,8 @@ Deno.serve(async (request) => {
           true,
         authenticate: async () => {
           const { data, error } = await admin.auth.getUser(token);
+          if (!error && data.user)
+            identities = providerSubjects(data.user.identities ?? []);
           return error ? null : (data.user?.id ?? null);
         },
         begin: async (owner, lease) =>
@@ -80,6 +97,68 @@ Deno.serve(async (request) => {
             p_token_hash: hash,
             p_lease: lease,
           })) === true,
+        revoke: async (owner, lease) => {
+          if (!identities.length) return;
+          const secret = Deno.env.get("MOGEUM_PROVIDER_CREDENTIAL_KEY");
+          if (!secret) throw Error("PROVIDER_NOT_CONFIGURED");
+          const config = {
+            appleClientId: Deno.env.get("APPLE_CLIENT_ID"),
+            appleClientSecret: Deno.env.get("APPLE_CLIENT_SECRET"),
+            kakaoClientId: Deno.env.get("KAKAO_CLIENT_ID"),
+            kakaoClientSecret: Deno.env.get("KAKAO_CLIENT_SECRET"),
+            kakaoAppId: Deno.env.get("KAKAO_APP_ID"),
+          };
+          const rows = await rpc("deletion_provider_credentials", {
+            p_owner: owner,
+            p_lease: lease,
+          });
+          if (!Array.isArray(rows)) throw Error("INVALID_CREDENTIALS");
+          await revokeAccountProviders(
+            identities,
+            rows as StoredProvider[],
+            config,
+            {
+              fetch: (input, init) => fetch(input, { ...init, signal }),
+              verifyApple: async (token) => {
+                const result = await jwtVerify(token, appleKeys, {
+                  issuer: "https://appleid.apple.com",
+                  audience: config.appleClientId,
+                  algorithms: ["RS256"],
+                });
+                return { sub: result.payload.sub };
+              },
+              decrypt: (row) =>
+                decryptProviderCredential(
+                  owner,
+                  row.provider,
+                  row.subject,
+                  row.ciphertext,
+                  secret,
+                ),
+              rotate: async (row, credential) => {
+                await rpc("rotate_deletion_provider_credential", {
+                  p_owner: owner,
+                  p_provider: row.provider,
+                  p_generation: row.generation,
+                  p_lease: lease,
+                  p_ciphertext: await encryptProviderCredential(
+                    owner,
+                    credential,
+                    secret,
+                  ),
+                });
+              },
+              mark: async (row) => {
+                await rpc("mark_provider_revoked", {
+                  p_owner: owner,
+                  p_provider: row.provider,
+                  p_generation: row.generation,
+                  p_lease: lease,
+                });
+              },
+            },
+          );
+        },
         files: async (owner, lease) => {
           const value = await rpc("account_deletion_files", {
             p_owner: owner,
@@ -119,6 +198,11 @@ Deno.serve(async (request) => {
     );
     return reply(result);
   } catch (error) {
+    if (error instanceof ProviderLoginRequired)
+      return reply(
+        { code: "PROVIDER_LOGIN_REQUIRED", provider: error.provider },
+        409,
+      );
     return reply(
       {
         code:

@@ -150,6 +150,7 @@ export async function revokeProviderCredential(
     signal: AbortSignal.timeout(10000),
     redirect: "error",
   });
+  if (response.status === 401) throw Error("PROVIDER_LOGIN_REQUIRED");
   if (!response.ok) throw Error("PROVIDER_REVOKE_FAILED");
   const body = await response.json();
   if (String(body.id) !== credential.subject)

@@ -29,7 +29,10 @@ export function DeletionScreen({
         (error) => {
           if (alive)
             setState(
-              error instanceof Error && error.message === "LOGIN_REQUIRED"
+              error instanceof Error &&
+                ["LOGIN_REQUIRED", "PROVIDER_LOGIN_REQUIRED"].includes(
+                  error.message,
+                )
                 ? "login"
                 : "error",
             );
@@ -50,7 +53,8 @@ export function DeletionScreen({
       setState(await onRetry());
     } catch (error) {
       setState(
-        error instanceof Error && error.message === "LOGIN_REQUIRED"
+        error instanceof Error &&
+          ["LOGIN_REQUIRED", "PROVIDER_LOGIN_REQUIRED"].includes(error.message)
           ? "login"
           : "error",
       );
@@ -103,8 +107,8 @@ export function DeletionScreen({
         {state === "login" ? (
           <>
             <Text accessibilityRole="alert" style={s.body}>
-              로그인이 만료됐어요. 삭제를 요청한 같은 계정으로 로그인한 뒤
-              이어서 정리해주세요.
+              로그인 연결 해제를 확인해야 해요. 삭제를 요청한 같은 계정으로
+              로그인한 뒤 이어서 정리해주세요.
             </Text>
             <Button
               label="Apple로 다시 로그인"

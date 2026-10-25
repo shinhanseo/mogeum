@@ -11,6 +11,16 @@ export async function resolveDeletionRequest(
   async function attempt(token: string) {
     const response = await ports.send(token);
     if (response.status === 401) return null;
+    if (response.status === 409) {
+      const body = await response.json().catch(() => null);
+      if (
+        body?.code === "PROVIDER_LOGIN_REQUIRED" &&
+        ["apple", "kakao"].includes(body.provider)
+      )
+        throw Object.assign(Error("PROVIDER_LOGIN_REQUIRED"), {
+          provider: body.provider,
+        });
+    }
     if (!response.ok) throw Error("DELETION_RETRY_REQUIRED");
     const result = await response.json();
     if (result.state !== "running" && result.state !== "complete")
