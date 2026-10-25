@@ -4,6 +4,10 @@ import type { Answer, TastingDraft } from './draft';
 import { isFieldVisible, questionsFor, type Field } from './questions';
 
 export const emptyAnswer = (): Answer => ({ status: 'unanswered', descriptors: [], intensity: null, freeText: '' });
+/** IMEs can emit spaces/newlines when an untouched multiline input loses focus. */
+export function textAnswer(text: string): Answer {
+  return text.trim() ? { ...emptyAnswer(), status: 'answered', freeText: text } : emptyAnswer();
+}
 export function choose(answer: Answer, field: Field, code: string): Answer {
   const option = field.options?.find(o => o.code === code);
   if (!option) throw new Error('Invalid option');
