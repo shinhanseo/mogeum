@@ -6,7 +6,7 @@
 
 ## 현재 상태
 
-**실제 Supabase 개발 프로젝트에 기록 DB를 적용하고 앱 연결을 구현 중입니다.** Figma 기준 로그인·술장·기록 UI, 공통 컴포넌트와 사진/주종/날짜/평가/빈티지 입력이 있습니다. 기본 저장 버튼은 인증 세션의 사진 업로드→기록 RPC→술장 재조회로 연결했고 저장 요청 재시도를 보관합니다. Apple·카카오 provider 등록이 아직 없어 실제 소셜 로그인 및 사용자 프로젝트에서 앱 저장 성공 검증은 남아 있습니다. 4주종의 가볍게 5문항·심화 9/11/10/8문항, 문장 미리보기·직접 수정과 동일 기록에 노트를 보충하는 RPC도 연결했습니다. 저장 후 상세와 재음용·기본 수정/삭제를 연결했습니다. 내 취향 요약·근거 UI와 집계/캐시/AI 서버 호출부를 연결했습니다. 실제 모델 호출은 Gemini 서버 키 설정 후 검증해야 하며 여러 장 메뉴판의 기기 OCR·확인/수정·제한된 출처 카탈로그와 기록 비교 추천도 연결했습니다. [메뉴판 구현과 현재 지원 범위](docs/verification/menu-ocr.md)를 참고하세요. [노트 구현·iOS 검증과 남은 범위](docs/verification/tasting-notes.md)를 참고하세요. [현재 연결·검증과 제약](docs/verification/live-records.md), [개발 로드맵](docs/milestones.md), [이슈 지도](docs/issue-map.md)를 참고하세요.
+**실제 Supabase 개발 프로젝트에 기록 DB를 적용하고 앱 연결을 구현 중입니다.** Figma 기준 로그인·술장·기록 UI, 공통 컴포넌트와 사진/주종/날짜/평가/빈티지 입력이 있습니다. 기본 저장 버튼은 인증 세션의 사진 업로드→기록 RPC→술장 재조회로 연결했고 저장 요청 재시도를 보관합니다. Apple·카카오 provider와 콜백 등록을 완료했고 실제 사용자 로그인 및 관리형 프로젝트에서 앱 저장 성공 검증은 진행 중입니다. 4주종의 가볍게 5문항·심화 9/11/10/8문항, 문장 미리보기·직접 수정과 동일 기록에 노트를 보충하는 RPC도 연결했습니다. 저장 후 상세와 재음용·기본 수정/삭제를 연결했습니다. 내 취향 요약·근거 UI와 집계/캐시/AI 서버 호출부를 연결했습니다. Gemini 서버 키 등록과 합성 기록의 실제 모델 호출을 검증했으며, 관리형 인증 세션을 통한 전체 요약 흐름 검증은 남아 있습니다. 여러 장 메뉴판의 기기 OCR·확인/수정·제한된 출처 카탈로그와 기록 비교 추천도 연결했습니다. [메뉴판 구현과 현재 지원 범위](docs/verification/menu-ocr.md)를 참고하세요. [노트 구현·iOS 검증과 남은 범위](docs/verification/tasting-notes.md)를 참고하세요. [현재 연결·검증과 제약](docs/verification/live-records.md), [개발 로드맵](docs/milestones.md), [이슈 지도](docs/issue-map.md)를 참고하세요.
 
 다음 한 잔의 출처 기반 추천·저장 목록·추천 이유 상세도 연결했습니다. 실제 로컬 인증으로 iOS/Android 저장·기록·해제를 확인했으며 [추천 이유 화면과 검증 범위](docs/verification/discovery-reason/README.md)를 참고하세요.
 
@@ -145,3 +145,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 메뉴판 저장 응답 전에 화면을 닫고 다시 열어도, 계정별 저장·복원 순서를 지켜 이전 응답이 새 수정 사항을 덮지 않도록 처리합니다. [요청 순서 검증](docs/verification/menu-request-order/README.md).
 
 취향 요약·메뉴 추천 근거는 사진 준비 후 기록 버전을 재확인합니다. 취향 근거 화면도 앱 복귀 때 수정·삭제를 다시 읽습니다. [회귀 및 iOS 실제 복귀 검증](docs/verification/evidence-snapshot-window/README.md).
+
+2026-10-25 Apple·카카오 OAuth 공급자 활성화, 모금 전용 Gemini 서버 secret 등록 및 실제 provider 호출을 확인했습니다. [연결 상태·갱신 일정·검증 제약](docs/verification/auth-ai-connection/README.md).

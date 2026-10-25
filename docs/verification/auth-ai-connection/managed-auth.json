@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-25T01:59:31.122Z",
+  "managedDevelopment": true,
+  "appleEnabled": true,
+  "kakaoEnabled": true,
+  "pkce": true,
+  "redirects": [
+    {
+      "provider": "apple",
+      "status": 302,
+      "destinationHost": "appleid.apple.com",
+      "scope": "email name",
+      "callbackVerified": true
+    },
+    {
+      "provider": "kakao",
+      "status": 302,
+      "destinationHost": "kauth.kakao.com",
+      "scope": "openid",
+      "callbackVerified": true
+    }
+  ],
+  "completedUserLogin": false
+}

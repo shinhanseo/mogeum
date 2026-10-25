@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "model": "gemini-3.8-flash",
+  "providerSuccess": true,
+  "highlightIds": [
+    "향:과일 향"
+  ],
+  "durationMs": 5597
+}
