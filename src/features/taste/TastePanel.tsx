@@ -148,6 +148,7 @@ export function TastePanel({
           ? "기록을 불러오지 못했어요. 다시 시도해주세요."
           : error
       }
+      onAccount={() => router.push(owner ? "/account" : "/login")}
       onNext={() => router.push(owner ? "/discovery" : "/login")}
       onMenu={() => router.push(owner ? "/menu" : "/login")}
       onGenerate={() => {
