@@ -1,3 +1,4 @@
+import { resolveDeletionRequest } from "./deletion-request";
 import { menuPhotoPreparationQueue } from "../menu/preparation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
@@ -13,19 +14,26 @@ import { accountStorage } from "./account-storage";
 import { decodePendingRecord } from "../records/pending-restore";
 import { decodePreparedAttachment } from "../records/attachment-restore";
 import { isPreparedRecordPhoto } from "../records/draft-photo";
-type Receipt = { owner: string; token: string; complete: boolean };
+type Receipt = { owner: string; tokens: string[]; complete: boolean };
 const key = deletionReceiptKey;
 const validOwner = validDeletionOwner;
 export async function readDeletion(owner: string): Promise<Receipt | null> {
   if (!validOwner(owner)) throw Error("INVALID_OWNER");
   const raw = await AsyncStorage.getItem(key(owner));
   if (raw === null) return null;
+  if (raw.length > 400000) throw Error("INVALID_RECEIPT");
   const r = JSON.parse(raw);
+  if (r && !r.tokens && typeof r.token === "string") r.tokens = [r.token];
   if (
+    !r ||
     r.owner !== owner ||
-    typeof r.token !== "string" ||
-    r.token.length === 0 ||
-    r.token.length > 20000 ||
+    !Array.isArray(r.tokens) ||
+    r.tokens.length === 0 ||
+    r.tokens.length > 16 ||
+    r.tokens.some(
+      (token: unknown) =>
+        typeof token !== "string" || token.length === 0 || token.length > 20000,
+    ) ||
     typeof r.complete !== "boolean"
   )
     throw Error("INVALID_RECEIPT");
@@ -115,33 +123,34 @@ async function perform(owner: string): Promise<"running" | "complete"> {
     throw Error("ACCOUNT_CHANGED");
   if (!receipt) {
     if (data.session?.user.id !== owner) throw Error("LOGIN_REQUIRED");
-    receipt = { owner, token: data.session.access_token, complete: false };
-  } else if (!receipt.complete && data.session?.user.id === owner)
-    receipt = { ...receipt, token: data.session.access_token };
+    receipt = { owner, tokens: [data.session.access_token], complete: false };
+  }
   await AsyncStorage.setItem(key(owner), JSON.stringify(receipt));
   await accountStorage.freeze(owner);
   notifyDeletion(owner);
   if (!receipt.complete) {
-    const response = await fetch(
-      `${config.config.url}/functions/v1/delete-account`,
+    const result = await resolveDeletionRequest(
+      receipt.tokens,
+      data.session?.access_token,
       {
-        method: "POST",
-        headers: {
-          apikey: config.config.publishableKey,
-          Authorization: `Bearer ${receipt.token}`,
-          "Content-Type": "application/json",
+        send: (token) =>
+          fetch(`${config.config.url}/functions/v1/delete-account`, {
+            method: "POST",
+            headers: {
+              apikey: config.config.publishableKey,
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ confirm: true }),
+            signal: AbortSignal.timeout(55000),
+          }),
+        persist: async (tokens) => {
+          receipt = { ...receipt!, tokens };
+          await AsyncStorage.setItem(key(owner), JSON.stringify(receipt));
         },
-        body: JSON.stringify({ confirm: true }),
-        signal: AbortSignal.timeout(55000),
       },
     );
-    if (!response.ok)
-      throw Error(
-        response.status === 401 ? "LOGIN_REQUIRED" : "DELETION_RETRY_REQUIRED",
-      );
-    const result = await response.json();
     if (result.state === "running") return "running";
-    if (result.state !== "complete") throw Error("INVALID_RESPONSE");
     receipt = { ...receipt, complete: true };
     await AsyncStorage.setItem(key(owner), JSON.stringify(receipt));
   }
