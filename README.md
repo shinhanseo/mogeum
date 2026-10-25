@@ -155,3 +155,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 [관리형 배포·Gemini·삭제 및 iOS Apple 실제 검증](docs/verification/managed-account-rollout/README.md).
 
 [iOS·Android 네이티브 OCR부터 관리형 메뉴 저장·추천까지 실제 검증](docs/verification/managed-native-menu/README.md). 합성 이미지/임시 계정 전용이며 실사 메뉴판 품질·권한 UI·출시 빌드 검증은 별도입니다.
+
+술장 배경 분리의 기기 처리·선택적 로컬 표시를 추가했습니다. [실제 Android 처리 결과와 남은 검증](docs/verification/cutout/README.md). 원본 보존·캐시 유실 시 원본 복귀이며 클라우드 동기화는 포함하지 않습니다.
