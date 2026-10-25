@@ -4,7 +4,7 @@ import { Asset } from "expo-asset";
 import * as FS from "expo-file-system/legacy";
 import { CutoutEditor } from "../../src/features/cutout/CutoutEditor";
 import { createCutout } from "../../src/features/cutout/native";
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { colors } from "../../src/theme/tokens";
 /** Isolated real-engine probe: bundled illustration/photo fixtures, no login or server writes. */
 export default function Preview() {
@@ -40,7 +40,10 @@ export default function Preview() {
         await FS.writeAsStringAsync(
           directory + "report.json",
           JSON.stringify({
-            engine: "ML Kit Subject Segmentation",
+            engine:
+              Platform.OS === "ios"
+                ? "Apple Vision"
+                : "ML Kit Subject Segmentation",
             fixture: "figma-whisky.jpg",
             width: result.width,
             height: result.height,
