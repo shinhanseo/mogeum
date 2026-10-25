@@ -161,6 +161,7 @@ export default function DiscoveryPreview() {
           onRetry={() => {}}
           onBack={() => setMode("discover")}
           onRecord={() => setNotice("개발 시안 · 실제 기록은 인증 후 작성해요")}
+          onBegin={() => setNotice("개발 시안 · 기록 시작 행동 확인")}
           onReason={setSelectedProduct}
         />
       )}

@@ -1,3 +1,5 @@
+import { personalizedDrinks } from "../../../supabase/functions/_shared/next-drinks-domain";
+import { Mogu } from "../../components/Mogu";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -40,10 +42,12 @@ type Props = {
   onBack: () => void;
   onRecord: (productId: string) => void;
   onReason: (productId: string) => void;
+  onBegin: () => void;
 };
 /** 04 / 19:784 and 19:972. Error/empty states extend the captured design. */
 export function DiscoveryScreen(props: Props) {
   const { result, wishlist, mode, busy, saving, error, category } = props;
+  const recommendations = personalizedDrinks(result?.recommendations ?? []);
   const [editingSaved, setEditingSaved] = useState(false);
   const saved = new Set(
     wishlist.filter((r) => r.saved).map((r) => r.productId),
@@ -97,23 +101,29 @@ export function DiscoveryScreen(props: Props) {
               style={s.savedLink}
             />
           </View>
-          <Text style={s.body}>가까운 취향부터, 조금 새로운 한 잔까지.</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.filters}
-          >
-            {filters.map((value, i) => (
-              <ChoiceChip
-                key={value ?? "all"}
-                outlined
-                label={value ? categoryLabels[value] : "전체"}
-                selected={category === value}
-                onPress={() => props.onCategory(value)}
-                style={{ minWidth: [48, 68, 56, 56, 72][i] }}
-              />
-            ))}
-          </ScrollView>
+          <Text style={s.body}>
+            {recommendations.length
+              ? "좋게 남긴 느낌과 닮은 한 잔을 찾아봤어요."
+              : "내가 남긴 느낌을 바탕으로 찾아드려요."}
+          </Text>
+          {recommendations.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.filters}
+            >
+              {filters.map((value, i) => (
+                <ChoiceChip
+                  key={value ?? "all"}
+                  outlined
+                  label={value ? categoryLabels[value] : "전체"}
+                  selected={category === value}
+                  onPress={() => props.onCategory(value)}
+                  style={{ minWidth: [48, 68, 56, 56, 72][i] }}
+                />
+              ))}
+            </ScrollView>
+          )}
         </>
       )}
       {busy ? (
@@ -177,7 +187,7 @@ export function DiscoveryScreen(props: Props) {
         </>
       ) : (
         <>
-          {result?.recommendations
+          {recommendations
             .filter((r) => !category || r.product.category === category)
             .map((row) => (
               <View key={row.product.id} style={s.drink}>
@@ -226,20 +236,50 @@ export function DiscoveryScreen(props: Props) {
                 <View style={s.divider} />
               </View>
             ))}
-          {!busy &&
-          !error &&
-          result &&
-          !result.recommendations.filter(
-            (r) => !category || r.product.category === category,
-          ).length ? (
-            <Text style={s.body}>
-              준비한 제품을 모두 만나봤어요. 다른 주종도 둘러보세요.
-            </Text>
+          {!busy && !error && result && !recommendations.length ? (
+            <View style={s.empty}>
+              <View style={s.mogu}>
+                <Mogu />
+              </View>
+              <Text style={s.emptyTitle}>
+                {!result.sensoryRecordCount
+                  ? "한 잔의 느낌부터 남겨볼까요?"
+                  : "아직 닮은 한 잔을 찾지 못했어요."}
+              </Text>
+              <Text style={s.emptyCopy}>
+                {!result.sensoryRecordCount
+                  ? "어떤 향과 맛이 좋았는지 알려주면\n그 느낌과 닮은 술을 찾아드려요."
+                  : "좋게 남긴 향과 맛이 더 쌓이면\n내 기록과 비교해 다시 찾아볼게요."}
+              </Text>
+              <Button
+                label={
+                  result.recordCount
+                    ? "내 기록에 느낌 남기기"
+                    : "첫 한 잔 남기기"
+                }
+                onPress={props.onBegin}
+              />
+            </View>
+          ) : !busy &&
+            !error &&
+            result &&
+            !recommendations.some(
+              (r) => !category || r.product.category === category,
+            ) ? (
+            <View style={s.message}>
+              <Text style={s.body}>
+                이 주종에서는 아직 내 기록과 닮은 술을 찾지 못했어요.
+              </Text>
+              <Button
+                label="전체 주종 보기"
+                variant="text"
+                onPress={() => props.onCategory(null)}
+              />
+            </View>
           ) : null}
-          {result ? (
+          {result && recommendations.length ? (
             <Text style={s.caption}>
-              출처를 확인한 {result.catalogSize}개 제품 안에서 비교해요. 실제
-              모델 생성이 아닌 내 기록과 제품 특징 비교예요.
+              출처를 확인한 제품 특징과 내 기록을 비교했어요.
               {result.omittedSensoryRecords
                 ? " 감각 비교에는 최근 200개 기록을 사용했어요."
                 : ""}
@@ -251,6 +291,10 @@ export function DiscoveryScreen(props: Props) {
   );
 }
 const s = StyleSheet.create({
+  empty: { alignItems: "stretch", gap: space.lg, paddingVertical: space.xl },
+  mogu: { width: 170, height: 153, alignSelf: "center" },
+  emptyTitle: { ...typography.title, color: colors.text, textAlign: "center" },
+  emptyCopy: { ...typography.body, color: colors.muted, textAlign: "center" },
   content: { padding: layout.screenPadding, gap: space.xl },
   savedContent: { gap: space.lg },
   flex: { flex: 1 },

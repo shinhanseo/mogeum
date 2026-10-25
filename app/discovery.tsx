@@ -220,6 +220,9 @@ function DiscoveryPanel({ owner }: { owner: string }) {
             onRecord={(productId) =>
               router.push({ pathname: "/record", params: { productId } })
             }
+            onBegin={() =>
+              result?.recordCount ? home("cellar") : router.push("/record")
+            }
             onReason={setSelectedProduct}
           />
         </View>

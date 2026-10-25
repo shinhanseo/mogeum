@@ -24,6 +24,12 @@ export type NextDrink = {
   unconfirmedFeatures: Product["features"];
   score: number;
 };
+/** A discovery catalog entry is not a personal recommendation without net positive, cited evidence. */
+export function personalizedDrinks(rows: NextDrink[]): NextDrink[] {
+  return rows.filter(
+    (row) => row.score > 0 && row.similar.some((f) => f.recordIds.length > 0),
+  );
+}
 /** Edition-aware history check. A missing/ambiguous wine vintage never confirms a catalog edition. */
 export function seenProductIds(history: DrinkHistory[]): Set<string> {
   const found = new Set<string>();
@@ -114,7 +120,8 @@ export function discoverDrinks(
     .sort(
       (a, b) => b.score - a.score || a.product.id.localeCompare(b.product.id),
     );
-  if (category) return ranked;
+  const eligible = personalizedDrinks(ranked);
+  if (category) return eligible;
   // Give every supported category a place before adding the second suggestion from each category.
   const kinds: Product["category"][] = [
     "whisky",
@@ -123,7 +130,7 @@ export function discoverDrinks(
     "traditional",
   ];
   const queues = kinds.map((kind) =>
-    ranked.filter((r) => r.product.category === kind),
+    eligible.filter((r) => r.product.category === kind),
   );
   const output: NextDrink[] = [];
   while (queues.some((q) => q.length))
