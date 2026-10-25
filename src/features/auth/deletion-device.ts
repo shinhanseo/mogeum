@@ -118,7 +118,8 @@ async function perform(owner: string): Promise<"running" | "complete"> {
   // Do not persist an irreversible local workflow before the server migration is available.
   if (!receipt) await currentDeletionStatus(owner);
   const { data, error } = await client.auth.getSession();
-  if (error) throw error;
+  // A deleted Auth user can no longer refresh; its saved receipt must still be acknowledged.
+  if (error && !receipt) throw error;
   if (data.session && data.session.user.id !== owner)
     throw Error("ACCOUNT_CHANGED");
   if (!receipt) {
