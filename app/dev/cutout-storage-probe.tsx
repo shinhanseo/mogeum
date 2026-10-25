@@ -15,6 +15,10 @@ import {
 import { createRecordRepository } from "../../src/features/records/repository";
 import { createCellarRepository } from "../../src/features/cellar/repository";
 import { applyAttachment } from "../../src/features/records/attachment";
+import {
+  deleteExperience,
+  drainPhotoDeletions,
+} from "../../src/features/records/edit";
 import { loadRecordDetail } from "../../src/features/records/detail";
 import { colors } from "../../src/theme/tokens";
 /** Explicit synthetic loopback verification only. Existing sessions are never replaced. */
@@ -173,6 +177,32 @@ export default function CutoutStorageProbe() {
           "OLD_CUTOUT_REUSED",
         );
         await pass("photo_replacement_excludes_old_cutout");
+        await drainPhotoDeletions(client, owner);
+        ensure(
+          (await readLocalCutout(owner, path)) === null,
+          "OLD_DERIVATIVE_RETAINED",
+        );
+        await pass("photo_job_removes_old_derivative");
+        let staleBlocked = false;
+        try {
+          await saveLocalCutout(owner, path, result);
+        } catch {
+          staleBlocked = true;
+        }
+        ensure(staleBlocked, "REMOVED_SOURCE_APPLIED");
+        await pass("removed_photo_cannot_receive_cutout");
+        await saveLocalCutout(owner, newPath, result);
+        const current = await loadRecordDetail(client, owner, {
+          recordId: record.recordId,
+        });
+        await deleteExperience(client, owner, current.record);
+        await drainPhotoDeletions(client, owner);
+        ensure(
+          (await readLocalCutout(owner, newPath)) === null,
+          "DELETED_RECORD_DERIVATIVE_RETAINED",
+        );
+        await pass("record_delete_removes_derivative");
+
         await client.auth.signOut({ scope: "local" });
         const other = await signup();
         let blocked = false;
