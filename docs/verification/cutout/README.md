@@ -29,3 +29,19 @@
 ### iOS 빌드 호환성 추가 확인
 
 실제 simulator 양 아키텍처 빌드에서 패키지의 `BackgroundRemovalException.private message`가 Expo58 `Exception.message`와 충돌해 컴파일 실패했다. `detailMessage`로만 이름을 바꾸는 최소 patch-package 패치를 커밋하고 postinstall에서 재적용한다. 패치 후 Xcode `generic/platform=iOS Simulator` Debug 빌드가 **BUILD SUCCEEDED**로 끝났다. 실제 iPhone에서 Vision을 실행한 결과는 여전히 미검증이다. 패치 파일에는 빌드 산출물을 포함하지 않는다.
+
+### 로컬 실제 Auth/Storage/DB 연결 검증 추가
+
+`/dev/cutout-storage-probe?runId=...`를 별도 로컬 Metro8082에서 실행했다. 이 진단은 dev + 정확한 loopback API URL만 허용하고 기존 세션이 있으면 덮어쓰지 않고 중단한다. 명시적으로 생성한 임시 계정 2개만 사용한다. 결과 `android-storage-report.json`의9단계 모두 통과:
+
+1. 실제 로컬 인증
+2. Android native ML Kit 처리
+3. 실제 원본 업로드·기록 RPC·상세 조회
+4. 로컬 누끼 적용 후 DB 술장 재조회에서 cutout URI/파일 확인
+5. 새 저장 읽기에서 표시 캐시 복원
+6. 원본 복귀 후 누끼 없음·원본 사진 유지
+7. 실제 사진 교체 RPC 후 이전 누끼 재사용 안 함
+8. 다른 임시 계정으로 전환 후 이전 계정 누끼 적용 차단·이전 술장 안 보임
+9. 해당 계정의 표시 캐시 정리
+
+검증 후 명시된 private manifest에 있는 임시 계정/기록/원본 파일만 cleanup 스크립트로 정리했다. 버튼을 누른 전체 인증 UI E2E나 프로세스 재시작 캐시 복원은 이 probe가 검증하지 않는다. 일반 사용자 데이터·운영 서버는 사용하지 않았다. 위 ‘남은 검증’의 저장/사진 교체/계정 전환 경계는 이 추가 검증으로 확인했으며 Galaxy·iPhone 실기기와 전체 UI 검증은 남아 있다.
