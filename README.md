@@ -160,4 +160,6 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 
 테이스팅 노트의 공백 직접 입력 오류와 키보드 이동을 보정했습니다. [수정·회귀 검증 및 실기기 잔여 범위](docs/verification/tasting-input-keyboard.md).
 
-외부 로그인 토큰 보관·연결 해제·재로그인 복구를 앱과 서버에 연결했습니다. [로컬 검증과 관리형 미배포 범위](docs/verification/provider-revocation-wiring.md). 실제 사용자 OAuth 연결 해제 검증은 포함하지 않습니다.
+외부 로그인 토큰 보관·연결 해제·재로그인 복구를 앱과 서버에 연결했습니다. [로컬·관리형 배포 검증과 남은 범위](docs/verification/provider-revocation-wiring.md). 실제 사용자 OAuth 연결 해제 검증은 포함하지 않습니다.
+
+계정 삭제의 provider capture/해제 서버를 개발 프로젝트에 배포했습니다. 실제 관리형 synthetic 계정의 Auth·사진·기록 삭제/타인 보호/응답 유실 재확인을 검증했습니다. 실제 Apple/Kakao 테스트 계정의 grant 해제 전체 검증은 남아 있습니다. [배포와 검증 범위](docs/verification/provider-revocation-wiring.md).

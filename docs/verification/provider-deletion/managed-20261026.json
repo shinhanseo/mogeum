@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-25T16:10:10.079Z",
+  "projectRef": "vsckzjfgzdpzkzuumldf",
+  "syntheticOnly": true,
+  "humanAccountChanged": false,
+  "passed": [
+    "unauthenticated_requests_rejected",
+    "real_auth_storage_records_created",
+    "unlinked_identity_capture_rejected_before_provider_call",
+    "confirmation_and_caller_identity_guards",
+    "owner_auth_binary_and_records_deleted",
+    "other_owner_preserved",
+    "deleted_session_receipt_replay"
+  ],
+  "success": true,
+  "syntheticCleanupComplete": true,
+  "actualProviderGrantRevoked": false,
+  "schemaPermissions": {
+    "anon_can_read_tokens": false,
+    "authenticated_can_capture": false,
+    "authenticated_can_read_tokens": false,
+    "capture_rpc_exists": true,
+    "credential_table_exists": true,
+    "service_can_capture": true
+  },
+  "deployedFunctions": [
+    {
+      "name": "delete-account",
+      "version": 3,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "name": "provider-credentials",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    }
+  ]
+}
