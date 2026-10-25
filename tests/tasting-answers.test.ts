@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { aromaCatalogs } from '../src/features/tasting/catalog';
 import { activeAroma, changeAroma, emptyAroma } from '../src/features/tasting/aroma';
-import { choose, composeNote, emptyAnswer, serializeAnswers } from '../src/features/tasting/answers';
+import { choose, composeNote, emptyAnswer, serializeAnswers, textAnswer } from '../src/features/tasting/answers';
 import { newTastingDraft, setAnswer } from '../src/features/tasting/draft';
 import { questionsFor } from '../src/features/tasting/questions';
 import { readFileSync } from 'node:fs';
@@ -80,4 +80,24 @@ test('saved v2 answers restore by stable question ID, including skipped aromas a
   const skipped=restoreAnswers(draft,[{mode:'deep',question_id:'nose',status:'skipped',descriptor_codes:[],intensity:null,free_text:null}]);
   assert.equal(serializeAnswers(skipped)[0].status,'skipped');assert.equal(composeNote(skipped),'');
   assert.deepEqual(draft.modes.deep.aromas,{});
+});
+
+test('blank IME input stays unanswered through validation, draft restore and note serialization',()=>{
+  for(const category of ['whisky','wine','beer','traditional'] as const)for(const mode of ['light','deep'] as const){
+    for(const field of questionsFor(category,mode).flatMap(q=>q.fields).filter(f=>f.kind==='text')){
+      for(const text of ['', ' ', '\n', ' \n\t', '\u3000']){
+        const draft=setAnswer(newTastingDraft('owner','record',category,mode),field.id,textAnswer(text));
+        assert.deepEqual(draft.modes[mode].answers[field.id],emptyAnswer());
+        assert.doesNotThrow(()=>parseTastingDraft(JSON.stringify(draft),'owner','record'));
+        assert.equal(composeNote(draft),'');
+        assert.ok(serializeAnswers(draft).every(a=>a.freeText===null));
+      }
+      const text='  내가 느낀 향\n부드러운 느낌  ';
+      const written=setAnswer(newTastingDraft('owner','record',category,mode),field.id,textAnswer(text));
+      assert.equal(written.modes[mode].answers[field.id].freeText,text);
+      const cleared=setAnswer(written,field.id,textAnswer(' \n'));
+      assert.equal(composeNote(cleared),'');
+      assert.equal(written.modes[mode].answers[field.id].freeText,text);
+    }
+  }
 });
