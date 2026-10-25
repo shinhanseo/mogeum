@@ -3,6 +3,7 @@ export type AccountDeletionPorts = {
   completed: () => Promise<boolean>;
   authenticate: () => Promise<string | null>;
   begin: (owner: string, lease: string) => Promise<boolean>;
+  revoke: (owner: string, lease: string) => Promise<void>;
   files: (owner: string, lease: string) => Promise<string[]>;
   remove: (paths: string[]) => Promise<void>;
   purge: (owner: string, lease: string) => Promise<void>;
@@ -20,6 +21,7 @@ export async function deleteAccount(
   if (!owner) throw new Error("UNAUTHENTICATED");
   if (!(await ports.begin(owner, lease))) return { state: "running" as const };
   try {
+    await ports.revoke(owner, lease);
     // Bounded work; large accounts continue on the next request without restarting/deleting unrelated owners.
     for (let batch = 0; batch < 10; batch++) {
       const paths = await ports.files(owner, lease);

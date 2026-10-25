@@ -17,6 +17,19 @@ export function DeletionScreen({
     "ready" | "busy" | "running" | "error" | "login" | "complete"
   >(initialTask ? "busy" : "ready");
   const lock = useRef(false);
+  const [requiredProvider, setRequiredProvider] = useState<
+    "apple" | "kakao" | null
+  >(null);
+  function requireLogin(error: unknown) {
+    const provider = (error as { provider?: unknown })?.provider;
+    setRequiredProvider(
+      provider === "apple" || provider === "kakao" ? provider : null,
+    );
+    return error instanceof Error &&
+      ["LOGIN_REQUIRED", "PROVIDER_LOGIN_REQUIRED"].includes(error.message)
+      ? ("login" as const)
+      : ("error" as const);
+  }
   useEffect(() => {
     if (!initialTask) return;
     let alive = true;
@@ -27,12 +40,7 @@ export function DeletionScreen({
           if (alive) setState(result);
         },
         (error) => {
-          if (alive)
-            setState(
-              error instanceof Error && error.message === "LOGIN_REQUIRED"
-                ? "login"
-                : "error",
-            );
+          if (alive) setState(requireLogin(error));
         },
       )
       .finally(() => {
@@ -49,11 +57,7 @@ export function DeletionScreen({
     try {
       setState(await onRetry());
     } catch (error) {
-      setState(
-        error instanceof Error && error.message === "LOGIN_REQUIRED"
-          ? "login"
-          : "error",
-      );
+      setState(requireLogin(error));
     } finally {
       lock.current = false;
     }
@@ -103,19 +107,23 @@ export function DeletionScreen({
         {state === "login" ? (
           <>
             <Text accessibilityRole="alert" style={s.body}>
-              로그인이 만료됐어요. 삭제를 요청한 같은 계정으로 로그인한 뒤
-              이어서 정리해주세요.
+              로그인 연결 해제를 확인해야 해요. 삭제를 요청한 같은 계정으로
+              로그인한 뒤 이어서 정리해주세요.
             </Text>
-            <Button
-              label="Apple로 다시 로그인"
-              variant="apple"
-              onPress={() => void login("apple")}
-            />
-            <Button
-              label="카카오로 다시 로그인"
-              variant="kakao"
-              onPress={() => void login("kakao")}
-            />
+            {requiredProvider !== "kakao" && (
+              <Button
+                label="Apple로 다시 로그인"
+                variant="apple"
+                onPress={() => void login("apple")}
+              />
+            )}
+            {requiredProvider !== "apple" && (
+              <Button
+                label="카카오로 다시 로그인"
+                variant="kakao"
+                onPress={() => void login("kakao")}
+              />
+            )}
           </>
         ) : null}
         {state !== "complete" && state !== "login" ? (

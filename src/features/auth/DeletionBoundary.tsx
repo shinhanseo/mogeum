@@ -11,6 +11,7 @@ import {
   storedDeletionOwners,
 } from "./deletion-device";
 import { DeletionScreen } from "./DeletionScreen";
+import { getSupabase } from "../../lib/supabase";
 import { signIn } from "./oauth";
 import { colors } from "../../theme/tokens";
 /** Pending deletion survives Auth removal and app restarts; never show a deleted owner's stale screens. */
@@ -101,7 +102,16 @@ export function DeletionBoundary({ children }: { children: ReactNode }) {
                   setPending((current) => (current === owner ? null : current));
                 return result;
               }}
-              onLogin={signIn}
+              onLogin={async (provider) => {
+                const completed = await signIn(provider);
+                if (!completed) throw Error("LOGIN_CANCELLED");
+                const client = getSupabase();
+                const session = client
+                  ? (await client.auth.getSession()).data.session
+                  : null;
+                if (session?.user.id !== owner)
+                  throw Error("SAME_ACCOUNT_REQUIRED");
+              }}
             />
           ) : null}
         </View>

@@ -1,3 +1,7 @@
+import {
+  clearProviderCapture,
+  captureExistingSession,
+} from "./provider-capture-device";
 import { clearLocalCutouts } from "../cutout/storage";
 import type { DeletionEvent } from "./deletion-events";
 import { resolveDeletionRequest } from "./deletion-request";
@@ -97,6 +101,7 @@ async function cleanup(owner: string) {
       `${FileSystem.documentDirectory}menu-drafts/${owner}/`,
       { idempotent: true },
     );
+  await clearProviderCapture(owner);
   await AsyncStorage.multiRemove(keys);
 }
 const pending = new Map<string, Promise<"running" | "complete">>();
@@ -132,6 +137,8 @@ async function perform(owner: string): Promise<"running" | "complete"> {
     if (data.session?.user.id !== owner) throw Error("LOGIN_REQUIRED");
     receipt = { owner, tokens: [data.session.access_token], complete: false };
   }
+  if (data.session?.user.id === owner)
+    await captureExistingSession(data.session).catch(() => {});
   await AsyncStorage.setItem(key(owner), JSON.stringify(receipt));
   await accountStorage.freeze(owner);
   notifyDeletion({ owner, active: true });

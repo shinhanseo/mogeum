@@ -15,6 +15,9 @@ function harness() {
       events.push("freeze");
       return true;
     },
+    revoke: async () => {
+      events.push("providers");
+    },
     files: async () => photos,
     remove: async () => {
       events.push("photos");
@@ -49,6 +52,7 @@ test("deletion freezes first, removes binary before DB/Auth, and a lost response
   });
   assert.deepEqual(h.events, [
     "freeze",
+    "providers",
     "photos",
     "db",
     "auth",
@@ -68,7 +72,7 @@ test("photo removal failure never deletes records/Auth; retry can continue and l
     throw Error("storage offline");
   };
   await assert.rejects(deleteAccount(h.ports, "lease"), /offline/);
-  assert.deepEqual(h.events, ["freeze", "release"]);
+  assert.deepEqual(h.events, ["freeze", "providers", "release"]);
   h.ports.remove = remove;
   assert.deepEqual(await deleteAccount(h.ports, "retry"), {
     state: "complete",
@@ -78,7 +82,7 @@ test("foreign storage paths never reach the deletion API", async () => {
   const h = harness();
   h.setPhotos(["other/records/private.jpg"]);
   await assert.rejects(deleteAccount(h.ports, "lease"), /INVALID_PHOTO_PATH/);
-  assert.deepEqual(h.events, ["freeze", "release"]);
+  assert.deepEqual(h.events, ["freeze", "providers", "release"]);
 });
 test("unauthenticated requests and another active worker cannot begin destructive work", async () => {
   const h = harness();
@@ -99,4 +103,13 @@ test("large deletions are bounded and retain a pending state until a later reque
   assert.equal(h.events.filter((e) => e === "photos").length, 10);
   assert.ok(!h.events.includes("auth"));
   assert.equal(h.events.at(-1), "release");
+});
+
+test("provider failure preserves all photos, records and Auth and releases its lease", async () => {
+  const h = harness();
+  h.ports.revoke = async () => {
+    throw Error("provider offline");
+  };
+  await assert.rejects(deleteAccount(h.ports, "lease"), /offline/);
+  assert.deepEqual(h.events, ["freeze", "release"]);
 });

@@ -1,11 +1,7 @@
+import { captureVerifiedProvider } from "../_shared/provider-capture.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@6.2.13";
-import {
-  parseProviderCapture,
-  providerSubjects,
-  validateProviderCredential,
-  encryptProviderCredential,
-} from "../_shared/provider-credentials.ts";
+import { parseProviderCapture } from "../_shared/provider-credentials.ts";
 import { readMenuBody } from "../_shared/menu-body.ts";
 const jwks = createRemoteJWKSet(new URL("https://appleid.apple.com/auth/keys"));
 const cors = {
@@ -47,10 +43,6 @@ Deno.serve(async (request) => {
     return reply("INVALID_REQUEST", 400);
   }
   try {
-    const identity = providerSubjects(user.data.user.identities ?? []).find(
-      (i) => i.provider === input.provider,
-    );
-    if (!identity) return reply("PROVIDER_IDENTITY_MISMATCH", 403);
     const config = {
       appleClientId: Deno.env.get("APPLE_CLIENT_ID"),
       appleClientSecret: Deno.env.get("APPLE_CLIENT_SECRET"),
@@ -58,10 +50,12 @@ Deno.serve(async (request) => {
       kakaoClientSecret: Deno.env.get("KAKAO_CLIENT_SECRET"),
       kakaoAppId: Deno.env.get("KAKAO_APP_ID"),
     };
-    const credential = await validateProviderCredential(
+    await captureVerifiedProvider(
+      user.data.user.id,
+      user.data.user.identities ?? [],
       input,
-      identity.subject,
       config,
+      encryption,
       {
         fetch,
         verifyApple: async (token) => {
@@ -72,23 +66,33 @@ Deno.serve(async (request) => {
           });
           return { sub: verified.payload.sub };
         },
+        receipt: async (value) => {
+          const result = await admin.rpc("provider_credential_captured", {
+            p_owner: value.owner,
+            p_provider: value.provider,
+            p_subject: value.subject,
+            p_capture_hash: value.captureHash,
+          });
+          if (result.error) throw Error("CAPTURE_RECEIPT_UNAVAILABLE");
+          return result.data === true;
+        },
+        store: async (value) => {
+          const result = await admin.rpc("store_provider_credential_capture", {
+            p_owner: value.owner,
+            p_provider: value.provider,
+            p_subject: value.subject,
+            p_capture_hash: value.captureHash,
+            p_ciphertext: value.ciphertext,
+            p_generation: value.generation,
+          });
+          if (result.error) throw Error("SAVE_FAILED");
+        },
       },
     );
-    const ciphertext = await encryptProviderCredential(
-      user.data.user.id,
-      credential,
-      encryption,
-    );
-    const saved = await admin.rpc("store_provider_credential", {
-      p_owner: user.data.user.id,
-      p_provider: identity.provider,
-      p_subject: identity.subject,
-      p_ciphertext: ciphertext,
-      p_generation: crypto.randomUUID(),
-    });
-    if (saved.error) throw Error("SAVE_FAILED");
     return reply("STORED");
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "PROVIDER_IDENTITY_MISMATCH")
+      return reply("PROVIDER_IDENTITY_MISMATCH", 403);
     return reply("PROVIDER_CREDENTIAL_RETRY_REQUIRED", 503);
   }
 });
