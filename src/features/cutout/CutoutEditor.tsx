@@ -48,8 +48,8 @@ export function CutoutEditor({
         setResult(next);
         setSelected(true);
       } else await FS.deleteAsync(next.uri, { idempotent: true });
-    } catch {
-      if (alive.current) setError(cutoutError());
+    } catch (error) {
+      if (alive.current) setError(cutoutError(error));
     } finally {
       lock.current = false;
       if (alive.current) setBusy(false);

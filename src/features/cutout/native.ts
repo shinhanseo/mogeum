@@ -45,6 +45,10 @@ export function createCutout(uri: string): Promise<CutoutImage> {
   running = task;
   return task;
 }
-export function cutoutError() {
+export function cutoutError(error?: unknown) {
+  if (error instanceof Error && error.message.includes("does not work on the iOS Simulator"))
+    return "iOS 시뮬레이터에서는 배경을 분리할 수 없어요. 실제 iPhone에서 사용하거나 원본 사진으로 놓아주세요.";
+  if (Platform.OS === "ios")
+    return "배경을 분리하지 못했어요. 병과 배경이 구분되는 사진으로 다시 시도하거나 원본 사진을 사용해주세요.";
   return "배경을 분리하지 못했어요. Android 첫 사용에는 모델 다운로드가 필요해요. 연결을 확인하고 다시 시도하거나 원본을 사용해주세요.";
 }
