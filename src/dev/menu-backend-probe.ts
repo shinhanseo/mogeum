@@ -1,4 +1,4 @@
-/** Development-only native OCR → isolated local server probe. No configured managed endpoint is used. */
+/** Development-only native OCR probe using explicitly supplied synthetic clients. App login is never reused. */
 import { Platform } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import AsyncStorage from "@react-native-async-storage/async-storage";
