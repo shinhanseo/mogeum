@@ -57,31 +57,49 @@ export function DeletionBoundary({ children }: { children: ReactNode }) {
       subscription.remove();
     };
   }, [activeOwner, auth.status]);
-  // OAuth callback and explicit fixtures must remain routable while the gate owns the account screens.
-  if (path.startsWith("/dev/") || path === "/auth/callback") return children;
-  if (!checked)
-    return (
+  // Keep the navigator mounted so OAuth callbacks and completion redirects remain routable.
+  const bypass = path.startsWith("/dev/") || path === "/auth/callback";
+  const owner =
+    pending && (!activeOwner || activeOwner === pending) ? pending : null;
+  const gated = !bypass && (!checked || !!owner);
+  return (
+    <View style={{ flex: 1 }}>
       <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.background,
-          justifyContent: "center",
-        }}
+        style={{ flex: 1, opacity: gated ? 0 : 1 }}
+        pointerEvents={gated ? "none" : "auto"}
+        accessibilityElementsHidden={gated}
+        importantForAccessibility={gated ? "no-hide-descendants" : "auto"}
       >
-        <ActivityIndicator color={colors.primary} />
+        {children}
       </View>
-    );
-  if (pending && (!activeOwner || activeOwner === pending))
-    return (
-      <DeletionScreen
-        key={pending}
-        onRetry={async () => {
-          const result = await requestAccountDeletion(pending);
-          if (result === "complete") setPending(null);
-          return result;
-        }}
-        onLogin={signIn}
-      />
-    );
-  return children;
+      {gated && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: colors.background,
+          }}
+        >
+          {!checked ? (
+            <View style={{ flex: 1, justifyContent: "center" }}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : owner ? (
+            <DeletionScreen
+              key={owner}
+              onRetry={async () => {
+                const result = await requestAccountDeletion(owner);
+                if (result === "complete") setPending(null);
+                return result;
+              }}
+              onLogin={signIn}
+            />
+          ) : null}
+        </View>
+      )}
+    </View>
+  );
 }
