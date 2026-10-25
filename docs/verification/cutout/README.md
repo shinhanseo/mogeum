@@ -55,3 +55,5 @@ CI의 계정 삭제 API 검사가2회 `502 !== 401`로 실패했고, 같은 번�
 후속 로컬 네이티브 검증 `android-storage-cleanup-report.json`의12단계가 모두 통과했다. 기존9단계에 사진 삭제 작업이 원본을 지우기 전에 로컬 누끼를 정리하는지, 삭제된 사진에는 늦게 도착한 누끼가 적용되지 않는지, 기록 삭제 시 누끼도 제거되는지를 추가했다. 정리 실패는 durable 삭제 작업을 완료 처리하지 않아 다음 실행에서 재시도한다. 적용 직전에도 서버의 소유자·ready 원본 존재를 다시 확인한다. 테스트에서 만든 임시 계정2개와 원본은 명시적 manifest로 정리했다. 운영 계정에는 삭제 요청을 보내지 않았다.
 
 이 변경의 `npm run check`:325개 중318개 통과,7개 환경 의존 skip. Android emulator에서 실제 ML Kit와 로컬 Auth/Storage/DB를 연결했다. iPhone·Galaxy 실기기 품질 검증과 서버 누끼 동기화는 남아 있다.
+
+CI HTTP harness는 Node 환경이라 Expo native filesystem을 로드할 수 없다. 해당 harness에 명시적인 derivative adapter를 주입해 소유자/경로 경계와 실제 서버 원본 삭제를 검사한다. native 파일 삭제 자체는 위 Android12단계 probe에서 별도로 확인했다. 정리 실패를 무시하고 원본을 지우도록 앱 코드를 완화하지 않는다.
