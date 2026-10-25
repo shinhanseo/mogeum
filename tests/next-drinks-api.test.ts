@@ -70,13 +70,7 @@ test(
       assert.equal(initial.status, 200);
       const empty = await initial.json();
       parseDiscoveryResult(empty);
-      assert.equal(empty.recommendations.length, 32);
-      assert.ok(
-        empty.recommendations.every(
-          (r: { kind: string; similar: unknown[] }) =>
-            r.kind === "explore" && !r.similar.length,
-        ),
-      );
+      assert.deepEqual(empty.recommendations, []);
       const operation = randomUUID();
       const bookmark = () =>
         a.rpc("set_drink_wishlist", {
@@ -216,6 +210,7 @@ test(
       assert.equal(value.wishlist[0].product_id, "glenlivet-12");
       const foreign = await b.functions.invoke("next-drinks", { body: {} });
       assert.equal(foreign.error, null);
+      assert.deepEqual(foreign.data.recommendations, []);
       assert.equal(foreign.data.evidenceRecords.length, 0);
       assert.equal(foreign.data.wishlist.length, 0);
     } finally {

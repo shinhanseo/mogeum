@@ -1,3 +1,4 @@
+import { personalizedDrinks } from "../../../supabase/functions/_shared/next-drinks-domain";
 import {
   products,
   PRODUCT_CATALOG_VERSION,
@@ -228,7 +229,8 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
     (r) => r.product_id,
   );
   return {
-    recommendations,
+    // Older deployments returned uncited catalog exploration here. Never render it as personal advice.
+    recommendations: personalizedDrinks(recommendations),
     wishlist,
     evidenceRecords,
     recordCount,

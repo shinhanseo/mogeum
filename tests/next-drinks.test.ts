@@ -13,7 +13,28 @@ const empty: TasteSnapshot = {
   totalRecords: 0,
   omittedCount: 0,
 };
-test("empty and photo-only records are exploration, never sensory preference", () => {
+const positiveRecord = {
+  id: "positive",
+  entryId: "entry-positive",
+  revision: 1,
+  category: "whisky",
+  name: "합성 느낌 기록",
+  date: "2026-10-23",
+  revisit: "again",
+  rating: null,
+  note: {
+    mode: "light",
+    version: 2,
+    inputRevision: 1,
+    confirmedInputRevision: 1,
+    confirmed: true,
+    answers: [
+      { questionId: "nose", status: "answered", descriptorCodes: ["fruit"] },
+      { questionId: "body", status: "answered", descriptorCodes: ["light"] },
+    ],
+  },
+};
+test("empty and photo-only records never produce personal recommendations", () => {
   const photo = {
     id: "photo",
     entryId: "entry",
@@ -30,16 +51,7 @@ test("empty and photo-only records are exploration, never sensory preference", (
     { ...empty, records: [photo], totalRecords: 1 },
   ]) {
     const result = discoverDrinks(snapshot, []);
-    assert.equal(result.length, 32);
-    assert.ok(
-      result.every(
-        (r) => r.kind === "explore" && r.similar.length === 0 && r.score === 0,
-      ),
-    );
-    assert.equal(
-      new Set(result.slice(0, 4).map((r) => r.product.category)).size,
-      4,
-    );
+    assert.deepEqual(result, []);
   }
 });
 test("wine history honors explicit vintage and never chooses an ambiguous edition", () => {
@@ -65,19 +77,22 @@ test("wine history honors explicit vintage and never chooses an ambiguous editio
   );
 });
 test("known products from full history are excluded even if absent from recent sensory snapshot", () => {
-  const result = discoverDrinks(empty, [
-    {
-      entered_name: "Glenfiddich 12",
-      category: "whisky",
-      vintage_status: null,
-      vintage_year: null,
-    },
-  ]);
+  const result = discoverDrinks(
+    { ...empty, records: [positiveRecord], totalRecords: 1 },
+    [
+      {
+        entered_name: "Glenfiddich 12",
+        category: "whisky",
+        vintage_status: null,
+        vintage_year: null,
+      },
+    ],
+  );
   assert.equal(
     result.some((r) => r.product.id === "glenfiddich-12"),
     false,
   );
-  assert.equal(discoverDrinks(empty, [], "beer").length, 8);
+  assert.deepEqual(discoverDrinks(empty, [], "beer"), []);
 });
 test("wishlist SQL admits exactly the curated product IDs", () => {
   const sql = readFileSync(
@@ -90,27 +105,6 @@ test("wishlist SQL admits exactly the curated product IDs", () => {
   assert.deepEqual([...new Set(ids)].sort(), products.map((p) => p.id).sort());
 });
 
-const positiveRecord = {
-  id: "positive",
-  entryId: "entry-positive",
-  revision: 1,
-  category: "whisky",
-  name: "합성 느낌 기록",
-  date: "2026-10-23",
-  revisit: "again",
-  rating: null,
-  note: {
-    mode: "light",
-    version: 2,
-    inputRevision: 1,
-    confirmedInputRevision: 1,
-    confirmed: true,
-    answers: [
-      { questionId: "nose", status: "answered", descriptorCodes: ["fruit"] },
-      { questionId: "body", status: "answered", descriptorCodes: ["light"] },
-    ],
-  },
-};
 test("aroma can bridge categories but body/taste preference cannot leak into an untried category", () => {
   const result = discoverDrinks(
     { ...empty, records: [positiveRecord], totalRecords: 1 },
@@ -131,7 +125,7 @@ test("aroma can bridge categories but body/taste preference cannot leak into an 
       .every((f) => f.recordIds.every((id) => id === "positive")),
   );
 });
-test("opposing observations stay visible without being reported as confident close preference", () => {
+test("equally opposing observations do not become personal recommendations", () => {
   const negative = {
     ...positiveRecord,
     id: "negative",
@@ -141,22 +135,16 @@ test("opposing observations stay visible without being reported as confident clo
   const result = discoverDrinks(
     { ...empty, records: [positiveRecord, negative], totalRecords: 2 },
     [],
-  ).find((r) => r.product.id === "glenlivet-12")!;
-  assert.equal(result.score, 0);
-  assert.equal(result.kind, "explore");
-  assert.deepEqual(result.similar[0].recordIds, ["positive"]);
-  assert.deepEqual(result.cautions[0].negativeIds, ["negative"]);
+  );
+  assert.ok(!result.some((r) => r.product.id === "glenlivet-12"));
 });
 test("negative-only observations are cautions, not invented positive matches", () => {
   const negative = { ...positiveRecord, id: "negative", revisit: "not_for_me" };
   const result = discoverDrinks(
     { ...empty, records: [negative], totalRecords: 1 },
     [],
-  ).find((r) => r.product.id === "glenlivet-12")!;
-  assert.equal(result.similar.length, 0);
-  assert.equal(result.cautions.length, 1);
-  assert.equal(result.score, -1);
-  assert.ok(result.unconfirmedFeatures.every((f) => f.id !== "향:과일 향"));
+  );
+  assert.deepEqual(result, []);
 });
 
 test("unknown wine vintage does not silently become an NV product", () => {
@@ -172,4 +160,39 @@ test("unknown wine vintage does not silently become an NV product", () => {
     seenProductIds([{ ...record, vintage_status: "nv" }]).has(product.id),
     true,
   );
+});
+
+test("neutral and unevaluated sensory observations do not invent a preference", () => {
+  for (const revisit of ["okay", null])
+    assert.deepEqual(
+      discoverDrinks(
+        {
+          ...empty,
+          records: [{ ...positiveRecord, revisit }],
+          totalRecords: 1,
+        },
+        [],
+      ),
+      [],
+    );
+});
+test("positive matches retain contrary evidence, without padding the list with uncited catalog entries", () => {
+  const records = [
+    positiveRecord,
+    { ...positiveRecord, id: "positive2", entryId: "entry2" },
+    {
+      ...positiveRecord,
+      id: "negative",
+      entryId: "entry3",
+      revisit: "not_for_me",
+    },
+  ];
+  const rows = discoverDrinks({ ...empty, records, totalRecords: 3 }, []);
+  assert.ok(rows.length > 0 && rows.length < products.length);
+  assert.ok(
+    rows.every((r) => r.score > 0 && r.similar.some((f) => f.recordIds.length)),
+  );
+  const row = rows.find((r) => r.product.id === "glenlivet-12")!;
+  assert.deepEqual(row.similar[0].recordIds, ["positive", "positive2"]);
+  assert.deepEqual(row.cautions[0].negativeIds, ["negative"]);
 });

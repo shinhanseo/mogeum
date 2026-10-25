@@ -1,16 +1,21 @@
+import type { NextDrink } from "../supabase/functions/_shared/next-drinks-domain";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseDiscoveryResult } from "../src/features/discovery/contract";
-import { discoverDrinks } from "../supabase/functions/_shared/next-drinks-domain";
 import {
   products,
   PRODUCT_CATALOG_VERSION,
 } from "../supabase/functions/_shared/product-catalog";
 const result = () => ({
-  recommendations: discoverDrinks(
-    { hash: "empty", records: [], totalRecords: 0, omittedCount: 0 },
-    [],
-  ),
+  // Explicit legacy deployment fixture: catalog exploration used to be returned without taste evidence.
+  recommendations: products.map((product) => ({
+    product: structuredClone(product),
+    kind: "explore" as const,
+    score: 0,
+    similar: [],
+    cautions: [],
+    unconfirmedFeatures: structuredClone(product.features),
+  })) as NextDrink[],
   wishlist: [],
   evidenceRecords: [],
   tasteHash: "empty",
@@ -23,18 +28,16 @@ const result = () => ({
   catalogSize: products.length,
   limitedCatalog: true,
 });
-test("catalog exploration survives transport without acquiring preference evidence", () => {
-  const input = result(),
-    parsed = parseDiscoveryResult(JSON.parse(JSON.stringify(input)));
-  assert.equal(parsed.recommendations.length, 32);
-  assert.ok(parsed.recommendations.every((r) => r.kind === "explore"));
-  parsed.recommendations[0].product.source.url = "changed";
-  assert.notEqual(
-    products.find((p) => p.id === parsed.recommendations[0].product.id)!.source
-      .url,
-    "changed",
-  );
+test("an older deployment's catalog filler is suppressed without deleting saved bookmarks", () => {
+  const input = {
+    ...result(),
+    wishlist: [{ product_id: products[0].id, saved: true, revision: 1 }],
+  };
+  const parsed = parseDiscoveryResult(JSON.parse(JSON.stringify(input)));
+  assert.deepEqual(parsed.recommendations, []);
+  assert.deepEqual(parsed.wishlist, input.wishlist);
 });
+
 test("rejects invented products, response URLs, duplicate products and incompatible catalogs", () => {
   const mutations = [
     (r: ReturnType<typeof result>) => {
