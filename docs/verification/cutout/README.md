@@ -25,3 +25,7 @@
 - 원본 Figma에 없는 누끼 편집 상태는 기존 cream/burgundy 토큰·Button·ChoiceChip·Header를 재사용한 확장 UI다. 픽셀 일치 검증은 주장하지 않는다.
 
 최종 로컬 검사: 개발 작업 트리 `npm run check` 331개 중324개 통과/7개 환경 의존 skip. 인증 WIP와 이전 질문 수정에서 분리한 main 기반 리뷰 브랜치는 typecheck·lint·질문 계약 검사 및320개 중313개 통과/7개 skip. 테스트 개수 차이는 미병합 인증/질문 회귀를 리뷰 브랜치에 포함하지 않았기 때문이다.
+
+### iOS 빌드 호환성 추가 확인
+
+실제 simulator 양 아키텍처 빌드에서 패키지의 `BackgroundRemovalException.private message`가 Expo58 `Exception.message`와 충돌해 컴파일 실패했다. `detailMessage`로만 이름을 바꾸는 최소 patch-package 패치를 커밋하고 postinstall에서 재적용한다. 패치 후 Xcode `generic/platform=iOS Simulator` Debug 빌드가 **BUILD SUCCEEDED**로 끝났다. 실제 iPhone에서 Vision을 실행한 결과는 여전히 미검증이다. 패치 파일에는 빌드 산출물을 포함하지 않는다.
