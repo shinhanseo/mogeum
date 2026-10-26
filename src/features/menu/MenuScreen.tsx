@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   Image,
   Linking,
+  Keyboard,
+  Platform,
   Modal,
   Pressable,
   ScrollView,
@@ -802,6 +804,9 @@ export function MenuScreen(p: Props) {
                   )}
                   <Text style={s.label}>술 이름</Text>
                   <TextInput
+                    returnKeyType="done"
+                    submitBehavior="blurAndSubmit"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                     accessibilityLabel="메뉴 술 이름"
                     value={editing.name}
                     onChangeText={(name) =>
@@ -817,9 +822,12 @@ export function MenuScreen(p: Props) {
                   />
                   <Text style={s.label}>가격 · 원 / 모르면 비워두기</Text>
                   <TextInput
+                    returnKeyType="done"
+                    submitBehavior="blurAndSubmit"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                     accessibilityLabel="메뉴 가격"
                     value={editing.price?.toString() ?? ""}
-                    keyboardType="number-pad"
+                    keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "number-pad"}
                     onChangeText={(v) =>
                       setEditing({
                         ...editing,
@@ -831,6 +839,9 @@ export function MenuScreen(p: Props) {
                   />
                   <Text style={s.label}>용량 · 잔 / 보틀</Text>
                   <TextInput
+                    returnKeyType="done"
+                    submitBehavior="blurAndSubmit"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                     accessibilityLabel="메뉴 용량"
                     value={editing.serving ?? ""}
                     onChangeText={(serving) =>

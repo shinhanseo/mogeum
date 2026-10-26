@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Button } from '../../components/Button';
 import { ChoiceChip } from '../../components/ChoiceChip';
 import { Icon } from '../../components/Icon';
@@ -28,7 +28,7 @@ export function CellarScreen({ items, totalCount, loading, error, onNext, onRetr
   return <View style={styles.page}>
     <View style={styles.header}>
       <View style={styles.titleRow}><Text style={styles.title}>나의 술장</Text><Pressable accessibilityRole="button" accessibilityLabel="술 찾기" onPress={() => setSearchOpen(!searchOpen)} style={styles.searchAction}><Icon name="search" color={colors.text} /></Pressable></View><Text style={styles.count}>모아둔 술 {totalCount}</Text>
-      {searchOpen && <TextInput maxLength={150} accessibilityLabel="술 이름 검색" placeholder="술 이름으로 찾기" placeholderTextColor={colors.muted} value={query} onChangeText={onQuery} style={styles.search} />}
+      {searchOpen && <TextInput returnKeyType="done" submitBehavior="blurAndSubmit" onSubmitEditing={() => Keyboard.dismiss()} maxLength={150} accessibilityLabel="술 이름 검색" placeholder="술 이름으로 찾기" placeholderTextColor={colors.muted} value={query} onChangeText={onQuery} style={styles.search} />}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filters}>{(['전체', ...categories] as const).map(value => <ChoiceChip key={value} label={value} selected={category === value} onPress={() => onCategory(value)} compact style={{ paddingHorizontal: 15 * filterScale, minWidth: ({ 전체: 49, 위스키: 67, 와인: 53, 맥주: 53, 전통주: 74 })[value] * filterScale }} />)}</ScrollView>
     </View>
     {(loading || error) && !items.length ? status : !empty && filtered.length === 0 ? <View style={styles.noResults}><Text style={styles.emptyTitle}>찾는 술이 없어요</Text><Button label="검색 조건 지우기" variant="secondary" onPress={() => { onCategory('전체'); onQuery(''); }} /></View> :
