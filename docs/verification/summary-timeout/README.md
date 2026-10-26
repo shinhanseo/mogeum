@@ -13,3 +13,7 @@ AI SDK7.0.148와 Google4.0.102의 캐시된 version-matched 문서도 확인했�
 실제 관리형에서 iOS native OCR2장 재생→12개 메뉴·저장/동일 요청 재실행·타인 접근 차단·추천1개, Galaxy 모호한 가격 원문 재생→후보4개/가격 확정0개/검토 필요, 기록 기반 다음 술19개, Auth/사진/노트/기록 삭제 및 다른 계정 보호가 확인됐다. 이전 원문을 서버로 재생한 것이며 새로운 카메라 OCR 검증이 아니다.
 
 menu-recommend와 taste-summary 최신 소스를 CLI로 개발 프로젝트에 배포했다. CLI source 배포는 header가 source-development이며 dashboard 단일 bundle ID와 구분한다. 실제 모델 성공·물리 iPhone·스토어 출시 준비 완료를 주장하지 않는다. check343개 중335개 통과/환경 의존8개 skip, handler Deno check 통과.
+
+## 후속 상태
+
+위 생성 지연 미해결 기록 이후, 근거 ID 선택 작업에 맞춘 모델 비교와 변경으로 실제 관리형 요약 생성·DB 저장·cache 재사용을 확인했다. [후속 모델 검증](../summary-model/README.md). 기존 시간 초과 처리와 실패 판정은 유지한다.

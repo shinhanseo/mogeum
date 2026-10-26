@@ -198,6 +198,14 @@ async function main() {
         report.summaryModel = context.data.cached.model;
         report.summaryHighlights = context.data.cached.selection.highlightIds;
         report.summaryCacheSaved = true;
+        const cached = await call("taste-summary", a.token);
+        const cachedBody = await cached.json();
+        ensure(
+          cached.status === 200 &&
+            cachedBody.state === "ready" &&
+            cachedBody.cached === true,
+        );
+        report.summaryCacheReplayed = true;
       } else {
         failed = true;
         report.failedStep = step;
