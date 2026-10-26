@@ -13,3 +13,5 @@ iOS 26.5 실제 development build + 로컬 Supabase 합성 계정에서 아래�
 - 복구한 편집 취소 → 원문 미리보기 복귀. 저장 버튼은 누르지 않았습니다.
 
 증거는 무시된 로컬 `artifacts/qa/tasting-done/ios-preview-stage-restored.png`, `ios-editor-stage-restored.png`에 보관했습니다. Android·실기기·실제 빈 편집 버퍼 종료/재시작·계정 전환 전체 UI는 남아 있습니다. 현재 EAS build Android 6/iOS remote 4는 이 수정 이전 소스이므로 이 기능을 포함했다고 표시하지 않습니다.
+
+후속 [앱 재실행 QA](tasting-relaunch/README.md)에서 iOS 실제 빈 편집 복구·취소 원문 보존과 Android native 저장소 24개 초안의 프로세스 재시작 후 복구를 추가 확인했습니다. 위 빌드/미검증 목록은 최초 작업 당시 상태이며, Android 터치 UI·실기기·계정 전환 전체 흐름은 후속 검증에서도 완료 처리하지 않았습니다.
