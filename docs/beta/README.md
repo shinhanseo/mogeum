@@ -43,6 +43,8 @@ npx eas-cli build -p ios --profile preview-simulator
 
 내부 QA에서도 자신의 실제 기록 대신 지워도 되는 테스트 기록을 권장한다. 알려진 미검증 범위는 [테스터 안내](tester-guide.md)를 참고한다.
 
+Android 직접 확인은 [실기기 수동 QA 체크리스트](android-manual-qa.md)를 사용한다. 갤럭시 설치·실행과 핵심 기능 전체 QA를 구분하며, 삼성 키보드/시스템 Back/권한/실사 OCR 등의 미검증 항목을 따로 남긴다.
+
 보안 점검: [Expo CLI upstream 권고와 runtime 포함 범위](../verification/dependency-audit/README.md). 빌드 도구 의존성 권고는 #112에서 미해결로 추적하며 임의 major override/downgrade는 적용하지 않는다.
 
 스토어 등록 문안은 [한국어 초안](../store/metadata-ko.md)에 정리했다. 아직 스토어에 게시하지 않았다.
