@@ -1,6 +1,6 @@
 # 검증과 AI 평가
 
-모든 검증은 실제 수행 여부·환경·결과를 PR에 쓴다. 아직 실행 가능한 앱이 없으므로 현재 테스트 통과를 주장하지 않는다. package scripts와 테스트 도구는 부트스트랩에서 고정한다.
+모든 검증은 실제 수행 여부·환경·결과를 PR과 verification 문서에 쓴다. 현재 iOS·Android development build와 내부 베타 산출물이 있다. 도메인/로컬 HTTP/관리형 합성 계정/시뮬레이터·에뮬레이터/실기기 UI 검증을 구분하며 한 범위의 성공을 다른 범위의 통과로 표현하지 않는다. 실제 명령은 package.json을 기준으로 한다.
 
 ## 도메인 자동 검증
 
@@ -58,3 +58,5 @@ iOS 개발 빌드의 `/dev/tasting?category=wine&mode=deep&question=appearance`�
 ## 실제 native + 로컬 서버 검증
 
 [개발 전용 native record probe](verification/native-record-backend.md)는 iOS/Android의 실제 사진 준비·Storage 업로드·RPC 저장·응답 유실 replay·RLS·native 파일 정리·서버 삭제를 검증한다. Web mock이나 UI 탭 조작 검증으로 표현하지 않는다. 합성 계정 정리 도구의 다른 run 차단은 test:storage의 실제 HTTP 회귀에도 포함한다.
+
+2026-10-26 기본 기록의 사진·빈티지·날짜·평가·별점 초안 강제 종료/재실행 및 저장 후 파일 정리와 입력 Done 범위는 [기본 기록 UI 검증](verification/record-input-done/README.md)을 참고한다. 테이스팅 입력의 긴 한글·줄바꿈·Done 증거는 [입력창 검증](verification/tasting-input-keyboard.md)에 구분한다.
