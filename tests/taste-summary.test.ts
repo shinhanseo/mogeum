@@ -58,3 +58,13 @@ test('provider timeouts release the lease, never cache a summary, and return onl
  const response=await tasteHandler(h.ports)(request());assert.equal(response.status,502);assert.equal(response.headers.get('cache-control'),'no-store');assert.deepEqual(await response.json(),{code:'ANALYSIS_TIMEOUT',retryable:true});assert.equal(h.finished(),null);assert.equal(selections,1);
  }
 });
+
+test('deep tasting intensity preserves its question context and never merges weak sweetness with weak acidity',()=>{
+ const deep={...record(1).note!,mode:'deep',answers:[{questionId:'palate.sweet',status:'answered',descriptorCodes:['level_1']},{questionId:'palate.acid',status:'answered',descriptorCodes:['level_1']}]};
+ const analysis=analyzeTaste(snapshot([record(1,{note:deep})]));
+ assert.equal(analysis.facts.length,2);assert.equal(new Set(analysis.facts.map(f=>f.id)).size,2);
+ assert.deepEqual(analysis.facts.map(f=>f.label).sort(),['단맛 · 약함','산미 · 약함'].sort());
+ const contrast=analyzeTaste(snapshot([record(1,{note:{...deep,answers:deep.answers.slice(0,1)}}),record(2,{revisit:'not_for_me',note:{...deep,answers:deep.answers.slice(1)}})]));
+ const sweet=contrast.facts.find(f=>f.label==='단맛 · 약함')!,acid=contrast.facts.find(f=>f.label==='산미 · 약함')!;
+ assert.equal(sweet.positiveIds.length,1);assert.equal(sweet.negativeIds.length,0);assert.equal(acid.positiveIds.length,0);assert.equal(acid.negativeIds.length,1);
+});
