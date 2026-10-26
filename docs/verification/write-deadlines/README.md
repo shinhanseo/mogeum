@@ -16,6 +16,14 @@
 
 `npm run check`: 371개 중 363 통과, 환경 의존 8 skip, 실패 0. 이후 Request signal에 init.signal=undefined가 전달되는 경계도 추가 검사해 원래 취소를 유지하는 것을 확인했다.
 
+## Android native 기본 저장 결과 · 2026-10-26
+
+전용 Android API 37 에뮬레이터/SDK58 앱을 종료한 뒤 QA 서버 8082를 다시 선택했다. Metro의 Android 새 entry bundle과 로컬 QA 모듈 로드를 확인한 뒤 동일 합성 계정으로 이름 없는 위스키의 새 경험을 작성했다. 로컬 gateway만 55초 일시 중지하고 저장을 눌렀다. 시간 초과 뒤 기존 `또 마시고 싶어요` 선택과 pending 안내, 오류가 남고 저장 버튼이 다시 활성화된 것을 확인했다.
+
+중단 중 해당 계정의 실제 DB는 2행이었다. gateway 복구 뒤 같은 저장 버튼으로 재시도해 상세로 이동했고 경험 3행/술장 항목 1개/서로 다른 operation 3개였다. 새 경험은 정확히 1행만 추가됐다. `artifacts/qa/composer-draft/android-server-deadline-error.png`, `android-server-deadline-retried.png`에 실제 캡처를 보관한다. paused=false를 확인했다. 운영 서버와 실제 사용자 데이터는 사용하지 않았다.
+
 ## 남은 검증
 
-Android deadline, native 사진 교체 deadline, 다른 노트/삭제 mutation의 대기 제한은 별도로 확인해야 한다. 전체 네트워크 흐름을 이 변경만으로 완료 처리하지 않는다.
+Android에서 사진 없는 기존 경험에 앨범의 QA 사진을 선택하고 gateway를 55초 중지해 사진 업로드도 확인했다. 시간 초과 후 pending 사진과 `보관한 요청 다시 시도`가 유지됐다. 오류 설명은 큰 미리보기 아래로 밀려 스크롤이 필요했으며 이 사용성 문제는 #122로 분리했다. 복구 후 재시도로 실제 상세에 사진이 나타났고, 해당 계정 경험 수는 3개 그대로, record_photos는 1→2행이었다. `android-photo-deadline-error.png`, `android-photo-deadline-retried.png`에 실제 캡처를 보관한다.
+
+iOS native 사진 교체 deadline, 다른 노트/삭제 mutation의 대기 제한은 별도로 확인해야 한다. 전체 네트워크 흐름을 이 변경만으로 완료 처리하지 않는다.
