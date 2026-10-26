@@ -1,0 +1,35 @@
+name: 모금 베타 피드백
+description: 설치·기록·추천 과정에서 겪은 문제나 의견
+title: "[베타] "
+body:
+  - type: markdown
+    attributes:
+      value: "이 이슈는 공개됩니다. 비밀번호·인증 코드·세션 토큰은 올리지 마세요. 스크린샷은 선택이며 개인 기록을 가려주세요."
+  - type: input
+    id: environment
+    attributes:
+      label: 기기·OS·앱 빌드 번호
+      placeholder: Galaxy S24 / Android 16 / 모금 0.1.0 (2)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 어떤 순서로 사용했나요?
+      placeholder: 메뉴판 2장 선택 → 첫 항목 이름 수정 → 추천 요청
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: 기대한 결과와 실제 결과
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 얼마나 자주 발생하나요?
+      options:
+        - 한 번 발생했어요
+        - 가끔 발생해요
+        - 같은 순서에서 매번 발생해요

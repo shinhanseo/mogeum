@@ -28,3 +28,8 @@ expo-env.d.ts
 **/native-record-probe-private-*.json
 __pycache__/
 *.py[cod]
+
+# Signing material stays private, never in beta archives or Git.
+credentials.json
+.credentials/
+artifacts/

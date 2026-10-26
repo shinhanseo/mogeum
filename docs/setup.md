@@ -1,6 +1,6 @@
 # 환경 설정과 운영
 
-앱 초기 설정과 개발 상태 화면을 추가했다. 사진 기록·인증·서버 연결은 후속 이슈다. 사용자가 이미 Apple Developer에 가입했다고 했으나 계정 접근, 서명, 실제 Supabase/EAS 프로젝트 연결은 아직 완료되지 않았다.
+사진 기록·Apple/Kakao 인증·Supabase 서버 연결을 구현했다. 최신 베타 빌드 준비와 미검증 범위는 [베타 안내](beta/README.md)를 기준으로 확인한다.
 
 ## 준비 순서
 
@@ -40,6 +40,6 @@ npm start
 
 식별자를 바꿀 때는 두 값을 모두 설정하고 `npx expo prebuild --clean`으로 재생성한다. ios/android는 생성 출력이므로 Git에서 제외한다. 실제 출시용 bundle ID와 서명은 소유자 확인 후 설정한다. Apple Developer 로그인이나 클라우드 프로젝트 생성은 이 초기화에 포함하지 않는다.
 
-EAS 설정에는 development/개발 simulator/preview profile만 준비했다. 실제 Expo 소유 프로젝트 연결·로그인·빌드는 아직 하지 않았다. SDK 58 선택 근거: [공식 생성 가이드](https://docs.expo.dev/get-started/create-a-project/), [Development Build 가이드](https://docs.expo.dev/develop/development-builds/introduction/).
+EAS 프로젝트를 연결했고 development/preview/preview-simulator/beta-store 프로필을 구성했다. preview 환경은 개발 Supabase에 연결한다. 빌드 산출물 검증과 외부 배포 조건은 [베타 안내](beta/README.md)에 구분한다. SDK 58 선택 근거: [공식 생성 가이드](https://docs.expo.dev/get-started/create-a-project/), [Development Build 가이드](https://docs.expo.dev/develop/development-builds/introduction/).
 
 2026-10-23 기준 기본 수정·사진 완료 확인(20261022160000) 및 삭제 영수증(20261022161000)까지 mogeum-dev에 수동 적용했다. 기존 3개와 합쳐 총 5개 migration의 CLI history 정합성 복구가 필요하다. 이전 SQL을 db push로 중복 실행하지 않는다. [적용 증거와 검증](verification/record-edit.md)을 참고한다.

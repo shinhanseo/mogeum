@@ -1,0 +1,32 @@
+# Use clean CNG output rather than the developer's generated native projects.
+node_modules/
+.git/
+.expo/
+dist/
+web-build/
+coverage/
+ios/
+android/
+.env
+.env.*
+!.env.example
+*.log
+*.keystore
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+supabase/.temp/
+supabase/.branches/
+# Dev-only routes, probes and reports are not part of tester archives.
+app/dev/
+tests/
+docs/
+.github/
+supabase/tests/
+# Runtime imports share domain contracts in supabase/functions/_shared; retain them.
+
+credentials.json
+.credentials/
+artifacts/
+assets/fixtures/ocr-benchmark/
