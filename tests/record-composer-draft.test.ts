@@ -123,3 +123,75 @@ test("composer keys participate in account deletion freeze and only the selected
   await storage.setItem(b, "different owner's draft");
   assert.equal(writes, 1);
 });
+
+test("file cleanup failure keeps the exact draft for safe receipt retry", async () => {
+  const { store } = memory(),
+    value = draft();
+  await store.persist(value);
+  await assert.rejects(
+    store.finish(value, async () => {
+      throw Error("file busy");
+    }),
+    /file busy/,
+  );
+  assert.deepEqual(await store.restore(owner, "new"), value);
+  let cleanup = 0;
+  assert.equal(
+    await store.finish(value, async () => {
+      cleanup++;
+    }),
+    true,
+  );
+  assert.equal(cleanup, 1);
+  assert.equal(await store.restore(owner, "new"), null);
+});
+test("pending requests preserve validated source draft and reject replacing it after upload uncertainty", async () => {
+  const { decodePendingRecord } =
+    await import("../src/features/records/pending-restore");
+  const { submitPending } = await import("../src/features/records/pending");
+  const value = draft();
+  const pending = {
+    version: 1 as const,
+    ownerId: owner,
+    operationId: other,
+    input: { enteredName: "사진 없는 와인" },
+    composerDraft: value,
+  };
+  const restored = decodePendingRecord(
+    JSON.stringify(pending),
+    owner,
+    "file:///new-container/",
+  );
+  assert.deepEqual(restored.composerDraft, value);
+  assert.throws(() =>
+    decodePendingRecord(
+      JSON.stringify({
+        ...pending,
+        composerDraft: { ...value, ownerId: other },
+      }),
+      owner,
+      "file:///new-container/",
+    ),
+  );
+  let mutations = 0;
+  await assert.rejects(
+    submitPending(
+      {
+        ...pending,
+        composerDraft: { ...value, revision: 2, name: "바뀐 초안" },
+      },
+      {
+        ownerId: () => owner,
+        read: async () => restored,
+        write: async () => {},
+        upload: async () => {},
+        save: async () => {
+          mutations++;
+          throw Error("unexpected save");
+        },
+      },
+    ),
+    /원래 초안/,
+  );
+  assert.equal(mutations, 0);
+});

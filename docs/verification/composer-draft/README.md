@@ -1,26 +1,31 @@
-# 기본 기록 초안 복구 · 개발 중 (#115)
+# 기본 기록 초안 복구 (#115)
 
-현재 브랜치는 저장 계층과 native 사진 보관 기반을 준비한 상태다. **RecordComposer UI 연결과 실제 앱 재실행 검증은 아직 미완료**이며, 베타 APK에 이 기능이 적용됐다고 주장하지 않는다.
+사진 선택부터 전송 전까지 이름·주종·마신 날짜·호감·별점·빈티지·작성 단계를 계정과 진입 경로별로 기기에 보관한다. 새 기록, 같은 술 재음용, 추천 술에서 시작한 기록은 서로 다른 context를 사용한다. 이미 전송을 시도한 pending이 있으면 그것을 먼저 복원한다.
 
-완료한 기반:
+## 보관과 완료 처리
 
-- 계정 UUID + 새 기록/재음용 항목/추천 prefill context별 draft key.
-- 불완전 빈티지 입력을 허용하는 버전/소유권/입력 검증, revision 경합·다른 form 덮어쓰기 방지.
-- 완료한 초안의 늦은 쓰기와 오래된 cleanup이 새 초안을 지우는 것 방지.
-- photo URI 대신 photo ID/크기를 저장하고 새 앱 컨테이너의 owner 전용 경로로 복원.
-- 이미지 준비 queue freeze/drain과 계정 삭제의 owner 폴더 정리 연결.
-- 계정 storage freeze와 cleanup key 판별에 새 namespace 포함.
+- 빈티지 연도를 두 자리만 입력한 상태도 보관한다. 달력을 열면 복구한 마신 날짜의 달을 보여준다.
+- 사진은 최대 긴 변 1600px JPEG로 owner 전용 Documents 폴더에 둔다. 절대 URI 대신 사진 ID/크기를 저장해 현재 앱 컨테이너 기준으로 복구한다.
+- 사진 변경은 새 파일과 메타데이터 보관이 성공한 뒤 기존 사진을 정리한다. 사진이 없어졌을 때는 입력을 유지하고 다시 선택하도록 안내한다.
+- 전송 전에 최신 snapshot을 flush하고 pending에 원본 snapshot을 넣는다. pending operation ID는 별도 UUID이며 기존 서버 중복 방지 계약을 유지한다.
+- 서버 receipt 확인 → 정확히 해당 snapshot의 사진/초안 정리 → pending 정리 순서다. 초안 정리 실패 시 receipt를 남겨 같은 요청으로 재시도한다. 더 새 초안은 오래된 cleanup으로 지우지 않는다.
+- revision/직렬 queue가 오래된 쓰기와 다른 form 덮어쓰기를 막는다. 완료된 draft ID의 늦은 쓰기도 막는다.
+- 계정 삭제 시 storage freeze와 이미지 queue drain 후 해당 owner의 폴더만 정리한다.
 
-현재 검사: 타입·린트·계약 및 363개 중 355 통과·8 환경 의존 skip. 메타데이터 복원·경합·소유권·freeze를 검증했다. native 이미지 준비/삭제의 실기기 동작은 아직 실행하지 않았다.
+## 실행한 검증 · 2026-10-26
 
-다음 연결 순서:
+`npm run check`: **365개 중 357 통과, 8개 환경 의존 skip**, 실패 0. 메타데이터 파싱/소유권/context 분리, 저장 경합, 다른 form 충돌, 삭제 freeze, cleanup 실패 후 재시도, pending snapshot 불변성을 검사했다.
 
-1. `app/record.tsx`의 기존 pending 복구를 가장 우선한다. pending이 없을 때만 해당 context 초안을 복원하고 이전 이름/주종/날짜/평가/빈티지/사진을 적용한다.
-2. 기본 작성 상태 변경을 저장하고 사진 선택 시 owner 전용 경로로 준비한다. 기존 usePhotoPicker/PhotoAccessSheet와 Figma 수치를 유지한다.
-3. 서버 전송 전에 최신 snapshot을 flush한다. 가능하면 composer draft ID를 operation ID로 사용해 완료 후 초안 정리 실패에서도 중복 기록을 방지한다.
-4. PendingRecord에 복구할 composer snapshot/식별자를 검증된 선택 필드로 연결한다. 다른 진입 경로에서 pending을 복구해도 원래 초안을 정리해야 한다.
-5. 서버 receipt 확인 → 해당 composer snapshot 조건부 정리 → 기존 pending 정리 순서로 완료한다. cleanup 실패는 서버 재전송 대신 receipt로 재시도한다.
-6. 원본 사진을 다시 압축하지 않고 `composerPhotoForPending`으로 기존 pending photo 경로에 복사한다. 사진 교체 시 새 snapshot 보관이 성공한 뒤 기존 owner 사진만 정리한다.
-7. iOS/Android에서 종료/복구·스토리지 실패·다른 계정·pending 우선·재음용/prefill context 분리를 실제로 검증한다. 실제 사용자 계정은 사용하지 않는다.
+iOS 26.5 iPhone 17 Pro 시뮬레이터의 실제 development build + 격리된 로컬 Supabase 합성 계정으로 다음을 실행했다. preview나 운영 계정 검증이 아니다.
 
-도구 현황: iOS UI는 macOS `Device Hub`(`com.apple.dt.Devices`)에서 CUA로 조작 가능하다. beta Release에는 app/dev가 제외돼 있으므로 로그인 없는 preview를 이용한 검증을 실제 인증 E2E로 부르지 않는다. 별도 dev native + local synthetic account 경로를 준비하고 기존 실제 세션을 덮지 않는다.
+1. 사진 없는 기록에서 이름·와인·부분 빈티지 `20` 입력 → 앱 terminate/relaunch → 동일 입력 복구. 이때 서버 기록은 0개였다.
+2. 빈티지 입력 키보드가 필드/적용 버튼을 가리는 문제를 발견해 modal에 KeyboardAvoidingView를 적용했다. 입력/적용 버튼이 키보드 위에 표시됨을 확인했다.
+3. 빈티지 2020과 저장소 fixture 사진 선택 → 호감/별점 4 선택 → terminate/relaunch → 사진·평가 단계·모든 값 복구.
+4. 실제 저장 후 SQL의 합성 계정 범위에서 기록 **정확히 1개**, 이름/별점/호감 일치 확인. 상세에 사진과 빈티지 표시 확인.
+5. 완료 후 composer/pending 사진 파일 0개, 새 기록이 빈 시작 화면으로 열리는 것 확인.
+
+CUA 캡처는 로컬 `artifacts/qa/composer-draft/`에 보관했다: `ios-vintage-keyboard.png`, `ios-vintage-restored.png`, `ios-photo-rating-restored.png`, `ios-saved-detail.png`. 사진은 저장소 fixture이며 사용자 사진/운영 세션을 사용하지 않았다. 이 캡처를 Figma 전체 시각 일치 검증으로 부르지 않는다.
+
+## 남은 검증
+
+Android native 복구/저장, 실제 기기, 네트워크 실패 후 UI 재시도, native 파일 삭제 실패 주입, 여러 계정 전환과 재음용/prefill context의 화면 E2E는 추가 검증이 필요하다. 순수 계약 테스트 통과로 대체하지 않는다. 공개 베타 산출물은 이 변경 이전 빌드이므로 새 빌드 검증 전 최신 기능이 포함됐다고 표시하지 않는다.

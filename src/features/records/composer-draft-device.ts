@@ -85,14 +85,18 @@ export async function composerPhotoForPending(
     `${FileSystem.documentDirectory}record-drafts/`,
     { intermediates: true },
   );
-  await FileSystem.copyAsync({ from: source.uri, to: target });
+  try {
+    await FileSystem.copyAsync({ from: source.uri, to: target });
+  } catch (error) {
+    await FileSystem.deleteAsync(target, { idempotent: true }).catch(() => {});
+    throw error;
+  }
   return { localUri: target, width: photo.width, height: photo.height };
 }
 export async function finishComposerDraft(value: RecordComposerDraft) {
-  const cleared = await composerDraftStorage.finish(value);
-  if (cleared && value.photo)
-    await removeComposerPhoto(value.ownerId, value.photo);
-  return cleared;
+  return composerDraftStorage.finish(value, async () => {
+    if (value.photo) await removeComposerPhoto(value.ownerId, value.photo);
+  });
 }
 /** Freeze/drain in-flight image work before removing only this account's directory. */
 export async function clearComposerPhotos(owner: string) {

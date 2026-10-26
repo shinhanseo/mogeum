@@ -34,6 +34,7 @@ export function composerContext(entryId?: string, productId?: string) {
 export function composerStorageKey(owner: string, context: string) {
   if (
     !UUID.test(owner) ||
+    typeof context !== "string" ||
     !(
       context === "new" ||
       (context.startsWith("entry:") && UUID.test(context.slice(6))) ||
@@ -156,12 +157,16 @@ export function createComposerDraftStorage(storage: Storage) {
         await storage.setItem(key, raw);
       });
     },
-    finish(value: RecordComposerDraft): Promise<boolean> {
+    finish(
+      value: RecordComposerDraft,
+      beforeRemove?: () => Promise<void>,
+    ): Promise<boolean> {
       const key = composerStorageKey(value.ownerId, value.context),
         expected = JSON.stringify(value);
       return enqueue(key, async () => {
         const current = await storage.getItem(key);
         if (current !== null && current !== expected) return false;
+        await beforeRemove?.();
         await storage.removeItem(key);
         closed.add(`${key}|${value.id}`);
         return true;
