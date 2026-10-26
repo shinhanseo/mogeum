@@ -13,3 +13,5 @@ Hermes 원시 문자열 테이블에서 SDK prefix와 인접 문자열이 합쳐
 후속 Android Release(code 3)도 완성해 APK 내장 번들·정확한 package·non-debuggable·마이크/overlay 권한 제외를 확인했다. 양 플랫폼 실행/시각 검증 범위는 위와 같다. PR #107의 App checks 및 Database policies가 모두 통과해 main에 반영했다.
 
 최신 입력창/노트 대기 제한 빌드(Android6, iOS EAS4)의 설치·실행 범위는 [추가 검증](../beta-inputfix/README.md)을 참고하세요. 이전 결과와 최신 소스 포함 범위를 구분합니다.
+
+후속 Android7/iOS EAS5의 작성 복원·로그아웃·기울임 보정 포함 범위와 설치 결과는 [최신 QA 배치](../beta-qa-batch/README.md)를 참고하세요. 이후 PR140 기본 기록 Done은 해당 산출물에 포함되지 않습니다.
