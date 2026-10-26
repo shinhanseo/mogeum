@@ -13,3 +13,7 @@ Device Hub가 제공하는 iPhone 17 Pro / iOS 26.5 화면을 CUA로 직접 조�
 폰트 확대/다른 작은 기기/실제 로그인 뒤 전체 흐름/최신 Figma 같은 크기 pixel 비교는 이 검사에 포함하지 않는다. 화면 캡처는 QA 증거이며 검색 테스트 문구·기기 도구 테두리를 포함한다. 스토어 홍보 이미지로 사용하지 않는다.
 
 [로그인](ios-login.png), [빈 술장](ios-empty-cellar.png), [느낌 없는 취향](ios-no-taste.png), [검색 키보드](ios-search-keyboard.png).
+
+## 후속 Simulator Release 확인
+
+법적 문서 연결을 포함한 후속 빌드도 다운로드·Hermes 번들 검사·설치/실행했다. 접근성 트리에 약관/개인정보 링크 2개가 각각 노출되고 각 링크를 누르면 실제 URL 미설정 안내가 표시됨을 확인했다. [미설정 안내 캡처](ios-legal-unconfigured.png). 정상 게시 주소 열기는 아직 확인하지 않았다.
