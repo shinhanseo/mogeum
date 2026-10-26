@@ -11,3 +11,5 @@ iOS Simulator Release 산출물을 다운로드해 내장 Hermes 번들을 검�
 Hermes 원시 문자열 테이블에서 SDK prefix와 인접 문자열이 합쳐지는 오탐을 발견해 disassembly 후 검사하도록 수정했다. 실제 Hermes 안전/위험 fixture 두 개를 컴파일하는 회귀 테스트를 포함한다.
 
 후속 Android Release(code 3)도 완성해 APK 내장 번들·정확한 package·non-debuggable·마이크/overlay 권한 제외를 확인했다. 양 플랫폼 실행/시각 검증 범위는 위와 같다. PR #107의 App checks 및 Database policies가 모두 통과해 main에 반영했다.
+
+최신 입력창/노트 대기 제한 빌드(Android6, iOS EAS4)의 설치·실행 범위는 [추가 검증](../beta-inputfix/README.md)을 참고하세요. 이전 결과와 최신 소스 포함 범위를 구분합니다.
