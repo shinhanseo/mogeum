@@ -59,6 +59,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const nameInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const recordScroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const [name, setName] = useState(previewEntry?.name??'');
   const [category, setCategory] = useState<Category | null>(previewEntry?.category??null);
   const [feeling, setFeeling] = useState<string | null>(null);
@@ -155,6 +156,12 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
     finally{busyRef.current=false;if(ownerRef.current===owner)setPhotoPreparing(false);}
   }
   const picker=usePhotoPicker(asset=>{void rememberPhoto(asset);});
+  useEffect(() => {
+    if (!error && !picker.error) return;
+    // Reveal newly rendered feedback without changing the form, draft or retry action.
+    const frame = requestAnimationFrame(() => recordScroll.current?.scrollToEnd({ animated: true }));
+    return () => cancelAnimationFrame(frame);
+  }, [error, picker.error]);
   const pickPhoto=(camera=false)=>{if(!busyRef.current&&!pending)void picker.open(camera);};
 
   async function saveRecord(withNote = false) {
@@ -213,7 +220,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <PhotoAccessSheet access={picker.access} busy={picker.busy} onClose={picker.close} onContinue={picker.proceed} onDismiss={picker.onDismiss}/>
     <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (repeatEntry || pending?.entryId || category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
-    <ScrollView pointerEvents={saving||photoPreparing ? 'none' : 'auto'} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+    <ScrollView ref={recordScroll} pointerEvents={saving||photoPreparing ? 'none' : 'auto'} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       {step === 'start' ? <View style={styles.start}>
         <Text style={styles.display}>오늘의 한 잔을{`\n`}사진으로 남겨볼까?</Text><Text style={[styles.body, { marginTop: 8 }]}>잘 찍은 사진이 아니어도 괜찮아요.</Text>
         <View style={styles.hero}><Mogu /><Text style={[styles.body, { marginTop: 24 }]}>사진 한 장이면 시작할 수 있어요</Text><Text style={[styles.caption, { marginTop: 8 }]}>이름과 느낌은 천천히 채워요.</Text></View>
