@@ -44,7 +44,7 @@ function ConnectedTasting({ owner, recordId }: {owner:string;recordId:string}) {
         const {data:answers,error:answerError}=await client.from('record_answers').select('mode,question_id,status,descriptor_codes,intensity,free_text').eq('record_id',recordId).eq('catalog_version',2).abortSignal(AbortSignal.timeout(TASTING_REQUEST_TIMEOUT_MS));
         if(answerError)throw answerError;if(!mounted)return;
         const value=restoreAnswers({...newTastingDraft(owner,recordId,record.category as TastingCategory,note.mode),baseRecordRevision:record.revision},answers);
-        if(note.confirmed_note)value.composition={text:note.confirmed_note,edited:true,sourceRevision:value.revision};
+        if(note.confirmed_note)value.composition={text:note.confirmed_note,edited:note.edited_by_user===true,sourceRevision:value.revision};
         setDraft(value);
       }
       // Defaults in user_settings are not evidence that a person has chosen a mode.
