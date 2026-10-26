@@ -161,7 +161,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
     if(previewEntry||previewCandidates){setError('개발 시안에서는 서버에 저장하지 않아요.');return;}
     if(restoreFailed)return;
     if (!owner) { router.push('/login'); return; }
-    if (!pending && !photo && !name.trim()) { setError('사진이나 술 이름을 남겨주세요.'); return; }
+    if (!pending && !photo && !name.trim() && !repeatEntry) { setError('사진이나 술 이름을 남겨주세요.'); return; }
     if (!pending && (name.trim().length > 200 || (category === '와인' && vintage && vintage !== 'NV' && vintage !== '모름' && Number(vintage) < 1))) { setError('술 이름과 빈티지를 확인해주세요.'); return; }
     if (!pending && !feeling) { setError('이 술이 어땠는지 골라주세요.'); return; }
     if (withNote && (!category || category === '기타')) { if(pending){setError('저장 중인 기록을 먼저 완료해주세요. 술 종류는 저장 후 보완할 수 있어요.');return;} setStep('info');setSheet('category');setError('테이스팅 노트를 쓸 술 종류를 골라주세요.');return; }

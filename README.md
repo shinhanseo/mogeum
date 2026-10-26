@@ -28,6 +28,8 @@ iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메�
 
 기본 기록·사진 교체 전송은 20초 동안 응답이 없으면 같은 요청으로 재시도할 수 있습니다. iOS 로컬 서버 중단→시간 초과→복구 후 저장을 확인했으며 Android와 사진 교체 장애 검증은 남아 있습니다. [저장 대기 제한 검증](docs/verification/write-deadlines/README.md).
 
+사진만 저장한 이름 없는 술도 `한 번 더 기록하기`에서 새 사진·이름 없이 경험을 추가할 수 있습니다. 기존 사진·감상은 복사하지 않고 같은 술장 카드에 묶습니다. [Android 실제 저장과 DB 경계 검증](docs/verification/unnamed-repeat/README.md).
+
 기록 저장·사진 교체의 동시 요청과 완료 정리를 계정/기록별로 직렬화합니다. [보관 요청 동시 실행 검증](docs/verification/record-request-order.md).
 
 술 상세도 앱 복귀 시 기록·사진·이력을 재확인하고, 만료/실패한 사진 URL은 한 번만 재발급합니다. [iOS 실제 수정·삭제 복귀 검증과 제약](docs/verification/detail-refresh/README.md). 상세 DB 조회는 20초, 사진 서명 UI 대기는 10초로 제한하며 사진 없음/불러오기 실패를 구분합니다. [대기 제한·실패 검증](docs/verification/detail-deadlines/README.md).
