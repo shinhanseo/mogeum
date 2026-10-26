@@ -8,7 +8,7 @@ import { colors, fonts, typography } from '../../theme/tokens';
 import { aromaCatalogs, type NoteMode } from './catalog';
 import { changeAroma, emptyAroma } from './aroma';
 import { aromaLabel, choose, composeNote, emptyAnswer, textAnswer } from './answers';
-import { cancelNoteEdit, setAnswer, switchMode, type TastingDraft } from './draft';
+import { cancelNoteEdit, restoredTastingView, setAnswer, switchMode, type TastingDraft, type TastingView } from './draft';
 import { isFieldVisible, questionsFor, type Field } from './questions';
 import { ModeSheet } from './ModeSheet';
 
@@ -16,7 +16,7 @@ type Props = { initial: TastingDraft; onChange: (draft: TastingDraft) => void; o
 const categoryLabels = { whisky:'위스키',wine:'와인',beer:'맥주',traditional:'전통주' };
 export function TastingComposer({ initial, onChange, onSave, onClose, previewOnly }: Props) {
   const [draft, setDraft] = useState(initial);
-  const [view, setView] = useState<'questions'|'preview'|'edit'>(initial.pendingSave?'preview':initial.composition?.editBuffer!==undefined?'edit':'questions');
+  const [view, setView] = useState<TastingView>(()=>restoredTastingView(initial));
   const [sheet, setSheet] = useState(false);
   const [note, setNote] = useState(initial.composition?.text ?? '');
   const [editText, setEditText] = useState(initial.composition?.editBuffer??'');
@@ -70,6 +70,9 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
   const intensityWidth=(choiceWidth*2+8-32)/5;
   const label = draft.mode === 'light' ? '가볍게' : '자세히';
   function update(value: TastingDraft) { setDraft(value); onChange(value); }
+  function changeView(next: TastingView, value = draft) {
+    update({...value,stage:next});setView(next);
+  }
   function move(next: number, value = draft) {
     dismissInput();
     const target = questions[next];
@@ -78,15 +81,15 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
     scroll.current?.scrollTo({ y:0, animated:false });
   }
   function showPreview(value: TastingDraft) {
-    if(edited&&value.composition?.sourceRevision===value.revision){setView('preview');return;}
+    if(edited&&value.composition?.sourceRevision===value.revision){changeView('preview',value);return;}
     const generated = composeNote(value);
     if (edited && note !== generated) {
       Alert.alert('직접 다듬은 문장이 있어요', '기존 문장을 유지하거나 새 답변으로 다시 정리할 수 있어요.', [
-        { text:'기존 문장 유지', onPress:()=>setView('preview') },
-        { text:'다시 정리', onPress:()=>{setNote(generated);setEdited(false);update({...value,composition:{text:generated,edited:false,sourceRevision:value.revision}});setView('preview');} },
+        { text:'기존 문장 유지', onPress:()=>changeView('preview',value) },
+        { text:'다시 정리', onPress:()=>{setNote(generated);setEdited(false);changeView('preview',{...value,composition:{text:generated,edited:false,sourceRevision:value.revision}});} },
       ]); return;
     }
-    setNote(generated); update({...value,composition:{text:generated,edited:false,sourceRevision:value.revision}});setView('preview');
+    setNote(generated); changeView('preview',{...value,composition:{text:generated,edited:false,sourceRevision:value.revision}});
   }
   function skip() {
     let next = draft;
@@ -106,19 +109,18 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
   }
   function selectMode(mode: NoteMode) {
     dismissInput();
-    const next=switchMode(draft,mode);update(next);setSheet(false);setView('questions');scroll.current?.scrollTo({y:0,animated:false});
+    const next=switchMode(draft,mode);changeView('questions',next);setSheet(false);scroll.current?.scrollTo({y:0,animated:false});
   }
   function cancelEdit() {
     dismissInput();
-    update(cancelNoteEdit(draft));
+    changeView('preview',cancelNoteEdit(draft));
     setEditText(note);
-    setView('preview');
   }
   function back() {
     if (busy.current) return;
     if (retryOnly) { onClose(); return; }
     if (view === 'edit') cancelEdit();
-    else if (view === 'preview') setView('questions');
+    else if (view === 'preview') changeView('questions');
     else if (index > 0) move(index - 1);
     else onClose();
   }
@@ -154,10 +156,10 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
     {!!previewOnly&&<Text style={styles.fixture}>개발용 화면 미리보기 · 실제 계정/저장과 무관</Text>}
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="뒤로" onPress={back} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable><Text style={styles.nav}>테이스팅 노트</Text><Pressable accessibilityRole="button" accessibilityLabel="기록 방식 변경" onPress={()=>{if(!saving&&!retryOnly)setSheet(true);}} style={styles.mode}><Text style={styles.modeText}>{label} ▾</Text></Pressable></View>
     <ScrollView ref={scroll} onScroll={event=>{scrollY.current=event.nativeEvent.contentOffset.y;}} scrollEventThrottle={16} onLayout={revealInput} keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content,draft.mode==='deep'&&view==='questions'&&{gap:16}]} showsVerticalScrollIndicator={false} pointerEvents={saving?'none':'auto'}>
-      {view==='questions'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label}{draft.mode==='deep'?' 남기기':''} · {index+1} / {questions.length}</Text><View style={styles.progress}>{questions.map((q,i)=><View key={q.id} style={[styles.segment,i<=index&&styles.done]}/>)}</View><Text style={styles.title}>{question.title}</Text><Text style={[styles.hint,draft.mode==='deep'&&typography.body]}>{question.hint}</Text>{question.fields.filter(f=>isFieldVisible(f,modeDraft.answers)).map(renderField)}<Text style={styles.hint}>떠오르는 게 없다면 넘어가도 괜찮아요.</Text></>:view==='preview'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><Text style={styles.title}>내가 느낀 만큼,{`\n`}한 잔의 기록.</Text><View style={styles.noteCard}><Text style={styles.note}>{note||'아직 남긴 느낌이 없어요. 기본 기록은 그대로 보관돼요.'}</Text></View><Text style={styles.hint}>{edited?'내 말로 다듬은 노트예요.':'선택한 답변만 문장으로 정리했어요.'}</Text><Button label="문장 직접 수정  ›" disabled={retryOnly} variant="text" onPress={()=>{setEditText(note);setView('edit');}}/></>:<><Text style={styles.title}>내 말로{`\n`}다듬어볼까요?</Text><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><TextInput {...doneInput} ref={node=>{inputs.current.editor=node;}} onFocus={()=>focusInput('editor')} onBlur={()=>{focusedInput.current=null;}} accessibilityLabel="노트 문장 직접 수정" value={editText} onChangeText={text=>{setEditText(text);update({...draft,composition:{text:note,edited,sourceRevision:draft.revision,editBuffer:text}});}} multiline maxLength={10000} style={[styles.input,styles.editor]}/><Text style={styles.hint}>선택한 감각을 바꾸려면 답변 수정을 이용해요.</Text></>}
+      {view==='questions'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label}{draft.mode==='deep'?' 남기기':''} · {index+1} / {questions.length}</Text><View style={styles.progress}>{questions.map((q,i)=><View key={q.id} style={[styles.segment,i<=index&&styles.done]}/>)}</View><Text style={styles.title}>{question.title}</Text><Text style={[styles.hint,draft.mode==='deep'&&typography.body]}>{question.hint}</Text>{question.fields.filter(f=>isFieldVisible(f,modeDraft.answers)).map(renderField)}<Text style={styles.hint}>떠오르는 게 없다면 넘어가도 괜찮아요.</Text></>:view==='preview'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><Text style={styles.title}>내가 느낀 만큼,{`\n`}한 잔의 기록.</Text><View style={styles.noteCard}><Text style={styles.note}>{note||'아직 남긴 느낌이 없어요. 기본 기록은 그대로 보관돼요.'}</Text></View><Text style={styles.hint}>{edited?'내 말로 다듬은 노트예요.':'선택한 답변만 문장으로 정리했어요.'}</Text><Button label="문장 직접 수정  ›" disabled={retryOnly} variant="text" onPress={()=>{setEditText(note);changeView('edit',{...draft,composition:{text:note,edited,sourceRevision:draft.revision,editBuffer:note}});}}/></>:<><Text style={styles.title}>내 말로{`\n`}다듬어볼까요?</Text><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><TextInput {...doneInput} ref={node=>{inputs.current.editor=node;}} onFocus={()=>focusInput('editor')} onBlur={()=>{focusedInput.current=null;}} accessibilityLabel="노트 문장 직접 수정" value={editText} onChangeText={text=>{setEditText(text);update({...draft,composition:{text:note,edited,sourceRevision:draft.revision,editBuffer:text}});}} multiline maxLength={10000} style={[styles.input,styles.editor]}/><Text style={styles.hint}>선택한 감각을 바꾸려면 답변 수정을 이용해요.</Text></>}
       {!!error&&<Text accessibilityRole="alert" style={styles.caption}>{error}</Text>}
     </ScrollView>
-    <View style={styles.actions}>{view==='questions'?<><Button label={index===questions.length-1?'내 노트 미리보기':'다음'} onPress={()=>move(index+1)}/><Button label={draft.mode==='deep'?'이 질문 건너뛰기':'건너뛰기'} variant="text" onPress={skip}/></>:view==='preview'?<><Button label={note.trim()?'노트 저장':'기록으로 돌아가기'} loading={saving} onPress={()=>{if(note.trim())void save();else onClose();}}/><Button label="답변 수정" disabled={saving||retryOnly} variant="text" onPress={()=>setView('questions')}/></>:<><Button label="수정한 문장 적용" onPress={()=>{setNote(editText);setEdited(true);update({...draft,composition:{text:editText,edited:true,sourceRevision:draft.revision}});setView('preview');}}/><Button label="취소" variant="text" onPress={cancelEdit}/></>}</View>
+    <View style={styles.actions}>{view==='questions'?<><Button label={index===questions.length-1?'내 노트 미리보기':'다음'} onPress={()=>move(index+1)}/><Button label={draft.mode==='deep'?'이 질문 건너뛰기':'건너뛰기'} variant="text" onPress={skip}/></>:view==='preview'?<><Button label={note.trim()?'노트 저장':'기록으로 돌아가기'} loading={saving} onPress={()=>{if(note.trim())void save();else onClose();}}/><Button label="답변 수정" disabled={saving||retryOnly} variant="text" onPress={()=>changeView('questions')}/></>:<><Button label="수정한 문장 적용" onPress={()=>{setNote(editText);setEdited(true);changeView('preview',{...draft,composition:{text:editText,edited:true,sourceRevision:draft.revision}});}}/><Button label="취소" variant="text" onPress={cancelEdit}/></>}</View>
     <ModeSheet visible={sheet} category={draft.category} onChoose={selectMode} onClose={()=>setSheet(false)}/>
   </KeyboardAvoidingView></SafeAreaView>;
 }

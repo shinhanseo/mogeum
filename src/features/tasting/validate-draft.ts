@@ -5,6 +5,7 @@ export function parseTastingDraft(raw:string,owner:string,record:string):Tasting
   if(raw.length>100000)throw new Error('Draft too large');
   const value=JSON.parse(raw) as TastingDraft;
   if(value.schemaVersion!==1||value.catalogVersion!==TASTING_CATALOG_VERSION||value.ownerId!==owner||value.recordId!==record||!['whisky','wine','beer','traditional'].includes(value.category)||!['light','deep'].includes(value.mode)||!Number.isInteger(value.revision)||value.revision<1)throw new Error('Unsupported draft');
+  if(value.stage!==undefined&&!['questions','preview','edit'].includes(value.stage))throw new Error('Invalid draft stage');
   for(const mode of ['light','deep'] as const){
     const saved=value.modes?.[mode];
     if(!saved||!saved.answers||!saved.aromas)throw new Error('Invalid mode draft');
