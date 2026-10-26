@@ -14,6 +14,12 @@ export function localDataOwner(key: string): string | null {
     key.match(
       new RegExp(`^mogeum-(?:tasting|attachment)-v1-(${uuid})-${uuid}$`, "i"),
     )?.[1] ??
+    key.match(
+      new RegExp(
+        `^mogeum:record-composer:v1:(${uuid}):(?:new|entry:${uuid}|product:[a-z0-9_-]{1,120})$`,
+        "i",
+      ),
+    )?.[1] ??
     null
   );
 }

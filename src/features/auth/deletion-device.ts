@@ -1,3 +1,4 @@
+import { clearComposerPhotos } from "../records/composer-draft-device";
 import {
   clearProviderCapture,
   captureExistingSession,
@@ -58,6 +59,7 @@ export async function currentDeletionStatus(owner: string) {
 async function cleanup(owner: string) {
   await accountStorage.freeze(owner);
   await clearLocalCutouts(owner);
+  await clearComposerPhotos(owner);
   await menuPhotoPreparationQueue.freeze(owner);
   const keys = deletedAccountKeys(owner, await AsyncStorage.getAllKeys());
   for (const storageKey of keys) {
