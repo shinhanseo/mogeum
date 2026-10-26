@@ -42,6 +42,7 @@ test("selected source, documents, another cache root and traversal cannot be rem
     ["file:///cache/ImageManipulator/original.jpg", "file:///cache/ImageManipulator/original.jpg", "file:///cache/"],
     ["file:/cache/ImageManipulator/result.jpg", "file:///cache/ImageManipulator/result.jpg", "file:///cache/"],
     ["file:///cache/ImageManipulator/%72esult.jpg", "file:///cache/ImageManipulator/result.jpg", "file:///cache/"],
+    ["/cache/ImageManipulator/result.jpg", "file:///cache/ImageManipulator/result.jpg", "file:///cache/"],
     ["file:///photos/a.jpg", "file:///documents/record-drafts/photo.jpg", "file:///cache/"],
     ["file:///photos/a.jpg", "file:///cache-other/ImageManipulator/result.jpg", "file:///cache/"],
     ["file:///photos/a.jpg", "file:///cache/ImageManipulator/../result.jpg", "file:///cache/"],
@@ -58,8 +59,9 @@ test("selected source, documents, another cache root and traversal cannot be rem
 
 test("cleanup failure cannot turn a durable photo into an error or mask its copy failure", async () => {
   const image = { source: "file:///photos/a.jpg", generated: "file:///cache/ImageManipulator/result.jpg", cacheDirectory: "file:///cache/" };
-  const remove = async () => { throw Error("cache busy"); };
-  assert.equal(await withGeneratedRecordImage(image, async () => "durable", remove), "durable");
-  const failed = new Error("copy failed");
-  await assert.rejects(withGeneratedRecordImage(image, async () => { throw failed; }, remove), error => error === failed);
+  for (const remove of [async () => { throw Error("cache busy"); }, () => { throw Error("sync cleanup failure"); }]) {
+    assert.equal(await withGeneratedRecordImage(image, async () => "durable", remove), "durable");
+    const failed = new Error("copy failed");
+    await assert.rejects(withGeneratedRecordImage(image, async () => { throw failed; }, remove), error => error === failed);
+  }
 });
