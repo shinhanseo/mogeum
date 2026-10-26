@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-26",
+  "rootOmitDev": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 5,
+    "critical": 0,
+    "total": 5
+  },
+  "serverOmitDev": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "rootDirectPath": "expo@58.0.19 -> @expo/cli@58.1.15",
+  "nodeForge": "1.4.0; no patched registry release available at check time",
+  "cliZod": "3.25.76; Expo SDK58 CLI declares ^3.25.76",
+  "serverZod": "4.6.7",
+  "androidProductionExport": {
+    "sources": 1478,
+    "nodeForgeSources": 0,
+    "zodSources": 0,
+    "expoCliMetroRuntimeShimSources": 1
+  },
+  "resolved": false,
+  "scope": "npm reports and one Android Metro production export; not proof of absence of all native or supply-chain vulnerabilities"
+}

@@ -42,3 +42,5 @@ npx eas-cli build -p ios --profile preview-simulator
 5. 실제 Apple/Kakao 연결 해제는 삭제 가능한 별도 계정으로 확인한다. 정상 계정을 시험 삼아 삭제하지 않는다.
 
 내부 QA에서도 자신의 실제 기록 대신 지워도 되는 테스트 기록을 권장한다. 알려진 미검증 범위는 [테스터 안내](tester-guide.md)를 참고한다.
+
+보안 점검: [Expo CLI upstream 권고와 runtime 포함 범위](../verification/dependency-audit/README.md). 빌드 도구 의존성 권고는 #112에서 미해결로 추적하며 임의 major override/downgrade는 적용하지 않는다.
