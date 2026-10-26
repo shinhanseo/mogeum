@@ -165,3 +165,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 계정 삭제의 provider capture/해제 서버를 개발 프로젝트에 배포했습니다. 실제 관리형 synthetic 계정의 Auth·사진·기록 삭제/타인 보호/응답 유실 재확인을 검증했습니다. 실제 Apple/Kakao 테스트 계정의 grant 해제 전체 검증은 남아 있습니다. [배포와 검증 범위](docs/verification/provider-revocation-wiring.md).
 
 AI 취향 요약의 생성 지연을 실제 서버에서 확인한 뒤 Gemini3.5 Flash-Lite로 조정했습니다. 합성3케이스와 관리형 기록→요약 저장→cache 재사용을 확인했으며 [모델 변경과 검증 범위](docs/verification/summary-model/README.md)를 참고하세요. 시간 초과 시 기록은 보존하고 재시도를 안내합니다.
+
+베타 준비: [독립 실행 빌드·배포 조건](docs/beta/README.md), [테스터 안내](docs/beta/tester-guide.md), [데이터 처리 내역](docs/beta/data-inventory.md). 외부 배포 승인은 별도이며 실제 iPhone 서명과 개인정보 문서 게시가 남아 있습니다.

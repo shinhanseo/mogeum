@@ -27,7 +27,12 @@
     "build:account-function": "tsx scripts/build-account-deletion-function.ts",
     "test:account-deploy": "tsx scripts/verify-account-deletion-function.ts",
     "test:provider-db": "tsx --test tests/provider-credential-db.test.ts",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "beta:assets": "node scripts/build-brand-assets.cjs",
+    "beta:check": "MOGEUM_APP_VARIANT=beta tsx scripts/check-beta-build.ts",
+    "beta:ready": "MOGEUM_APP_VARIANT=beta tsx scripts/check-beta-build.ts --external",
+    "eas-build-post-install": "tsx scripts/check-beta-build.ts",
+    "beta:scan": "tsx scripts/check-beta-artifact.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "0.4.4",
@@ -46,6 +51,7 @@
     "expo-linking": "~58.0.14",
     "expo-router": "~58.0.26",
     "expo-secure-store": "~58.0.2",
+    "expo-splash-screen": "~58.0.11",
     "expo-status-bar": "~58.0.4",
     "expo-system-ui": "~58.0.6",
     "expo-web-browser": "~58.0.6",
@@ -60,6 +66,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.10",
+    "@resvg/resvg-js": "2.6.2",
     "@types/node": "24.19.2",
     "@types/react": "~19.3.0",
     "esbuild": "0.28.2",

@@ -15,6 +15,8 @@ async function main() {
   const settings = await response.json();
   if (!response.ok || !settings.external?.apple || !settings.external?.kakao)
     throw Error("OAuth providers are not enabled");
+  const redirect = process.env.MOGEUM_VERIFY_AUTH_REDIRECT ?? "mogeum-dev://auth/callback";
+  if(!["mogeum-dev://auth/callback","mogeum-beta://auth/callback"].includes(redirect))throw Error("Approved native redirect required");
   const results = [];
   for (const provider of ["apple", "kakao"] as const) {
     const client = createClient(base, key, {
@@ -27,7 +29,7 @@ async function main() {
     });
     const { data, error } = await client.auth.signInWithOAuth({
       provider,
-      options: oauthOptions(provider, "mogeum-dev://auth/callback"),
+      options: oauthOptions(provider, redirect),
     });
     if (error || !data.url) throw Error("OAuth URL preparation failed");
     const result = await fetch(data.url, {
@@ -69,6 +71,7 @@ async function main() {
     pkce: true,
     redirects: results,
     completedUserLogin: false,
+    nativeRedirect: redirect,
   };
   if (process.argv[2])
     writeFileSync(process.argv[2], JSON.stringify(report, null, 2) + "\n");
