@@ -13,3 +13,5 @@ Android native 장애 검증에서 보관한 사진이 카드 가로 전체로 �
 `npm run check`: 372개 중 364 통과, 환경 의존 8 skip, 실패 0. 이는 시각 검증을 대신하지 않는다. 실제 Android 서버 중단/재시도 결과는 write-deadlines/README.md에 있다. iOS와 큰 접근성 글자는 별도 검증이 필요하다.
 
 수정 후 같은 Android native에서 사진을 다시 선택하고 gateway를 50초 중지했다. 별도 스크롤 없이 84×112 미리보기, 전체 오류 문장, 활성화된 재시도 CTA가 함께 보이는 것을 확인했다. android-photo-error-layout-fixed.png에 캡처를 보관한다. 서버는 watchdog으로 복구했다.
+
+수정 후 재시도도 상세의 실제 사진 표시로 완료됐다. 해당 합성 계정은 경험 3개/사진 2개를 유지했고 사진 추가·교체 두 작업의 receipt는 2개였다. 사진 교체가 새 마신 경험을 만들거나 중복 사진 행을 추가하지 않았다.
