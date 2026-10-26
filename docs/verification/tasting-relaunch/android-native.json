@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "platform": "android",
+  "runId": "android-relaunch-20261027-a",
+  "phase": "verified",
+  "status": "passed",
+  "cases": 24,
+  "categories": 4,
+  "modes": 2,
+  "stages": [
+    "questions",
+    "preview",
+    "edit"
+  ],
+  "bothModeAnswersPreserved": true,
+  "emptyEditPreserved": true,
+  "wrongOwnerSeesNoDraft": true,
+  "uiInteractionVerified": false,
+  "serverWritePerformed": false
+}

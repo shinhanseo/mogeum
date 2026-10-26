@@ -194,6 +194,8 @@ SQL Editor로 적용한 개발 DB 13개 변경의 CLI 이력을 스키마·권�
 
 긴 테이스팅 노트의 저장 실패도 안내 위치로 스크롤합니다. iPhone SE 개발용 실패 미리보기로 오류 노출을 확인했으며 서버 저장 성공 검증과 구분합니다. [재현·수정 범위](docs/verification/tasting-error-visible.md).
 
+앱 재실행 후 iOS 합성 기록의 질문/한글 답변과 빈 문장 편집 복구를 화면에서 확인했습니다. Android는 실제 native 저장소의 24개 초안을 프로세스 종료 후 대조했으며 터치 UI 검증과 구분합니다. [복구 QA 결과와 남은 범위](docs/verification/tasting-relaunch/README.md).
+
 검색·기록 이동·메뉴 수정의 추가 Done 처리와 실제 확인 범위는 [입력 완료 일관성](docs/verification/remaining-input-done.md)에 정리했습니다.
 
 기록 이동 검색의 이전 응답·오류가 새 검색에 섞이지 않도록 보호했습니다. [요청 순서와 검증](docs/verification/move-target-search.md).
