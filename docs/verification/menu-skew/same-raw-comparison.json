@@ -1,0 +1,702 @@
+[
+  {
+    "report": "ios",
+    "id": "light",
+    "baselineItemsHash": "c6b80c0baab2fab16068fb1f2a9c9e6a03ef5df216d680efea7113371f3bb3da",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "dark",
+    "baselineItemsHash": "c6b80c0baab2fab16068fb1f2a9c9e6a03ef5df216d680efea7113371f3bb3da",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "small",
+    "baselineItemsHash": "c6b80c0baab2fab16068fb1f2a9c9e6a03ef5df216d680efea7113371f3bb3da",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "dense",
+    "baselineItemsHash": "fbbe945ca910846fa690e7c2bedf2827ce55ee5092fdd12be34abf5656df5caf",
+    "before": {
+      "expectedEntries": 12,
+      "namesObserved": 12,
+      "parsedEntries": 12,
+      "matchedNames": 11,
+      "correctPrices": 11,
+      "correctServings": 9,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 12,
+      "namesObserved": 12,
+      "parsedEntries": 12,
+      "matchedNames": 11,
+      "correctPrices": 11,
+      "correctServings": 9,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "two-columns",
+    "baselineItemsHash": "a8a6d65fc211134c9d4718fa660ea7de02b96453e25306471e20c9719a032694",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "offset-price",
+    "baselineItemsHash": "b8942c5641d2770783bbfe917e13dabfdb64af8e4bac31a8aa0145b7df3f1223",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 0,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 0,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "landscape",
+    "baselineItemsHash": "f2204ab72de5cd1e9980c9a69b4165ea1938c4b7355cf69e18690a58732690f8",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "downscale",
+    "baselineItemsHash": "c6b80c0baab2fab16068fb1f2a9c9e6a03ef5df216d680efea7113371f3bb3da",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "low-contrast",
+    "baselineItemsHash": "c6b80c0baab2fab16068fb1f2a9c9e6a03ef5df216d680efea7113371f3bb3da",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "serif",
+    "baselineItemsHash": "4fe3027ac06318df984df9579d253e0e542905bc76ae82d9dcbae1819124ca8a",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 5,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 5,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "wrapped",
+    "baselineItemsHash": "378684c58b40c5ad4c71cfe4ae1d1b38a04ab929a7ea50d155dc280756e6e502",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 3,
+      "correctPrices": 3,
+      "correctServings": 3,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 3,
+      "correctPrices": 3,
+      "correctServings": 3,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "skew",
+    "baselineItemsHash": "b8942c5641d2770783bbfe917e13dabfdb64af8e4bac31a8aa0145b7df3f1223",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 0,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 6,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "no-price",
+    "baselineItemsHash": "9d0f9b89aafeb924d16c7d9696ab518f76d4cccbe2330f67166b7e5acd4cb4f4",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 0,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 0,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "ios",
+    "id": "ambiguous-price",
+    "baselineItemsHash": "e833caf42a6d54f848b7366a4f43b4f488aa8576e8901c7fc6839d3e87344bcb",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 0,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 6,
+      "correctPrices": 0,
+      "correctServings": 5,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "light",
+    "baselineItemsHash": "c9ad659e7a11826685be7fc38c5b19e5fb7ba0dc933e320632f4dad8f3801b03",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 6,
+      "matchedNames": 3,
+      "correctPrices": 2,
+      "correctServings": 3,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 6,
+      "matchedNames": 3,
+      "correctPrices": 2,
+      "correctServings": 3,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "dark",
+    "baselineItemsHash": "ccd0bc4e1dd5ba38021f5fbe9c40ccb2abc691ad73b22aa4a2e0d210a429b5f8",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 5,
+      "correctPrices": 3,
+      "correctServings": 4,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 5,
+      "correctPrices": 3,
+      "correctServings": 4,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "small",
+    "baselineItemsHash": "45ee232f6a5f78ca4bae478dbd45b8831b54c9dbae619666d3c621e432bc0a83",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 2,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 2,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "dense",
+    "baselineItemsHash": "b5c0fb52437e8addbe3a8748feef42bb932b14b41940bde565cd73b1cc667b14",
+    "before": {
+      "expectedEntries": 12,
+      "namesObserved": 9,
+      "parsedEntries": 10,
+      "matchedNames": 7,
+      "correctPrices": 7,
+      "correctServings": 6,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 12,
+      "namesObserved": 9,
+      "parsedEntries": 10,
+      "matchedNames": 7,
+      "correctPrices": 7,
+      "correctServings": 6,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "two-columns",
+    "baselineItemsHash": "0b8bbf6ab96a6dd7c8b6c0d1083167f984aeaa08cfd3c2f9f3a1be2b1bde4185",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 3,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 3,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "offset-price",
+    "baselineItemsHash": "65020c3653588f847a127e9dadc6e5518375bade2e2953b674983376bc499e98",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 3,
+      "matchedNames": 3,
+      "correctPrices": 0,
+      "correctServings": 3,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 3,
+      "matchedNames": 3,
+      "correctPrices": 0,
+      "correctServings": 3,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "landscape",
+    "baselineItemsHash": "5013d98ee788c0d74644dc6e3f2df836fb74ce92ec12de5e8aea2de0d631e16c",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 5,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 5,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "downscale",
+    "baselineItemsHash": "abfb649b5aca74b62d8b81bf4b6cd073e54deb4086de54e6271b0662519eb2ee",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 4,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 5,
+      "correctPrices": 4,
+      "correctServings": 4,
+      "unmatchedParsedItems": 1,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "low-contrast",
+    "baselineItemsHash": "95876ed02528b83d70da5311c0e9ab0cfa3b0925288b207173b035fc7ec59c0c",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 5,
+      "correctPrices": 5,
+      "correctServings": 4,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 5,
+      "correctPrices": 5,
+      "correctServings": 4,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "serif",
+    "baselineItemsHash": "77b8e577378d2182809fb37793e8077afe52df41a1a9c055bc4ade344e618f3a",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 3,
+      "correctPrices": 3,
+      "correctServings": 2,
+      "unmatchedParsedItems": 2,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 3,
+      "correctPrices": 3,
+      "correctServings": 2,
+      "unmatchedParsedItems": 2,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "wrapped",
+    "baselineItemsHash": "56922897be08c5e6d96c0e8248ef0d13caa14e70a9651d538edc4dda8d87970f",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 2,
+      "correctPrices": 2,
+      "correctServings": 2,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 5,
+      "matchedNames": 2,
+      "correctPrices": 2,
+      "correctServings": 2,
+      "unmatchedParsedItems": 3,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "skew",
+    "baselineItemsHash": "7e26c1eff4b6e348269354e700de6a6b3b39c66526f562153d7e9d081d061dae",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 4,
+      "matchedNames": 4,
+      "correctPrices": 0,
+      "correctServings": 3,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 6,
+      "parsedEntries": 6,
+      "matchedNames": 4,
+      "correctPrices": 4,
+      "correctServings": 3,
+      "unmatchedParsedItems": 2,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "no-price",
+    "baselineItemsHash": "65020c3653588f847a127e9dadc6e5518375bade2e2953b674983376bc499e98",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 3,
+      "matchedNames": 3,
+      "correctPrices": 0,
+      "correctServings": 3,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 3,
+      "matchedNames": 3,
+      "correctPrices": 0,
+      "correctServings": 3,
+      "unmatchedParsedItems": 0,
+      "abstentionViolations": 0
+    }
+  },
+  {
+    "report": "android",
+    "id": "ambiguous-price",
+    "baselineItemsHash": "1de02bf019fdd121e9c5751b8f704dd031f59e0e51897e649a8c0b508e7fae4f",
+    "before": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 4,
+      "matchedNames": 0,
+      "correctPrices": 0,
+      "correctServings": 0,
+      "unmatchedParsedItems": 4,
+      "abstentionViolations": 0
+    },
+    "after": {
+      "expectedEntries": 6,
+      "namesObserved": 5,
+      "parsedEntries": 4,
+      "matchedNames": 0,
+      "correctPrices": 0,
+      "correctServings": 0,
+      "unmatchedParsedItems": 4,
+      "abstentionViolations": 0
+    }
+  }
+]

@@ -253,7 +253,7 @@ async function main() {
     ensure(parse.status === 200);
     const parsed = await parse.json();
     requireCatalogVersion(parsed);
-    ensure(parsed.parser === "geometry-v3");
+    ensure(parsed.parser === "geometry-v4");
     const items = validateItems(parsed.items, photos);
     ensure(
       photos.every((photo) => items.some((item) => item.photoId === photo.id)),

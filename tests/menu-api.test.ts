@@ -118,7 +118,7 @@ test(
     });
     assert.equal(columnsResponse.status, 200);
     const columnsResult = await columnsResponse.json();
-    assert.equal(columnsResult.parser, "geometry-v3");
+    assert.equal(columnsResult.parser, "geometry-v4");
     assert.equal(columnsResult.items.length, 6);
     assert.deepEqual(
       columnsResult.items.map((i: { price: number }) => i.price),

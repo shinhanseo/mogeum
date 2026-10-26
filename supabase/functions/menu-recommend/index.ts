@@ -54,7 +54,7 @@ Deno.serve(async (request) => {
     if (body.action === "parse")
       return reply({
         items: parseMenu(photos),
-        parser: "geometry-v3",
+        parser: "geometry-v4",
         catalogVersion: PRODUCT_CATALOG_VERSION,
         reviewRequired: true,
       });
