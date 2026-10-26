@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-26T01:38:43.674Z",
+  "projectRef": "vsckzjfgzdpzkzuumldf",
+  "syntheticOnly": true,
+  "humanAccountChanged": false,
+  "passed": [
+    "unauthenticated_requests_rejected",
+    "real_auth_storage_records_created",
+    "unlinked_identity_capture_rejected_before_provider_call",
+    "confirmation_and_caller_identity_guards",
+    "owner_auth_binary_and_records_deleted",
+    "other_owner_preserved",
+    "deleted_session_receipt_replay"
+  ],
+  "success": true,
+  "syntheticCleanupComplete": true,
+  "actualProviderGrantRevoked": false
+}
