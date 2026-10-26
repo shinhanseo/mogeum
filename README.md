@@ -164,7 +164,7 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 
 술장 배경 분리의 기기 처리·선택적 로컬 표시를 추가했습니다. [실제 Android 처리 결과와 남은 검증](docs/verification/cutout/README.md). 원본 보존·캐시 유실 시 원본 복귀이며 클라우드 동기화는 포함하지 않습니다.
 
-테이스팅 노트의 공백 직접 입력 오류와 키보드 이동을 보정했습니다. [수정·회귀 검증 및 실기기 잔여 범위](docs/verification/tasting-input-keyboard.md).
+테이스팅 노트의 공백 직접 입력 오류와 키보드 이동을 보정했습니다. 입력창 한글 잘림과 Done 처리도 수정했고 iOS 한국어 소프트 키보드의 완료·값 유지까지 확인했습니다. Android 완료 동작 검증은 남아 있습니다. [수정·회귀 검증 및 실기기 잔여 범위](docs/verification/tasting-input-keyboard.md).
 
 외부 로그인 토큰 보관·연결 해제·재로그인 복구를 앱과 서버에 연결했습니다. [로컬·관리형 배포 검증과 남은 범위](docs/verification/provider-revocation-wiring.md). 실제 사용자 OAuth 연결 해제 검증은 포함하지 않습니다.
 
