@@ -42,3 +42,7 @@ npx eas-cli build -p ios --profile preview-simulator
 5. 실제 Apple/Kakao 연결 해제는 삭제 가능한 별도 계정으로 확인한다. 정상 계정을 시험 삼아 삭제하지 않는다.
 
 내부 QA에서도 자신의 실제 기록 대신 지워도 되는 테스트 기록을 권장한다. 알려진 미검증 범위는 [테스터 안내](tester-guide.md)를 참고한다.
+
+스토어 등록 문안은 [한국어 초안](../store/metadata-ko.md)에 정리했다. 아직 스토어에 게시하지 않았다.
+
+2026-10-26 관리형 synthetic 계정 회귀: 실제 Auth·사진 binary·기록 생성/삭제, 타인 보존, 삭제 세션 응답 재확인 등 7항목 통과·fixture 정리 완료. [결과](../verification/provider-deletion/beta-regression-20261026.json). 실제 Apple/Kakao grant 해제와는 별도다.
