@@ -195,3 +195,76 @@ test("pending requests preserve validated source draft and reject replacing it a
   );
   assert.equal(mutations, 0);
 });
+
+test("finishing a recovered pending cleans only its source context, preserving another context and owner", async () => {
+  const { store } = memory();
+  const source = {
+    ...draft(),
+    context: composerContext(owner),
+    entryId: owner,
+  };
+  const fresh = draft();
+  const recommendation = {
+    ...draft(),
+    context: composerContext(undefined, "glenlivet-12"),
+    id: other,
+  };
+  const anotherOwner = { ...draft(), ownerId: other };
+  await Promise.all(
+    [source, fresh, recommendation, anotherOwner].map((value) =>
+      store.persist(value),
+    ),
+  );
+  let removedPhoto = 0;
+  assert.equal(
+    await store.finish(source, async () => {
+      removedPhoto++;
+    }),
+    true,
+  );
+  assert.equal(removedPhoto, 1);
+  assert.equal(await store.restore(owner, source.context), null);
+  assert.deepEqual(await store.restore(owner, "new"), fresh);
+  assert.deepEqual(
+    await store.restore(owner, recommendation.context),
+    recommendation,
+  );
+  assert.deepEqual(await store.restore(other, "new"), anotherOwner);
+});
+
+test("failed replacement write preserves the last durable photo snapshot and queue remains usable", async () => {
+  const rows = new Map<string, string>();
+  let failWrite = false;
+  const store = createComposerDraftStorage({
+    getItem: async (key) => rows.get(key) ?? null,
+    setItem: async (key, raw) => {
+      if (failWrite) throw Error("disk full");
+      rows.set(key, raw);
+    },
+    removeItem: async (key) => {
+      rows.delete(key);
+    },
+  });
+  const old = { ...draft(), photo: { id: owner, width: 600, height: 800 } };
+  const replacement = {
+    ...old,
+    revision: 2,
+    photo: { id: other, width: 900, height: 1200 },
+  };
+  await store.persist(old);
+  failWrite = true;
+  await assert.rejects(store.persist(replacement), /disk full/);
+  assert.deepEqual(await store.restore(owner, "new"), old);
+  // Cleanup from the failed attempt must not touch the original metadata/photo.
+  let cleanup = 0;
+  assert.equal(
+    await store.finish(replacement, async () => {
+      cleanup++;
+    }),
+    false,
+  );
+  assert.equal(cleanup, 0);
+  failWrite = false;
+  await store.persist(replacement);
+  assert.deepEqual(await store.restore(owner, "new"), replacement);
+});

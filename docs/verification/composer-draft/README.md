@@ -14,7 +14,7 @@
 
 ## 실행한 검증 · 2026-10-26
 
-`npm run check`: **365개 중 357 통과, 8개 환경 의존 skip**, 실패 0. 메타데이터 파싱/소유권/context 분리, 저장 경합, 다른 form 충돌, 삭제 freeze, cleanup 실패 후 재시도, pending snapshot 불변성을 검사했다.
+`npm run check`: **367개 중 359 통과, 8개 환경 의존 skip**, 실패 0. 메타데이터 파싱/소유권/context 분리, 저장 경합, 다른 form 충돌, 삭제 freeze, cleanup 실패 후 재시도, pending snapshot 불변성, 다른 진입 경로/계정을 보존하는 완료 정리와 사진 교체 보관 실패를 검사했다.
 
 iOS 26.5 iPhone 17 Pro 시뮬레이터의 실제 development build + 격리된 로컬 Supabase 합성 계정으로 다음을 실행했다. preview나 운영 계정 검증이 아니다.
 
