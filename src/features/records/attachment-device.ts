@@ -1,3 +1,4 @@
+import { createDeadlineFetch } from "../../lib/deadline-fetch";
 import { recordRequestQueue } from "./request-queue";
 import { decodePreparedAttachment } from "./attachment-restore";
 import { isPreparedRecordPhoto } from "./draft-photo";
@@ -85,6 +86,7 @@ export async function saveAttachment(
           detectSessionInUrl: false,
         },
         global: {
+          fetch: createDeadlineFetch(fetch),
           headers: { Authorization: `Bearer ${session.access_token}` },
         },
       },

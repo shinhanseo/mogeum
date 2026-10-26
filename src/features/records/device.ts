@@ -1,3 +1,4 @@
+import { createDeadlineFetch } from "../../lib/deadline-fetch";
 import { finishComposerDraft } from "./composer-draft-device";
 import { recordRequestQueue } from "./request-queue";
 import { decodePendingRecord } from "./pending-restore";
@@ -117,6 +118,7 @@ export async function savePending(
           detectSessionInUrl: false,
         },
         global: {
+          fetch: createDeadlineFetch(fetch),
           headers: { Authorization: `Bearer ${session.access_token}` },
         },
       },
