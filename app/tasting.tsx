@@ -11,7 +11,7 @@ import { newTastingDraft, type TastingDraft } from '../src/features/tasting/draf
 import { type NoteMode, type TastingCategory } from '../src/features/tasting/catalog';
 import { clearDraft, persistDraft, restoreDraft } from '../src/features/tasting/persistence';
 import { restoreAnswers } from '../src/features/tasting/restore-answers';
-import { tastingRepository } from '../src/features/tasting/repository';
+import { tastingRepository, TASTING_REQUEST_TIMEOUT_MS } from '../src/features/tasting/repository';
 import * as Crypto from 'expo-crypto';
 
 export default function TastingScreen() {
@@ -32,16 +32,16 @@ function ConnectedTasting({ owner, recordId }: {owner:string;recordId:string}) {
       const record=await tastingRepository(client).context(recordId);
       if(!['whisky','wine','beer','traditional'].includes(record.category))throw new Error('주종을 먼저 확인해주세요.');
       const restored=await restoreDraft(owner,recordId);
-      const {data:note,error:noteError}=await client.from('record_notes').select('mode,catalog_version,confirmed_note,edited_by_user').eq('record_id',recordId).maybeSingle();
+      const {data:note,error:noteError}=await client.from('record_notes').select('mode,catalog_version,confirmed_note,edited_by_user').eq('record_id',recordId).abortSignal(AbortSignal.timeout(TASTING_REQUEST_TIMEOUT_MS)).maybeSingle();
       if(noteError)throw noteError;
-      const {data:settings,error:settingsError}=await client.from('user_settings').select('last_note_mode').eq('user_id',owner).maybeSingle();
+      const {data:settings,error:settingsError}=await client.from('user_settings').select('last_note_mode').eq('user_id',owner).abortSignal(AbortSignal.timeout(TASTING_REQUEST_TIMEOUT_MS)).maybeSingle();
       if(settingsError)throw settingsError;
       if(!mounted)return;
       revision.current=restored?.pendingSave?.expectedRevision??restored?.baseRecordRevision??record.revision;setCategory(record.category as TastingCategory);
       if(restored){if(restored.category!==record.category)throw new Error('Record category changed');setDraft(restored);}
       else if(note){
         if(note.catalog_version!==2)throw new Error('Unsupported legacy note');
-        const {data:answers,error:answerError}=await client.from('record_answers').select('mode,question_id,status,descriptor_codes,intensity,free_text').eq('record_id',recordId).eq('catalog_version',2);
+        const {data:answers,error:answerError}=await client.from('record_answers').select('mode,question_id,status,descriptor_codes,intensity,free_text').eq('record_id',recordId).eq('catalog_version',2).abortSignal(AbortSignal.timeout(TASTING_REQUEST_TIMEOUT_MS));
         if(answerError)throw answerError;if(!mounted)return;
         const value=restoreAnswers({...newTastingDraft(owner,recordId,record.category as TastingCategory,note.mode),baseRecordRevision:record.revision},answers);
         if(note.confirmed_note)value.composition={text:note.confirmed_note,edited:true,sourceRevision:value.revision};
@@ -49,7 +49,7 @@ function ConnectedTasting({ owner, recordId }: {owner:string;recordId:string}) {
       }
       // Defaults in user_settings are not evidence that a person has chosen a mode.
       else {
-        const {count,error:countError}=await client.from('record_notes').select('record_id',{count:'exact',head:true});
+        const {count,error:countError}=await client.from('record_notes').select('record_id',{count:'exact',head:true}).abortSignal(AbortSignal.timeout(TASTING_REQUEST_TIMEOUT_MS));
         if(countError)throw countError;if(!mounted)return;
         if(count&&settings?.last_note_mode)setDraft({...newTastingDraft(owner,recordId,record.category as TastingCategory,settings.last_note_mode),baseRecordRevision:record.revision});
         else setModeSheet(true);

@@ -22,6 +22,8 @@
 
 iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메뉴판 사진은 계정·세션·판본을 검사해 복구합니다. [보존된 초안 복구 검증](docs/verification/menu-container-restore/README.md).
 
+노트 조회·저장 요청은 20초 동안 응답이 없으면 실패 상태로 돌아오고 작성 내용을 보존합니다. iOS 로컬 서버 중단 후 같은 노트 재시도를 확인했습니다. [대기 제한 검증](docs/verification/tasting-request-deadline.md).
+
 노트 초안의 읽기·쓰기·정리를 직렬화하고, 완료 후 더 새롭게 작성된 초안은 보존합니다. [초안 순서·정리 검증](docs/verification/tasting-draft-order.md). Android 작성 단계의 시스템 Back 연결은 추가했으며 네이티브 동작 확인은 남아 있습니다. [미완료 검증 범위](docs/verification/composer-back/README.md).
 
 기본 기록도 전송 전에 사진·입력·평가 단계를 계정/진입 경로별로 보관하고, 저장 완료 뒤 해당 초안을 정리합니다. iOS/Android 로컬 합성 계정에서 사진 입력→종료→복구→실제 저장을 확인했으며 입력별·장애별 추가 검증은 진행 중입니다. [기본 기록 초안 검증과 남은 범위](docs/verification/composer-draft/README.md).
