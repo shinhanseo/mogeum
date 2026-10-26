@@ -167,3 +167,5 @@ AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 
 AI 취향 요약의 생성 지연을 실제 서버에서 확인한 뒤 Gemini3.5 Flash-Lite로 조정했습니다. 합성3케이스와 관리형 기록→요약 저장→cache 재사용을 확인했으며 [모델 변경과 검증 범위](docs/verification/summary-model/README.md)를 참고하세요. 시간 초과 시 기록은 보존하고 재시도를 안내합니다.
 
 베타 준비: [독립 실행 빌드·배포 조건](docs/beta/README.md), [테스터 안내](docs/beta/tester-guide.md), [데이터 처리 내역](docs/beta/data-inventory.md). 외부 배포 승인은 별도이며 실제 iPhone 서명과 개인정보 문서 게시가 남아 있습니다.
+
+백엔드 배포: [환경 분리·검사·복구 절차](docs/deployment/README.md). `npm run backend:check -- development`는 개발 서버 메타데이터와 인증 거부 경계를 읽기 전용으로 확인합니다.

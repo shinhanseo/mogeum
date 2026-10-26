@@ -9,3 +9,5 @@
 iOS Simulator Release 산출물을 다운로드해 내장 Hermes 번들을 검사했고 알려진 서버 키/개발 probe 패턴은 발견되지 않았다. 번들의 실제 식별자 `com.hanseo.mogeum`과 `mogeum-beta` scheme을 확인했고, 부팅된 iPhone 17 Pro 시뮬레이터에 설치 후 프로세스 실행 성공을 확인했다. 화면·실제 사용자 로그인 성공을 이 검사로 대체하지 않는다. Android 첫 Release APK도 빌드·번들 검사에 통과했다. 버전 0.1.0/code 2, 식별자 일치, non-debuggable, 마이크 권한 없음. manifest에서 불필요한 overlay 권한을 발견해 beta 설정에 차단하고 후속 빌드를 요청했다. 실제 Android 설치·실행은 아직 확인하지 않았다. 실제 iPhone/TestFlight 서명과 실제 Apple/Kakao grant 해제 테스트는 포함하지 않는다. 개인 설치 주소나 서명 정보는 이 공개 문서에 기록하지 않는다.
 
 Hermes 원시 문자열 테이블에서 SDK prefix와 인접 문자열이 합쳐지는 오탐을 발견해 disassembly 후 검사하도록 수정했다. 실제 Hermes 안전/위험 fixture 두 개를 컴파일하는 회귀 테스트를 포함한다.
+
+후속 Android Release(code 3)도 완성해 APK 내장 번들·정확한 package·non-debuggable·마이크/overlay 권한 제외를 확인했다. 양 플랫폼 실행/시각 검증 범위는 위와 같다. PR #107의 App checks 및 Database policies가 모두 통과해 main에 반영했다.
