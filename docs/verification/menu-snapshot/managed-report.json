@@ -1,0 +1,39 @@
+{
+  "checkedAt": "2026-10-26T00:01:08.592Z",
+  "projectRef": "vsckzjfgzdpzkzuumldf",
+  "syntheticOnly": true,
+  "humanAccountChanged": false,
+  "deleteBuild": "source-development",
+  "discoveryBuild": "next-drinks-68e91384a6bb2061",
+  "rawEmptyRecommendationCount": 0,
+  "summary": {
+    "state": "not_requested"
+  },
+  "positiveRecommendations": 19,
+  "menu": {
+    "build": "source-development",
+    "source": "previously-captured-ios-native-ocr",
+    "photoCount": 2,
+    "parsedItems": 12,
+    "parser": "geometry-v3",
+    "sessionSaved": true,
+    "idempotentReplay": true,
+    "otherAccountReadDenied": true,
+    "recommendations": 1
+  },
+  "ambiguousMenu": {
+    "source": "previously-captured-galaxy-native-ocr",
+    "candidates": 4,
+    "pricedCandidates": 0,
+    "reviewRequired": true
+  },
+  "accountDeletion": {
+    "physicalPhotoRemoved": true,
+    "recordsRemoved": true,
+    "notesRemoved": true,
+    "authRemoved": true,
+    "otherAccountPreserved": true,
+    "lostResponseReplay": true
+  },
+  "syntheticCleanupComplete": true
+}
