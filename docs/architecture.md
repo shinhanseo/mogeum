@@ -1,6 +1,6 @@
 # 기술 구조
 
-현재 Expo 58 / RN 0.88 / Router 58 앱, 관리형 개발 DB의 11개 마이그레이션과 기록 RPC·메뉴/취향·계정 삭제 Edge 함수를 구현했다. 외부 제공자 credential 기반과 복구인 12·13번째도 개발 서버에 적용했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 Apple·카카오·Gemini 설정과 iOS Apple/카카오 실제 로그인, 관리형 임시 계정의 실제 Gemini 요약·삭제 API를 확인했다. 외부 제공자 연결 해제와 출시 검증은 남아 있다. 메뉴 geometry-v3와 next-drinks 최신 번들을 개발 프로젝트에 배포했으며, 관리형 synthetic 계정의 인증 후 메뉴 추천·타인 보호·저장 재시도를 확인했다. Gemini 생성 시간 초과를 재현한 뒤 근거 ID 선택에 맞는 Flash-Lite로 변경해 실제 생성·DB 저장·동일 입력 cache 재사용을 다시 확인했다. 검증 범위와 표본 한계는 summary-model 문서에 남겼다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
+현재 Expo 58 / RN 0.88 / Router 58 앱, 관리형 개발 DB의 11개 마이그레이션과 기록 RPC·메뉴/취향·계정 삭제 Edge 함수를 구현했다. 외부 제공자 credential 기반과 복구인 12·13번째도 개발 서버에 적용했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 Apple·카카오·Gemini 설정과 iOS Apple/카카오 실제 로그인, 관리형 임시 계정의 실제 Gemini 요약·삭제 API를 확인했다. 외부 제공자 연결 해제와 출시 검증은 남아 있다. 메뉴 geometry-v4([배포 근거](verification/menu-skew/README.md))와 next-drinks 번들을 개발 프로젝트에 배포했으며, 관리형 synthetic 계정의 인증 후 메뉴 추천·타인 보호·저장 재시도를 확인했다. Gemini 생성 시간 초과를 재현한 뒤 근거 ID 선택에 맞는 Flash-Lite로 변경해 실제 생성·DB 저장·동일 입력 cache 재사용을 다시 확인했다. 검증 범위와 표본 한계는 summary-model 문서에 남겼다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
 
 ## 구성
 
