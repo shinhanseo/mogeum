@@ -119,6 +119,25 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.deepEqual(new Set(experiences.rows.map(row => row.revisit)), new Set(['again','not_for_me','okay']));
       assert.equal(String((await db.query('select record_count from public.cellar_overview where id=$1', [second.cellarEntryId])).rows[0].record_count), '3');
     });
+    await t.test('unnamed photo-only drinks can have a fresh linked experience without copying a photo or requiring a new identity', async () => {
+      await as(a); await uploadMetadata(a, 650);
+      const original=await saved(650,{photo:photo(a,650),category:'whisky'});
+      const input={category:'whisky',revisit:'okay',rating:3};
+      const repeat=await saved(651,input,original.cellarEntryId);
+      assert.notEqual(repeat.recordId,original.recordId);
+      assert.equal(repeat.cellarEntryId,original.cellarEntryId);
+      const row=(await db.query('select entered_name,rating,revisit from public.tasting_records where id=$1',[repeat.recordId])).rows[0];
+      assert.equal(row.entered_name,null); assert.equal(Number(row.rating),3); assert.equal(row.revisit,'okay');
+      for(const table of ['record_photos','record_answers','record_notes']) assert.equal((await db.query(`select * from public.${table} where record_id=$1`,[repeat.recordId])).rows.length,0,table);
+      const retry=await saved(651,input,original.cellarEntryId);
+      assert.equal(retry.recordId,repeat.recordId); assert.equal(retry.replayed,true);
+      assert.equal(Number((await db.query('select record_count from public.cellar_overview where id=$1',[original.cellarEntryId])).rows[0].record_count),2);
+      await assert.rejects(saved(652,{revisit:'okay'}),{code:'22023'});
+      await assert.rejects(saved(653,input,operation(99999)),{code:'42501'});
+      await as(b); await assert.rejects(saved(654,input,original.cellarEntryId),{code:'42501'});
+      await as(null); await assert.rejects(saved(655,input,original.cellarEntryId),{code:'42501'});
+      await as(a);
+    });
     await t.test('note save validates catalog, keeps the same experience and replays a lost response safely', async () => {
       const record=await saved(40,{enteredName:'Synthetic tasting whisky',category:'whisky'});
       const answers=[{questionId:'nose',status:'answered',descriptorCodes:['fruit'],intensity:null,freeText:null}];
