@@ -14,7 +14,7 @@
 
 앱 복귀 시 다음 한 잔을 최신화합니다. 양 플랫폼에서 별도 합성 세션의 북마크 변경이 복귀 직후 반영되는 것을 확인했습니다. [검증과 남은 실패 시나리오](docs/verification/discovery-foreground/README.md).
 
-추천 조회 도중 기록이 바뀌면 이전 근거와 새 이력을 섞어 반환하지 않도록 버전을 재확인합니다. [서버 검증과 관리형 미배포 범위](docs/verification/discovery-snapshot.md).
+추천 조회 도중 기록이 바뀌면 이전 근거와 새 이력을 섞어 반환하지 않도록 버전을 재확인합니다. [snapshot 경계의 서버 검증](docs/verification/discovery-snapshot.md).
 
 내 취향의 갱신 실패 시 이전 요약/사진을 숨기고 재시도를 제공합니다. Android의 실제 로컬 API 연결 단절→복구를 확인했습니다. [내 취향 복구 검증](docs/verification/taste-refresh/README.md).
 

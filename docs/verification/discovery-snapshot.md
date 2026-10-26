@@ -14,4 +14,4 @@
 - `npm run test:discovery-deploy`: 단일 파일 번들 `next-drinks-2522afe35cc4d2c1`, SHA256 `270428d90fce00deaac1169b3b3f74ab7b188da61367c8adb4c6ad2802f15def`를 로컬 Edge에서 실제 로드했다. 실제 Auth/Storage/Data API HTTP5/5 pass. 201개 이상의 과거 이력, 소유권, 중복 저장, 북마크/감각 근거 분리 회귀 포함. 번들 검증 후 원본 복원 확인.
 - 동시 변경 fault injection은 순수 orchestration 테스트다. 실제 HTTP의 동시 수정409 강제 재현이나 native409 화면은 이번 검증에 포함하지 않았다.
 
-**관리형 개발 프로젝트는 이전 배포 상태다.** 이 새 번들의 관리형 배포 및 소셜 인증 후 검증은 남아 있다. 관리형 DB 마이그레이션 변경은 없다.
+**당시(2026-10-24) 관리형 개발 프로젝트는 이전 배포 상태였다.** 이후 next-drinks 배포와 합성 인증 계정의 근거 없는 추천0개/긍정 근거 후 추천 검증은 [2026-10-25 보고서](managed-account-rollout/README.md)에 기록했다. 당시의 단일 번들2522와 이후 번들68e9를 동일 산출물로 표기하지 않는다. 실제 HTTP 동시 수정409·native409 화면을 위 검증이 대신하지 않는다. 관리형 DB 마이그레이션 변경은 없다.

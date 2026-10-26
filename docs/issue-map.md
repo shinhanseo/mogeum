@@ -30,4 +30,10 @@
 
 ## 다음 한 잔 · 추가 사용자 요청
 
-- #64 [다음 한 잔] 42–46·4주종 기록 기반 발견·추천 근거·북마크·기록 시작. domain/API/DB, 목록·저장·기록 prefill·로컬 mutation 복구와 44 독립 상세를 연결했다. PR #65–#73은 의존 순서의 draft이며 미병합이다. 44 원본은 확보했고 42/46 진입 화면의 최신 원본 대조·관리형 인증 E2E·작은 화면/큰 글자 검증은 남아 있다. 앱 복귀 시 최신화는 #21과 함께 검증한다.
+- #64 [다음 한 잔] 42–46·4주종 기록 기반 발견·추천 근거·북마크·기록 시작. 기반 PR #65–#73은 모두 2026-10-24 병합됐다(GitHub merged_at 확인). 이후 구현/검증은 [추천 이유](verification/discovery-reason/README.md), [앱 복귀 최신화](verification/discovery-foreground/README.md), [근거 없는 추천 차단](verification/discovery-no-evidence/README.md), [관리형 합성 계정 검증](verification/managed-account-rollout/README.md)을 참고한다. 각 보고서의 날짜와 실제 확인 범위를 구분하며 전체 플랫폼·큰 글자·실기기 완료로 확대하지 않는다. #64는 남은 조건을 확인할 때까지 열어둔다.
+
+## 내부 베타와 잔여 검증
+
+- Done 입력 일관성(#148/PR149)과 이동 검색 응답 격리(#150/PR151)는 앱·DB CI 통과 후 main에 병합됐다. [입력 완료](verification/remaining-input-done.md), [검색 순서](verification/move-target-search.md).
+- 설치 파일의 실제 포함 소스는 [베타 QA](verification/beta-qa-batch/README.md)에 별도로 기록한다. main 병합만으로 이미 배포한 파일이 갱신되지는 않는다.
+- 외부 모집 조건·소유자 작업은 [베타 준비](beta/README.md), 플랫폼별 남은 UX/권한·실기기 검증은 #21, 빌드 번호는 #146, upstream 보안 권고는 #112에서 계속 추적한다.
