@@ -72,6 +72,8 @@ jobs:
         run: npx -y deno check supabase/functions/menu-recommend/index.ts
       - name: Typecheck provider credential endpoint
         run: npx -y deno check supabase/functions/provider-credentials/index.ts
+      - name: Typecheck opt-in synthetic AI provider verifier without invoking the API
+        run: npx -y deno check supabase/tests/verify-summary-provider.ts
       - name: Typecheck the next-drinks endpoint
         run: npx -y deno check supabase/functions/next-drinks/index.ts
       - name: Verify generated deployment through real Auth, Storage binary and Data API
