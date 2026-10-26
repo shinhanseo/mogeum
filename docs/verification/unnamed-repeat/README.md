@@ -11,6 +11,7 @@
 - 술장으로 돌아가 사진 카드 1개와 `기록 2회` 표시를 확인했다. 캡처는 로컬 `artifacts/qa/composer-draft/android-unnamed-repeat-saved.png`, `android-unnamed-repeat-cellar.png`에 보관한다. 실제 사용자 데이터가 아니다.
 - DB 회귀 테스트: 같은 operation의 재시도는 같은 경험, 빈 신규 항목은 22023, 존재하지 않거나 타인 소유 항목 및 비로그인은 42501을 확인한다.
 - `npm run check`: 총 368개, 360 통과, 환경 의존 8 skip, 실패 0. PostgreSQL 다중 세션 동시성은 CI의 격리 Supabase에서도 확인한다.
+- 저장 deadline 수정(#120)이 병합된 main 위에서 통합 재검증: 372개 중 364 통과, 8 skip, 실패 0. 관리형 `backend:check -- development`도 migration ledger 일치 및 5개 함수의 잘못된 토큰 거부(401)를 확인했다.
 
 ## 서버와 디자인 범위
 
