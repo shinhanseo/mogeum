@@ -8,7 +8,7 @@ import { colors, fonts, typography } from '../../theme/tokens';
 import { aromaCatalogs, type NoteMode } from './catalog';
 import { changeAroma, emptyAroma } from './aroma';
 import { aromaLabel, choose, composeNote, emptyAnswer, textAnswer } from './answers';
-import { setAnswer, switchMode, type TastingDraft } from './draft';
+import { cancelNoteEdit, setAnswer, switchMode, type TastingDraft } from './draft';
 import { isFieldVisible, questionsFor, type Field } from './questions';
 import { ModeSheet } from './ModeSheet';
 
@@ -107,10 +107,16 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
     dismissInput();
     const next=switchMode(draft,mode);update(next);setSheet(false);setView('questions');scroll.current?.scrollTo({y:0,animated:false});
   }
+  function cancelEdit() {
+    dismissInput();
+    update(cancelNoteEdit(draft));
+    setEditText(note);
+    setView('preview');
+  }
   function back() {
     if (busy.current) return;
     if (retryOnly) { onClose(); return; }
-    if (view === 'edit') setView('preview');
+    if (view === 'edit') cancelEdit();
     else if (view === 'preview') setView('questions');
     else if (index > 0) move(index - 1);
     else onClose();
@@ -150,7 +156,7 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
       {view==='questions'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label}{draft.mode==='deep'?' 남기기':''} · {index+1} / {questions.length}</Text><View style={styles.progress}>{questions.map((q,i)=><View key={q.id} style={[styles.segment,i<=index&&styles.done]}/>)}</View><Text style={styles.title}>{question.title}</Text><Text style={[styles.hint,draft.mode==='deep'&&typography.body]}>{question.hint}</Text>{question.fields.filter(f=>isFieldVisible(f,modeDraft.answers)).map(renderField)}<Text style={styles.hint}>떠오르는 게 없다면 넘어가도 괜찮아요.</Text></>:view==='preview'?<><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><Text style={styles.title}>내가 느낀 만큼,{`\n`}한 잔의 기록.</Text><View style={styles.noteCard}><Text style={styles.note}>{note||'아직 남긴 느낌이 없어요. 기본 기록은 그대로 보관돼요.'}</Text></View><Text style={styles.hint}>{edited?'내 말로 다듬은 노트예요.':'선택한 답변만 문장으로 정리했어요.'}</Text><Button label="문장 직접 수정  ›" disabled={retryOnly} variant="text" onPress={()=>{setEditText(note);setView('edit');}}/></>:<><Text style={styles.title}>내 말로{`\n`}다듬어볼까요?</Text><Text style={styles.caption}>{categoryLabels[draft.category]} · {label} 남긴 노트</Text><TextInput ref={node=>{inputs.current.editor=node;}} onFocus={()=>focusInput('editor')} onBlur={()=>{focusedInput.current=null;}} accessibilityLabel="노트 문장 직접 수정" value={editText} onChangeText={text=>{setEditText(text);update({...draft,composition:{text:note,edited,sourceRevision:draft.revision,editBuffer:text}});}} multiline maxLength={10000} style={[styles.input,styles.editor]}/><Text style={styles.hint}>선택한 감각을 바꾸려면 답변 수정을 이용해요.</Text></>}
       {!!error&&<Text accessibilityRole="alert" style={styles.caption}>{error}</Text>}
     </ScrollView>
-    <View style={styles.actions}>{view==='questions'?<><Button label={index===questions.length-1?'내 노트 미리보기':'다음'} onPress={()=>move(index+1)}/><Button label={draft.mode==='deep'?'이 질문 건너뛰기':'건너뛰기'} variant="text" onPress={skip}/></>:view==='preview'?<><Button label={note.trim()?'노트 저장':'기록으로 돌아가기'} loading={saving} onPress={()=>{if(note.trim())void save();else onClose();}}/><Button label="답변 수정" disabled={saving||retryOnly} variant="text" onPress={()=>setView('questions')}/></>:<><Button label="수정한 문장 적용" onPress={()=>{setNote(editText);setEdited(true);update({...draft,composition:{text:editText,edited:true,sourceRevision:draft.revision}});setView('preview');}}/><Button label="취소" variant="text" onPress={()=>{update({...draft,composition:{text:note,edited,sourceRevision:draft.revision}});setView('preview');}}/></>}</View>
+    <View style={styles.actions}>{view==='questions'?<><Button label={index===questions.length-1?'내 노트 미리보기':'다음'} onPress={()=>move(index+1)}/><Button label={draft.mode==='deep'?'이 질문 건너뛰기':'건너뛰기'} variant="text" onPress={skip}/></>:view==='preview'?<><Button label={note.trim()?'노트 저장':'기록으로 돌아가기'} loading={saving} onPress={()=>{if(note.trim())void save();else onClose();}}/><Button label="답변 수정" disabled={saving||retryOnly} variant="text" onPress={()=>setView('questions')}/></>:<><Button label="수정한 문장 적용" onPress={()=>{setNote(editText);setEdited(true);update({...draft,composition:{text:editText,edited:true,sourceRevision:draft.revision}});setView('preview');}}/><Button label="취소" variant="text" onPress={cancelEdit}/></>}</View>
     <ModeSheet visible={sheet} category={draft.category} onChoose={selectMode} onClose={()=>setSheet(false)}/>
   </KeyboardAvoidingView></SafeAreaView>;
 }
