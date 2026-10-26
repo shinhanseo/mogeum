@@ -189,3 +189,5 @@ SQL Editor로 적용한 개발 DB 13개 변경의 CLI 이력을 스키마·권�
 내부 베타 Android7/iOS EAS5의 설치·검사·포함 소스와 남은 범위는 [최신 베타 QA](docs/verification/beta-qa-batch/README.md)에 정리했습니다.
 
 기본 기록 사진 변환의 중간 캐시 누적을 수정하고 iOS 사진 교체/재실행 및 양 플랫폼 native 모듈에서 확인했습니다. [캐시 정리·계정 초안 격리 검증](docs/verification/record-image-cache/README.md).
+
+저장 실패 시 안내가 화면 아래에 숨지 않도록 새 오류 위치로 스크롤합니다. [실제 iOS 서버 실패·재시도와 pending 우선 복구 확인](docs/verification/record-error-visible/README.md).
