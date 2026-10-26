@@ -30,7 +30,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         foregroundImage: "./assets/brand/adaptive-foreground.png",
         backgroundColor: "#FAF7F2",
       },
-      blockedPermissions: ["android.permission.RECORD_AUDIO"],
+      blockedPermissions: [
+        "android.permission.RECORD_AUDIO",
+        ...(beta ? ["android.permission.SYSTEM_ALERT_WINDOW"] : []),
+      ],
       ...(beta
         ? { package: "com.hanseo.mogeum" }
         : process.env.MOGEUM_ANDROID_PACKAGE

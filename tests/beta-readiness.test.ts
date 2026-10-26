@@ -10,7 +10,10 @@ const config = {
   ios: { bundleIdentifier: "com.hanseo.mogeum" },
   android: {
     package: "com.hanseo.mogeum",
-    blockedPermissions: ["android.permission.RECORD_AUDIO"],
+    blockedPermissions: [
+      "android.permission.RECORD_AUDIO",
+      "android.permission.SYSTEM_ALERT_WINDOW",
+    ],
   },
   extra: {
     appVariant: "beta",

@@ -47,6 +47,12 @@ export function betaBuildProblems(
     )
   )
     issues.push("UNUSED_MICROPHONE_PERMISSION");
+  if (
+    !config.android?.blockedPermissions?.includes(
+      "android.permission.SYSTEM_ALERT_WINDOW",
+    )
+  )
+    issues.push("UNUSED_OVERLAY_PERMISSION");
   return [...new Set(issues)];
 }
 export function externalBetaProblems(env: Record<string, string | undefined>) {
