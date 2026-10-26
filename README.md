@@ -197,3 +197,5 @@ SQL Editor로 적용한 개발 DB 13개 변경의 CLI 이력을 스키마·권�
 기록 이동 검색의 이전 응답·오류가 새 검색에 섞이지 않도록 보호했습니다. [요청 순서와 검증](docs/verification/move-target-search.md).
 
 내부 베타의 [읽기 전용 코호트 집계](docs/beta/metrics.md)를 추가했습니다. 기존 기록 사용자·현재 확정 노트와 미측정 설치/재방문·추천 실행을 구분하며, 앱에 새 추적 SDK를 넣지 않습니다.
+
+iOS 별도 QA 시뮬레이터에서 실제 카메라 권한 거부·설정 앱 이동/복귀·앨범 선택 취소 후 사진 보존을 추가 확인했습니다. [범위와 남은 권한 검증](docs/verification/photo-access.md).
