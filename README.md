@@ -183,3 +183,5 @@ AI 취향 요약의 생성 지연을 실제 서버에서 확인한 뒤 Gemini3.5
 백엔드 배포: [환경 분리·검사·복구 절차](docs/deployment/README.md). `npm run backend:check -- development`는 개발 서버 메타데이터와 인증 거부 경계를 읽기 전용으로 확인합니다.
 
 SQL Editor로 적용한 개발 DB 13개 변경의 CLI 이력을 스키마·권한 비교 후 정리했습니다. [479개 정의 비교·SQL 재적용 없는 이력 등록](docs/verification/schema-ledger/README.md).
+
+기본 기록·수정의 이름/날짜/빈티지에도 Done을 연결했습니다. [iOS 완료 동작과 사진 포함 초안의 종료·복구·실제 저장 검증](docs/verification/record-input-done/README.md). Android 완료 동작은 별도 미검증입니다.
