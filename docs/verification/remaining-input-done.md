@@ -10,6 +10,9 @@ iPhone17Pro/iOS26.5 개발 미리보기에서 다음을 확인했습니다. 실�
 - 새 술로 분리의 이름을 `QA 새 술 이름`으로 변경 → 완료 → 키보드 닫힘, 입력/분리 탭 유지, 확인 모달이나 실제 이동 없음.
 - 합성 메뉴 사진을 실제 기기 OCR로 읽음 → 3개 메뉴 확인 → 수정 → 가격18000 입력. 숫자·구두점 키보드에 완료 키 표시, 완료 → 키보드 닫힘/가격 유지/수정 창 유지. 확인 완료는 별도 버튼입니다. 서버 호출 없는 명시적 개발 경로입니다.
 
-로컬 증거는 ignored `artifacts/qa/remaining-done/ios-split-done.png`, `ios-menu-price-done.png`입니다. 술장 검색·메뉴 이름/용량의 이번 실제 키보드 탭 검증과 Android/삼성 키보드는 별도입니다. Android 독립 에뮬레이터는 실행됐지만 CUA에서 실행 파일 앱을 식별하지 못했고, Android Studio 입력도 반응하지 않아 Done 검증을 통과했다고 쓰지 않습니다. 테스트용 AVD 데이터는 초기화하지 않았습니다.
+- 같은 메뉴 편집에서 이름 `글렌리벳 12년 QA`, 용량 `60ml`도 각각 완료 → 키보드 닫힘/값 유지/편집 창 유지 확인.
+- 합성61개 술장 미리보기에서 `위스키 61` 검색 → 결과1개 → 완료 → 키보드 닫힘/검색어·해당 선반 결과 유지 확인.
+
+로컬 증거는 ignored `artifacts/qa/remaining-done/ios-split-done.png`, `ios-menu-price-done.png`, `ios-menu-all-done.png`, `ios-cellar-search-done.png`입니다. 추가6입력의 iOS 완료 동작은 확인했고 Android/삼성 키보드는 별도입니다. Android 독립 에뮬레이터는 실행됐지만 CUA에서 실행 파일 앱을 식별하지 못했고, Android Studio 입력도 반응하지 않아 Done 검증을 통과했다고 쓰지 않습니다. 테스트용 AVD 데이터는 초기화하지 않았습니다.
 
 전체 check394/386통과/8환경skip/0실패. React 품질 점검: 새 effect/state/비동기 요청이나 컴포넌트 구조 변경 없이 기존 TextInput 이벤트만 연결했고 접근성 label·기존 값 관리·제출 버튼을 유지했습니다. 키보드 표시 설정은 네이티브 UI로 확인하며 구현을 복제하는 단위 테스트는 추가하지 않았습니다. 이 변경은 현재 Androidcode8/iOSEAS6 설치 파일 이후입니다.
