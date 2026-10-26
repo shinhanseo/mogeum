@@ -11,9 +11,10 @@ npm run backend:check -- development
 
 `backend:check`는 명시된 개발 프로젝트의 5개 함수 활성 상태·gateway 설정·필수 서버 secret **이름**과 잘못된 토큰의 401 응답을 확인한다. 비밀값·원시 CLI 오류는 출력하지 않는다. 마이그레이션 파일 해시와 CLI 이력 정합성도 남긴다. 연결된 project-ref가 명시 대상과 다르면 중단한다. 실제 DB 버전 일치, 정상 로그인, AI 성공, 실제 계정 삭제 성공을 이 검사로 대체하지 않는다. CLI 인증은 `npx supabase login`을 사용하며 토큰을 채팅/공개 이슈에 보내지 않는다.
 
-## 현재 DB 이력 경고
+## DB 이력 정리 결과
 
-2026-10-26 조회에서 13개 local migration에 대응하는 remote CLI 이력이 비어 있었다. 기존 DB는 SQL Editor로 적용되어 실제 테이블/RPC가 존재한다. 이 상태에서 `db push`를 실행하지 않는다. 검사 명령은 `MIGRATION_NOT_TRACKED`로 자동 배포 불가를 표시한다. 실제 스키마·권한·함수·Storage 정책을 migration 결과와 대조한 후에만 이력 정리를 진행한다. 확인 없이 전부 applied로 표시하는 repair는 하지 않는다.
+2026-10-26 최초 조회에서 13개 local migration의 remote 이력이 비어 있었다. 기존 SQL Editor 적용 결과와 로컬 application schema/권한/Storage 설정 479개를 비교했고 실행 로직은 일치했다(주석 한 줄만 다름). 공식 CLI로 적용 이력만 등록한 뒤 13개 버전 정합성과 `db push --dry-run`의 신규 적용 0건을 확인했다. [범위와 근거](../verification/schema-ledger/README.md). 이후의 불일치가 자동으로 승인되는 것은 아니며 `MIGRATION_NOT_TRACKED`/조회 실패는 계속 배포를 차단한다.
+
 
 ## DB 이력 정합성이 확인된 대상의 배포 순서
 
