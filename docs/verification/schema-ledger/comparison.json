@@ -1,0 +1,37 @@
+{
+  "localObjects": 420,
+  "remoteObjects": 420,
+  "missingRemote": [],
+  "extraRemote": [],
+  "changed": [
+    [
+      "function",
+      "begin_account_deletion(uuid,text,uuid)"
+    ]
+  ],
+  "matching": 419,
+  "additionalSecurityScope": {
+    "localObjects": 59,
+    "remoteObjects": 59,
+    "missingRemote": [],
+    "extraRemote": [],
+    "changed": [],
+    "matching": 59
+  },
+  "commentOnlyDifferenceVerified": true,
+  "differenceExplanation": "begin_account_deletion: replacing exactly one comment in local definition reproduces remote MD5; executable SQL unchanged",
+  "historyRegistration": {
+    "versions": 13,
+    "sqlReplayed": false,
+    "businessDataModified": false,
+    "commandCompleted": true
+  },
+  "scope": "Application public/private objects, Storage policies and record-photos bucket config; relation options/owners and guard_account_upload. No user data read or full platform schema equivalence claim.",
+  "historyVerifiedAligned": true,
+  "dryRun": {
+    "upToDate": true,
+    "migrations": [],
+    "seeds": [],
+    "roles": []
+  }
+}

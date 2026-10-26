@@ -1,0 +1,86 @@
+{
+  "target": "development",
+  "projectRef": "vsckzjfgzdpzkzuumldf",
+  "metadataAndAuthBoundaryReady": true,
+  "migrationLedgerAligned": true,
+  "automaticDeploymentReady": true,
+  "ledgerIssues": [],
+  "migrations": [
+    {
+      "name": "20261021090000_record_foundation.sql",
+      "sha256": "d020aa92c93c3303d58be880a2aa10e617878d890bfbe0a14aab982a8ae6f29a"
+    },
+    {
+      "name": "20261021091000_record_transactions.sql",
+      "sha256": "7a70b837356032b3de6cb319324ad3e4fa8d97e4d776501ce4f137b3bd498481"
+    },
+    {
+      "name": "20261021100000_tasting_notes.sql",
+      "sha256": "621d25ed4566a8c41400947624ae5e0f506b962c63c43202b0acc5bb323aed3a"
+    },
+    {
+      "name": "20261022160000_record_edit.sql",
+      "sha256": "91de7eb64d063d4aa34f2f03c89e9f14c167053e729a2574995626f4d407fbae"
+    },
+    {
+      "name": "20261022161000_record_tombstones.sql",
+      "sha256": "89486a626edbf6e05338861e33b5f1ea2fcea57fe861d39e252e03729b3505ac"
+    },
+    {
+      "name": "20261023010000_record_attachments.sql",
+      "sha256": "a4550421eb1b552700099192ce7eccabc237e21bbf56db6ed6aeec90107980ba"
+    },
+    {
+      "name": "20261023020000_taste_summary.sql",
+      "sha256": "ea80c44e033757efe146ec77336215262cd7802d25243541e4ed2b480fcab02f"
+    },
+    {
+      "name": "20261023030000_menu_sessions.sql",
+      "sha256": "f61bf347c288aeb6b7f70004e98d043695d11a58e3e948be1c629b616ebc73f0"
+    },
+    {
+      "name": "20261023040000_drink_wishlist.sql",
+      "sha256": "970be47d72b3a29738ed6bdfe98c8005954b0d169f48e3add58eccbba9c9ff35"
+    },
+    {
+      "name": "20261025090000_cellar_ready_photos.sql",
+      "sha256": "2ecd651e05097e5902638eac915e6c9badffbe04d10ad809b97dcb4de7e5bfdb"
+    },
+    {
+      "name": "20261025120000_account_deletion.sql",
+      "sha256": "23073333c0081da0cb67332f9e06fad76ec24ddcef12d5562c07cdde70a053a8"
+    },
+    {
+      "name": "20261025170000_provider_credentials.sql",
+      "sha256": "32fd1013d520b2fb54bc8937307b973125d442bc4117c0ca3ef979f7fe2f84bc"
+    },
+    {
+      "name": "20261025190000_provider_deletion_recovery.sql",
+      "sha256": "b62e22b8f36f8d4713ed66519f5fa23d5af2c2195af783a920df3151d928b880"
+    }
+  ],
+  "probes": [
+    {
+      "function": "taste-summary",
+      "status": 401
+    },
+    {
+      "function": "menu-recommend",
+      "status": 401
+    },
+    {
+      "function": "next-drinks",
+      "status": 401
+    },
+    {
+      "function": "delete-account",
+      "status": 401
+    },
+    {
+      "function": "provider-credentials",
+      "status": 401
+    }
+  ],
+  "issues": [],
+  "scope": "read-only metadata and invalid-token requests; not a functional login/DB/AI/deletion smoke test"
+}

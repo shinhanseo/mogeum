@@ -10,11 +10,21 @@ import {
 } from "../src/lib/backend-release";
 function cliJson(args: string[]) {
   return JSON.parse(
-    execFileSync("npx", ["supabase", ...args, "--output", "json"], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-      timeout: 45000,
-    }),
+    execFileSync(
+      "npx",
+      [
+        "supabase",
+        ...args,
+        ...(args[0] === "migration"
+          ? ["--output-format", "json"]
+          : ["--output", "json"]),
+      ],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 45000,
+      },
+    ),
   );
 }
 async function main() {
