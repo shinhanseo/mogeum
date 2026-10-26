@@ -38,7 +38,7 @@ iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메�
 
 술 상세도 앱 복귀 시 기록·사진·이력을 재확인하고, 만료/실패한 사진 URL은 한 번만 재발급합니다. [iOS 실제 수정·삭제 복귀 검증과 제약](docs/verification/detail-refresh/README.md). 상세 DB 조회는 20초, 사진 서명 UI 대기는 10초로 제한하며 사진 없음/불러오기 실패를 구분합니다. [대기 제한·실패 검증](docs/verification/detail-deadlines/README.md).
 
-계정 관리에 기기 로그아웃과 영구 삭제 확인·재시도 흐름을 추가했습니다. 삭제 API는 로컬 임시 계정의 실제 Auth/Storage로 검증했고 관리형 배포·임시 계정 E2E는 확인했고 외부 OAuth 해제와 양 플랫폼 전체 삭제 UI 검증은 남아 있습니다. [계정 삭제 검증과 남은 범위](docs/verification/account-deletion/README.md).
+계정 관리에 기기 로그아웃과 영구 삭제 확인·재시도 흐름을 추가했습니다. 기기 로그아웃은 Auth 서버 응답이 멈춰도 20초 후 대기를 끝냅니다. iOS 로컬 장애·기기 세션 정리·초안/기록 보존·다른 계정 빈 술장을 확인했습니다. [로그아웃 대기 검증](docs/verification/logout-deadline/README.md). 삭제 API는 로컬 임시 계정의 실제 Auth/Storage로 검증했고 관리형 배포·임시 계정 E2E는 확인했고 외부 OAuth 해제와 양 플랫폼 전체 삭제 UI 검증은 남아 있습니다. [계정 삭제 검증과 남은 범위](docs/verification/account-deletion/README.md).
 
 ## 출시 범위
 

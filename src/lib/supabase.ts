@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 import { getBackendState } from './env';
 import { ensureNativeAuthCrypto } from './native-auth-crypto';
+import { createLogoutFetch } from './logout-fetch';
 
 let client: SupabaseClient | null = null;
 /** No client or network request is created until valid public configuration exists. */
@@ -13,6 +14,7 @@ export function getSupabase(): SupabaseClient | null {
   if (!state.configured) return null;
   ensureNativeAuthCrypto();
   client = createClient(state.config.url, state.config.publishableKey, {
+    global: { fetch: createLogoutFetch(fetch, state.config.url) },
     auth: {
       ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),
       storageKey: `mogeum-${new URL(state.config.url).hostname}-auth`,
