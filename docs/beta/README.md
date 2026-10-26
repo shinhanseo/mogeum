@@ -36,7 +36,7 @@ npx eas-cli build -p ios --profile preview-simulator
 ## 외부 모집 전에 소유자가 마칠 일
 
 1. [실제 데이터 처리 내역](data-inventory.md)을 검토하고 책임자/문의처·보관 정책·위탁/국외 처리 고지를 확정한다. 이를 실제 개인정보 문서와 이용약관으로 게시한다.
-2. `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_TERMS_URL`에 게시한 HTTPS 주소를 설정하고 앱 내 연결을 확인한다. 현재 로그인 문구만으로 실제 문서 연결이 완료된 것은 아니다.
+2. `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_TERMS_URL`에 게시한 HTTPS 주소를 설정하고 앱 내 연결을 확인한다. 로그인의 기존 약관·개인정보 문구에서 각 문서를 열도록 연결했다. URL이 없거나 잘못되면 준비 안내를 표시한다. 게시 주소가 없으므로 실제 문서 열기 검증은 아직 미완료다.
 3. 문서/범위를 직접 검토한 후에만 `MOGEUM_BETA_OWNER_REVIEWED=1`로 외부 배포 검사를 실행한다. 이 값은 법률 검토나 스토어 승인 대신이 아니다.
 4. 실제 iPhone/TestFlight에는 Apple 계정 인증·서명·필요한 동의가 남는다. 결제·약관 동의는 자동으로 하지 않는다.
 5. 실제 Apple/Kakao 연결 해제는 삭제 가능한 별도 계정으로 확인한다. 정상 계정을 시험 삼아 삭제하지 않는다.
