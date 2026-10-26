@@ -118,8 +118,36 @@ const damagedPriceCell =
   /^(?:[₩$€¥]\s*)?\d{1,3}(?:,\d{3})+[\p{L}\p{N}%％]{1,4}$/u;
 const isDamagedPriceCell = (text: string) =>
   !priceCell.test(text) && damagedPriceCell.test(text);
+/** Use shared text baselines only; short amount boxes may be axis-aligned even on a tilted photo. */
+function rowSlope(photo: MenuPhoto): number {
+  const candidates = photo.lines.flatMap((line) => {
+    const text = line.text.trim();
+    if (!/\p{L}/u.test(text) || priceCell.test(text) || isDamagedPriceCell(text)) return [];
+    const [a, b, c, d] = line.polygon;
+    const top = { x: (b.x - a.x) * photo.width, y: (b.y - a.y) * photo.height };
+    const bottom = { x: (c.x - d.x) * photo.width, y: (c.y - d.y) * photo.height };
+    if (top.x <= 0 || bottom.x <= 0) return [];
+    const first = Math.atan2(top.y, top.x), second = Math.atan2(bottom.y, bottom.x);
+    const height = (Math.hypot((d.x - a.x) * photo.width, (d.y - a.y) * photo.height)
+      + Math.hypot((c.x - b.x) * photo.width, (c.y - b.y) * photo.height)) / 2;
+    const width = (Math.hypot(top.x, top.y) + Math.hypot(bottom.x, bottom.y)) / 2;
+    if (height <= 0 || width < height * 1.2 || Math.abs(first - second) > Math.PI / 120) return [];
+    return [{ angle: (first + second) / 2, long: width >= height * 4,
+      centerY: (a.y + b.y + c.y + d.y) / 4 }];
+  }).sort((a, b) => a.angle - b.angle);
+  if (candidates.length < 3) return 0;
+  const middle = Math.floor(candidates.length / 2);
+  const median = candidates.length % 2 ? candidates[middle].angle
+    : (candidates[middle - 1].angle + candidates[middle].angle) / 2;
+  if (Math.abs(median) < Math.PI / 90 || Math.abs(median) > Math.PI / 15) return 0;
+  const agreeing = candidates.filter(value => Math.abs(value.angle - median) <= Math.PI / 90);
+  const anchors = agreeing.filter(value => value.long);
+  if (agreeing.length / candidates.length < 0.7 || anchors.length < 3
+    || Math.max(...anchors.map(value => value.centerY)) - Math.min(...anchors.map(value => value.centerY)) < 0.2) return 0;
+  return Math.tan(median) * photo.width / photo.height;
+}
 /** Split complete name→amount columns with a visible gutter, retaining uncertain amounts for review. */
-function splitMenuColumns(row: MenuLine[]): MenuLine[][] {
+function splitMenuColumns(row: MenuLine[], layout: typeof bounds): MenuLine[][] {
   const groups: MenuLine[][] = [];
   let current: MenuLine[] = [];
   for (const line of row) {
@@ -146,7 +174,7 @@ function splitMenuColumns(row: MenuLine[]): MenuLine[][] {
   for (let i = 1; i < groups.length; i++) {
     const previous = groups[i - 1].at(-1)!;
     const right = Math.max(...previous.polygon.map((p) => p.x));
-    if (bounds(groups[i][0]).x - right < Math.max(0.02, bounds(previous).h))
+    if (layout(groups[i][0]).x - right < Math.max(0.02, layout(previous).h))
       return [row];
   }
   return groups;
@@ -156,14 +184,21 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
   validatePhotos(photos);
   const output: MenuItem[] = [];
   for (const p of photos) {
+    const slope = rowSlope(p);
+    // Keep raw polygons/line IDs unchanged. The projection is used only for row comparisons.
+    const positions = new Map(p.lines.map(line => {
+      const ys = line.polygon.map(point => point.y - slope * point.x);
+      return [line, { x: bounds(line).x, y: Math.min(...ys), h: Math.max(...ys) - Math.min(...ys) }] as const;
+    }));
+    const layout = (line: MenuLine) => positions.get(line)!;
     const sorted = [...p.lines].sort(
-      (a, b) => bounds(a).y - bounds(b).y || bounds(a).x - bounds(b).x,
+      (a, b) => layout(a).y - layout(b).y || layout(a).x - layout(b).x,
     );
     const rows: MenuLine[][] = [];
     for (const line of sorted) {
-      const b = bounds(line);
+      const b = layout(line);
       const row = rows.find((r) => {
-        const a = bounds(r[0]);
+        const a = layout(r[0]);
         return (
           Math.abs(a.y + a.h / 2 - (b.y + b.h / 2)) < Math.min(a.h, b.h) * 0.5
         );
@@ -172,8 +207,8 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
       else rows.push([line]);
     }
     for (const unsplit of rows) {
-      unsplit.sort((a, b) => bounds(a).x - bounds(b).x);
-      for (const row of splitMenuColumns(unsplit)) {
+      unsplit.sort((a, b) => layout(a).x - layout(b).x);
+      for (const row of splitMenuColumns(unsplit, layout)) {
         const text = row
           .map((l) => l.text)
           .join(" ")

@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-10-26T05:04:59.639Z",
+  "projectRef": "vsckzjfgzdpzkzuumldf",
+  "syntheticOnly": true,
+  "humanAccountChanged": false,
+  "deleteBuild": "source-development",
+  "discoveryBuild": "next-drinks-68e91384a6bb2061",
+  "rawEmptyRecommendationCount": 0,
+  "summary": {
+    "status": 200,
+    "state": "ready",
+    "code": null
+  },
+  "summaryModel": "gemini-3.5-flash-lite",
+  "summaryHighlights": [
+    "향:과일 향"
+  ],
+  "summaryCacheSaved": true,
+  "summaryCacheReplayed": true,
+  "positiveRecommendations": 19,
+  "menu": {
+    "build": "menu-53c155f7ba861f76",
+    "source": "previously-captured-ios-native-ocr",
+    "photoCount": 2,
+    "parsedItems": 12,
+    "parser": "geometry-v4",
+    "sessionSaved": true,
+    "idempotentReplay": true,
+    "otherAccountReadDenied": true,
+    "recommendations": 1
+  },
+  "ambiguousMenu": {
+    "source": "previously-captured-galaxy-native-ocr",
+    "candidates": 4,
+    "pricedCandidates": 0,
+    "reviewRequired": true
+  },
+  "accountDeletion": {
+    "physicalPhotoRemoved": true,
+    "recordsRemoved": true,
+    "notesRemoved": true,
+    "authRemoved": true,
+    "otherAccountPreserved": true,
+    "lostResponseReplay": true
+  },
+  "syntheticCleanupComplete": true
+}
