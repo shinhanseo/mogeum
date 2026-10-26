@@ -10,6 +10,8 @@
 
 ## 다시 확인
 
-`MOGEUM_VERIFY_AI_PROVIDER=1 deno run --env-file=<비밀 설정 파일> --allow-env --allow-net --allow-sys supabase/tests/verify-summary-provider.ts`로 합성 데이터3케이스를 명시적으로 호출할 수 있다. 개인 기록을 읽지 않으며 키·응답 본문은 출력하지 않는다. 실제 API 호출이므로 일반 CI에서 자동 실행하지 않는다.
+`MOGEUM_VERIFY_AI_PROVIDER=1 deno run --config=supabase/tests/deno.json --env-file=<비밀 설정 파일> --allow-env --allow-net --allow-sys supabase/tests/verify-summary-provider.ts`로 합성 데이터3케이스를 명시적으로 호출할 수 있다. 개인 기록을 읽지 않으며 키·응답 본문은 출력하지 않는다. 실제 API 호출이므로 일반 CI에서 자동 실행하지 않는다.
 
 TypeScript 앱 검사와 Deno endpoint/검증 스크립트 check를 수행했다. 생성 캐시를 재조회하는 관리형 harness도 갱신했다. 물리 iPhone·전체 UI 및 실제 Apple/Kakao grant revoke는 여전히 별도다.
+
+서버 verifier의 CI 검사는 앱 node_modules에 AI 의존성이 있다고 가정하지 않는다. 별도 Deno config의 global cache mode와 verifier lockfile을 명시해 앱 npm 설치와 분리한다. 실제 API 호출은 opt-in 실행에만 둔다.
