@@ -59,3 +59,10 @@ export function activeObservations(draft: TastingDraft) {
     aromas: Object.fromEntries(Object.entries(mode.aromas).map(([question, value]) => [question, activeAroma(value, catalog!)])),
   };
 }
+
+/** Explicit cancellation discards only unapplied prose, retaining the last committed preview. */
+export function cancelNoteEdit(draft: TastingDraft): TastingDraft {
+  if (!draft.composition || draft.composition.editBuffer === undefined) return draft;
+  const { editBuffer: _discarded, ...composition } = draft.composition;
+  return { ...draft, composition };
+}
