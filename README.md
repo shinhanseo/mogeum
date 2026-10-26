@@ -24,6 +24,8 @@ iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메�
 
 노트 초안의 읽기·쓰기·정리를 직렬화하고, 완료 후 더 새롭게 작성된 초안은 보존합니다. [초안 순서·정리 검증](docs/verification/tasting-draft-order.md). Android 작성 단계의 시스템 Back 연결은 추가했으며 네이티브 동작 확인은 남아 있습니다. [미완료 검증 범위](docs/verification/composer-back/README.md).
 
+기본 기록도 전송 전에 사진·입력·평가 단계를 계정/진입 경로별로 보관하고, 저장 완료 뒤 해당 초안을 정리합니다. iOS/Android 로컬 합성 계정에서 사진 입력→종료→복구→실제 저장을 확인했으며 입력별·장애별 추가 검증은 진행 중입니다. [기본 기록 초안 검증과 남은 범위](docs/verification/composer-draft/README.md).
+
 기록 저장·사진 교체의 동시 요청과 완료 정리를 계정/기록별로 직렬화합니다. [보관 요청 동시 실행 검증](docs/verification/record-request-order.md).
 
 술 상세도 앱 복귀 시 기록·사진·이력을 재확인하고, 만료/실패한 사진 URL은 한 번만 재발급합니다. [iOS 실제 수정·삭제 복귀 검증과 제약](docs/verification/detail-refresh/README.md). 상세 DB 조회는 20초, 사진 서명 UI 대기는 10초로 제한하며 사진 없음/불러오기 실패를 구분합니다. [대기 제한·실패 검증](docs/verification/detail-deadlines/README.md).

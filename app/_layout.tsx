@@ -16,6 +16,13 @@ import { colors } from "../src/theme/tokens";
 
 export default function RootLayout() {
   useEffect(attachAuthLifecycle, []);
+  useEffect(() => {
+    if (__DEV__) {
+      void import("../src/dev/local-qa-menu")
+        .then(({ registerLocalQaMenu }) => registerLocalQaMenu())
+        .catch(() => {});
+    }
+  }, []);
   const [loaded, error] = useFonts({
     NotoSansKR_400Regular,
     NotoSansKR_500Medium,

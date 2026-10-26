@@ -1,3 +1,4 @@
+import { parseComposerDraft } from "./composer-draft";
 import { currentDocumentUri } from "../../lib/document-uri";
 import type { PendingRecord } from "./pending";
 import { isPreparedRecordPhoto } from "./draft-photo";
@@ -29,6 +30,13 @@ export function decodePendingRecord(
     (value.entryId !== undefined && !uuid(value.entryId))
   )
     fail();
+  if (value.composerDraft !== undefined) {
+    value.composerDraft = parseComposerDraft(
+      JSON.stringify(value.composerDraft),
+      owner,
+      value.composerDraft.context,
+    );
+  }
   const saved = value.saved;
   if (
     saved !== undefined &&

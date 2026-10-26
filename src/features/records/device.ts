@@ -1,3 +1,4 @@
+import { finishComposerDraft } from "./composer-draft-device";
 import { recordRequestQueue } from "./request-queue";
 import { decodePendingRecord } from "./pending-restore";
 import { isPreparedRecordPhoto } from "./draft-photo";
@@ -52,7 +53,14 @@ export async function preparePhoto(
     const directory = `${FileSystem.documentDirectory}record-drafts/`;
     await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
     localUri = `${directory}${operationId}.jpg`;
-    await FileSystem.copyAsync({ from: image.uri, to: localUri });
+    try {
+      await FileSystem.copyAsync({ from: image.uri, to: localUri });
+    } catch (error) {
+      await FileSystem.deleteAsync(localUri, { idempotent: true }).catch(
+        () => {},
+      );
+      throw error;
+    }
   }
   return { localUri, width: image.width, height: image.height };
 }
@@ -61,6 +69,7 @@ export async function finishPending(pending: PendingRecord) {
     // Remove only the operation that actually completed, never a newer draft.
     const current = await readStoredPending(pending.ownerId);
     if (current?.operationId !== pending.operationId) return;
+    if (current.composerDraft) await finishComposerDraft(current.composerDraft);
     await AsyncStorage.removeItem(key(pending.ownerId));
     if (
       Platform.OS !== "web" &&
