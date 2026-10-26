@@ -1,5 +1,6 @@
 import { createDeadlineFetch } from "../../lib/deadline-fetch";
 import { finishComposerDraft } from "./composer-draft-device";
+import { withGeneratedRecordImage } from "./generated-image";
 import { recordRequestQueue } from "./request-queue";
 import { decodePendingRecord } from "./pending-restore";
 import { isPreparedRecordPhoto } from "./draft-photo";
@@ -51,17 +52,24 @@ export async function preparePhoto(
   if (Platform.OS === "web")
     localUri = `data:image/jpeg;base64,${image.base64}`;
   else {
-    const directory = `${FileSystem.documentDirectory}record-drafts/`;
-    await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-    localUri = `${directory}${operationId}.jpg`;
-    try {
-      await FileSystem.copyAsync({ from: image.uri, to: localUri });
-    } catch (error) {
-      await FileSystem.deleteAsync(localUri, { idempotent: true }).catch(
-        () => {},
-      );
-      throw error;
-    }
+    return withGeneratedRecordImage(
+      { source: uri, generated: image.uri, cacheDirectory: FileSystem.cacheDirectory },
+      async () => {
+        const directory = `${FileSystem.documentDirectory}record-drafts/`;
+        await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+        localUri = `${directory}${operationId}.jpg`;
+        try {
+          await FileSystem.copyAsync({ from: image.uri, to: localUri });
+        } catch (error) {
+          await FileSystem.deleteAsync(localUri, { idempotent: true }).catch(
+            () => {},
+          );
+          throw error;
+        }
+        return { localUri, width: image.width, height: image.height };
+      },
+      file => FileSystem.deleteAsync(file, { idempotent: true }),
+    );
   }
   return { localUri, width: image.width, height: image.height };
 }

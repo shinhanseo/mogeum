@@ -1,0 +1,30 @@
+{
+  "syntheticOnly": true,
+  "scope": "native module probes; not Android UI touch verification",
+  "ios": {
+    "probe": {
+      "synthetic": true,
+      "platform": "ios",
+      "status": "passed",
+      "relocated": true,
+      "recordRestored": true,
+      "replacementRestored": true,
+      "photoReadable": true,
+      "storedRawUnchanged": true
+    },
+    "newImageManipulatorFiles": 0
+  },
+  "android": {
+    "probe": {
+      "synthetic": true,
+      "platform": "android",
+      "status": "passed",
+      "relocated": false,
+      "recordRestored": true,
+      "replacementRestored": true,
+      "photoReadable": true,
+      "storedRawUnchanged": true
+    },
+    "newImageManipulatorFiles": 0
+  }
+}

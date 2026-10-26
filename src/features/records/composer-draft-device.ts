@@ -11,6 +11,7 @@ import {
   type RecordComposerDraft,
 } from "./composer-draft";
 import { isPreparedRecordPhoto } from "./draft-photo";
+import { withGeneratedRecordImage } from "./generated-image";
 export const composerDraftStorage = createComposerDraftStorage(accountStorage);
 export const composerPhotoQueue = createPhotoPreparationQueue();
 export const composerDraftSupported = Platform.OS !== "web";
@@ -51,20 +52,26 @@ export async function prepareComposerPhoto(
       : [],
     { compress: 0.8, format: SaveFormat.JPEG },
   );
-  await FileSystem.makeDirectoryAsync(
-    target.slice(0, target.lastIndexOf("/") + 1),
-    { intermediates: true },
+  return withGeneratedRecordImage(
+    { source: asset.uri, generated: image.uri, cacheDirectory: FileSystem.cacheDirectory },
+    async () => {
+      await FileSystem.makeDirectoryAsync(
+        target.slice(0, target.lastIndexOf("/") + 1),
+        { intermediates: true },
+      );
+      try {
+        await FileSystem.copyAsync({ from: image.uri, to: target });
+      } catch (error) {
+        await FileSystem.deleteAsync(target, { idempotent: true }).catch(() => {});
+        throw error;
+      }
+      return {
+        photo: { id, width: image.width, height: image.height },
+        asset: { uri: target, width: image.width, height: image.height },
+      };
+    },
+    uri => FileSystem.deleteAsync(uri, { idempotent: true }),
   );
-  try {
-    await FileSystem.copyAsync({ from: image.uri, to: target });
-  } catch (error) {
-    await FileSystem.deleteAsync(target, { idempotent: true }).catch(() => {});
-    throw error;
-  }
-  return {
-    photo: { id, width: image.width, height: image.height },
-    asset: { uri: target, width: image.width, height: image.height },
-  };
 }
 export async function removeComposerPhoto(owner: string, photo: ComposerPhoto) {
   await FileSystem.deleteAsync(
