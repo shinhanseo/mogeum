@@ -111,7 +111,7 @@ operation ID와 최초 입력은 응답 유실 시에도 바꾸지 않는다. �
 
 - `taste_summary_context()`는 활성 JWT 소유자의 `{snapshot:{hash,records,totalRecords,omittedCount},cached,stale,running}`를 반환한다. hash는 모든 경험 ID/revision + taste-v1이며 상세 분석 입력은 최근 200개로 제한한다. 클라이언트는 사용자 ID/근거/완성 주장을 입력하지 않는다.
 - `POST /functions/v1/taste-summary` body `{}`. 서명된 사용자 JWT를 `Auth.getUser(token)`로 검증한 뒤 자신의 context만 읽는다. 새 asymmetric JWT를 위해 legacy-secret gateway 검사를 사용하지 않으며 handler 인증은 필수다.
-- 200 ready/insufficient, 202 running, 401 UNAUTHENTICATED, 409 STALE_INPUT, 429 RATE_LIMITED, 503 AI_NOT_CONFIGURED, 502 ANALYSIS_FAILED. 실패 응답에 provider 상세/메모/키를 포함하지 않는다.
+- 200 ready/insufficient, 202 running, 401 UNAUTHENTICATED, 409 STALE_INPUT, 429 RATE_LIMITED, 503 AI_NOT_CONFIGURED, 502 ANALYSIS_FAILED/ANALYSIS_TIMEOUT. 모든 요약 응답은 Cache-Control:no-store로 반환한다. 실패 응답에 provider 상세/메모/키를 포함하지 않는다.
 - service_role만 `begin_taste_summary(owner,hash,lease)`/`finish_taste_summary(owner,hash,lease,result)` 호출 가능. 사용자는 private jobs/결과에 직접 쓰지 못한다. 서버 검증된 owner만 전달한다. 90초 lease, 20초 간격, 사용자별 하루 5회 획득 한도. 모델 자동 재시도 0, 호출 25초 timeout, 최대 출력 512 tokens.
 - 같은 hash 캐시는 재사용한다. 현재 hash와 다른 결과는 반환하지 않고 이전 요약을 숨긴다. 생성 중 수정/삭제/이동되면 완료 결과를 거절한다. 소유자의 계정 삭제 시 cache도 cascade.
 - AI는 코드 집계에서 검증된 feature ID 1–3개를 선정한다. 임의 문장/새 맛/타 기록 ID를 받지 않는다. 앱은 승인된 표현과 근거 기록으로 화면을 구성한다. 모델에 사진·이름·날짜·자유 메모·확정 원문·사용자 ID를 보내지 않고 고정 특징 ID/계열/횟수/다양성만 보낸다.
@@ -149,3 +149,7 @@ parse 응답의 parser는 geometry-v3다. 가격이 손상된 독립 OCR 셀은 
 POST next-drinks body는 `{ category?: 'whisky'|'beer'|'wine'|'traditional'|null }`만 받는다. owner는 검증된 JWT에서만 얻고 client 근거/owner override는 거절한다. recommendations에 product/source·similar·cautions·unconfirmedFeatures·kind·score를 반환하며, score는 내부 정렬용이다. 과대 body는 413, 인증 누락/거절은 401, 잘못된 category/field는 400, 데이터 호출 실패는 안전한 503 코드다. method=evidence-rules-v1/modelUsed=false와 catalogVersion/size를 포함한다.
 
 wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아니다. set_drink_wishlist(operation UUID, product ID, saved boolean, expected revision)는 현재 owner의 상태만 변경한다. 최초 expected revision은 0, 해제 후에도 revision은 남는다. 정확한 operation replay는 과거 receipt를 반환하고 원래 요청 변경/낡은 revision을 거절한다. receipt와 현재 상태는 다를 수 있으므로 클라이언트는 receipt 후 최신 목록을 재조회한다. 반영 전까지 operation/payload를 바꾸거나 후속 토글을 임의 전송하지 않는다. 후속 UI/pending queue 연결은 docs/verification/next-drinks-foundation.md를 따른다.
+
+## 메뉴 추천 입력 판본 재확인 · 2026-10-26
+
+서버가 추천을 만든 뒤 취향 context hash/totalRecords를 재조회한다. 생성 중 기록이 수정·삭제·추가됐으면409/MENU_EVIDENCE_STALE로 결과를 폐기하고 자동 재호출하지 않는다. 앱은 기존 메뉴 입력을 보존하고 최신 기록으로 다시 추천하도록 안내한다.

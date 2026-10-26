@@ -52,9 +52,11 @@ export async function menuRequest(
       /* Never expose remote exception text. */
     }
     throw new Error(
-      code === "MENU_ITEM_LIMIT"
-        ? "MENU_ITEM_LIMIT"
-        : "MENU_SERVICE_UNAVAILABLE",
+      code === "MENU_EVIDENCE_STALE"
+        ? "MENU_EVIDENCE_STALE"
+        : code === "MENU_ITEM_LIMIT"
+          ? "MENU_ITEM_LIMIT"
+          : "MENU_SERVICE_UNAVAILABLE",
     );
   }
   requireCatalogVersion(data);
