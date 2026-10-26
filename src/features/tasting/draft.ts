@@ -10,6 +10,7 @@ export type Answer = {
   freeText: string;
 };
 export type ModeDraft = { answers: Record<string, Answer>; aromas: Record<string, AromaDraft>; currentQuestion: string | null };
+export type TastingView = 'questions' | 'preview' | 'edit';
 export type TastingDraft = {
   schemaVersion: 1;
   catalogVersion: number;
@@ -19,10 +20,20 @@ export type TastingDraft = {
   mode: NoteMode;
   modes: Record<NoteMode, ModeDraft>;
   revision: number;
+  stage?: TastingView;
   baseRecordRevision?: number;
   composition?: { text: string; edited: boolean; sourceRevision: number; editBuffer?:string };
   pendingSave?: { operationId: string; expectedRevision: number };
 };
+
+/** Pending writes must reopen the immutable preview; legacy drafts retain their old fallback. */
+export function restoredTastingView(draft: TastingDraft): TastingView {
+  if (draft.pendingSave) return 'preview';
+  if (draft.stage === 'questions') return 'questions';
+  if (draft.stage === 'edit' && draft.composition?.editBuffer !== undefined) return 'edit';
+  if (draft.stage === 'preview' && draft.composition) return 'preview';
+  return draft.composition?.editBuffer !== undefined ? 'edit' : 'questions';
+}
 
 export function newTastingDraft(ownerId: string, recordId: string, category: TastingCategory, mode: NoteMode): TastingDraft {
   if (!ownerId || !recordId) throw new Error('Saved record and owner required');
