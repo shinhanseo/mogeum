@@ -198,6 +198,9 @@ async function main() {
         report.summaryModel = context.data.cached.model;
         report.summaryHighlights = context.data.cached.selection.highlightIds;
         report.summaryCacheSaved = true;
+      } else {
+        failed = true;
+        report.failedStep = step;
       }
     } else report.summary = { state: "not_requested" };
     step = "managed-evidence-discovery";
@@ -294,6 +297,47 @@ async function main() {
       idempotentReplay: true,
       otherAccountReadDenied: true,
       recommendations: compared.recommendations.length,
+    };
+    step = "managed-galaxy-ambiguous-prices";
+    const galaxy = JSON.parse(
+      await readFile(
+        "docs/verification/ocr-benchmark/android-galaxy-20261026.json",
+        "utf8",
+      ),
+    );
+    const rawGalaxy = galaxy.cases.find(
+      (c: { id: string }) => c.id === "ambiguous-price",
+    )?.rawNative;
+    ensure(rawGalaxy);
+    const ambiguousId = randomUUID();
+    const ambiguousPhotos = [
+      {
+        ...rawGalaxy,
+        id: ambiguousId,
+        imageRevision: 1,
+        lines: rawGalaxy.lines.map((line: object, index: number) => ({
+          ...line,
+          id: `${ambiguousId}:1:${index}`,
+        })),
+      },
+    ];
+    const ambiguous = await call("menu-recommend", a.token, {
+      action: "parse",
+      photos: ambiguousPhotos,
+    });
+    ensure(ambiguous.status === 200);
+    const ambiguousBody = await ambiguous.json();
+    requireCatalogVersion(ambiguousBody);
+    const uncertain = validateItems(ambiguousBody.items, ambiguousPhotos);
+    ensure(
+      uncertain.length > 0 &&
+        uncertain.every((item) => item.price === null && !item.confirmed),
+    );
+    report.ambiguousMenu = {
+      source: "previously-captured-galaxy-native-ocr",
+      candidates: uncertain.length,
+      pricedCandidates: 0,
+      reviewRequired: ambiguousBody.reviewRequired === true,
     };
     step = "managed-account-delete";
     const deleted = await call("delete-account", a.token, { confirm: true });

@@ -1,7 +1,7 @@
 import { analyzeTaste,SUMMARY_VERSION,validateSelection,type TasteSnapshot,type SummaryResult,type TasteAnalysis } from './taste-domain.ts';
 export type TasteContext={snapshot:TasteSnapshot;cached:SummaryResult|null;stale:boolean;running:boolean};
 export type SummaryPorts={authenticate:(token:string)=>Promise<{id:string}|null>;context:(token:string)=>Promise<TasteContext>;configured:()=>boolean;begin:(owner:string,hash:string,lease:string)=>Promise<string>;finish:(owner:string,hash:string,lease:string,result:SummaryResult|null)=>Promise<boolean>;select:(analysis:TasteAnalysis,signal:AbortSignal)=>Promise<unknown>;model:string};
-const headers={'Content-Type':'application/json','Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info','Access-Control-Allow-Methods':'POST, OPTIONS'};
+const headers={'Cache-Control':'no-store','Content-Type':'application/json','Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info','Access-Control-Allow-Methods':'POST, OPTIONS'};
 const response=(status:number,data:unknown)=>new Response(JSON.stringify(data),{status,headers});
 export function tasteHandler(ports:SummaryPorts){return async(request:Request):Promise<Response>=>{
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
@@ -29,8 +29,8 @@ export function tasteHandler(ports:SummaryPorts){return async(request:Request):P
   const result:SummaryResult={version:SUMMARY_VERSION,selection,generatedAt:new Date().toISOString(),model:ports.model};
   if(!await ports.finish(owner,hash,lease,result))return response(409,{code:'STALE_INPUT',retryable:true});
   lease=null;return response(200,{state:'ready',hash,cached:false});
- }catch{
+ }catch(error){
   if(owner&&hash&&lease)try{await ports.finish(owner,hash,lease,null);}catch{/* Lease expires. Never log personal inputs or provider errors. */}
-  return response(502,{code:'ANALYSIS_FAILED',retryable:true});
+  return response(502,{code:error instanceof Error && ['TimeoutError','AbortError'].includes(error.name)?'ANALYSIS_TIMEOUT':'ANALYSIS_FAILED',retryable:true});
  }
 };}
