@@ -48,3 +48,5 @@ npx eas-cli build -p ios --profile preview-simulator
 스토어 등록 문안은 [한국어 초안](../store/metadata-ko.md)에 정리했다. 아직 스토어에 게시하지 않았다.
 
 2026-10-26 관리형 synthetic 계정 회귀: 실제 Auth·사진 binary·기록 생성/삭제, 타인 보존, 삭제 세션 응답 재확인 등 7항목 통과·fixture 정리 완료. [결과](../verification/provider-deletion/beta-regression-20261026.json). 실제 Apple/Kakao grant 해제와는 별도다.
+
+기존 DB에서 기록 사용자·현재 확정 노트를 집계하는 [읽기 전용 코호트 도구](metrics.md)를 추가했습니다. 설치/재방문·추천 실행 이벤트와 구분하며 관측 전체 완료로 처리하지 않습니다.

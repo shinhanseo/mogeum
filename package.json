@@ -33,7 +33,8 @@
     "beta:ready": "MOGEUM_APP_VARIANT=beta tsx scripts/check-beta-build.ts --external",
     "eas-build-post-install": "tsx scripts/check-beta-build.ts",
     "beta:scan": "tsx scripts/check-beta-artifact.ts",
-    "backend:check": "tsx scripts/check-backend-release.ts"
+    "backend:check": "tsx scripts/check-backend-release.ts",
+    "beta:metrics": "tsx scripts/beta-metrics.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-kr": "0.4.4",
