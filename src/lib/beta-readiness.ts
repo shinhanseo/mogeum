@@ -1,3 +1,4 @@
+import { legalDocumentUrl } from "./legal-documents";
 type BetaConfig = {
   name?: string;
   scheme?: unknown;
@@ -61,18 +62,7 @@ export function externalBetaProblems(env: Record<string, string | undefined>) {
     ["EXPO_PUBLIC_PRIVACY_URL", "PRIVACY_URL_REQUIRED"],
     ["EXPO_PUBLIC_TERMS_URL", "TERMS_URL_REQUIRED"],
   ] as const) {
-    try {
-      const u = new URL(env[name] ?? "");
-      if (
-        u.protocol !== "https:" ||
-        u.username ||
-        u.password ||
-        /localhost|example\.|\.invalid$|\.test$|YOUR_/i.test(u.hostname)
-      )
-        throw Error();
-    } catch {
-      issues.push(code);
-    }
+    if (!legalDocumentUrl(env[name])) issues.push(code);
   }
   if (env.MOGEUM_BETA_OWNER_REVIEWED !== "1")
     issues.push("OWNER_REVIEW_REQUIRED");

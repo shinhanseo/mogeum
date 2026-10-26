@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Redirect, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../src/components/Button';
 import { Mogu } from '../src/components/Mogu';
@@ -8,6 +8,7 @@ import { WebStatusSpace } from '../src/components/ScreenHeader';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { signIn } from '../src/features/auth/oauth';
 import { colors, fonts, typography } from '../src/theme/tokens';
+import { openLegalDocument, type LegalDocument } from '../src/lib/legal-documents';
 
 // 04 · 화면 정리본 / 4:3036. Geometry read directly from the original Figma frame.
 export default function LoginScreen() {
@@ -25,6 +26,11 @@ export default function LoginScreen() {
     catch (error) { setError(error instanceof Error && error.message === 'PROVIDER_NOT_CONFIGURED' ? '아직 로그인 서비스 설정 중이에요. 먼저 둘러볼 수 있어요.' : '로그인을 연결하지 못했어요. 잠시 후 다시 시도해주세요.'); }
     finally { busyRef.current = false; setBusy(null); }
   }
+  async function openDocument(document: LegalDocument) {
+    const url = document === 'privacy' ? process.env.EXPO_PUBLIC_PRIVACY_URL : process.env.EXPO_PUBLIC_TERMS_URL;
+    const result = await openLegalDocument(url, Linking.openURL);
+    if (result !== 'opened') setError(result === 'unconfigured' ? '아직 공개 문서를 준비하고 있어요. 외부 베타 전에 안내할게요.' : '문서를 열지 못했어요. 잠시 후 다시 시도해주세요.');
+  }
   return <SafeAreaView style={styles.page}>
     <WebStatusSpace />
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -40,7 +46,7 @@ export default function LoginScreen() {
         </View>
         {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
         <Pressable accessibilityRole="button" onPress={() => router.replace('/?browse=1')} style={styles.browse}><Text style={styles.browseLabel}>먼저 둘러보기</Text></Pressable>
-        <Text style={styles.terms}>계속하면 서비스 이용약관과 개인정보 처리방침에{`\n`}동의하게 됩니다.</Text>
+        <Text style={styles.terms}>계속하면 <Text accessibilityRole="link" accessibilityLabel="서비스 이용약관 열기" onPress={() => void openDocument('terms')}>서비스 이용약관</Text>과 <Text accessibilityRole="link" accessibilityLabel="개인정보 처리방침 열기" onPress={() => void openDocument('privacy')}>개인정보 처리방침</Text>에{`\n`}동의하게 됩니다.</Text>
         <Text style={styles.adult}>성인 사용자를 위한 술 취향 기록 서비스예요.</Text>
       </View>
     </ScrollView>
