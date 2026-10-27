@@ -105,3 +105,24 @@ test("rejects malformed wishlists even when recommendations are valid", () => {
       /INVALID_DISCOVERY_RESPONSE/,
     );
 });
+
+test("old server recommendations are filtered by saved=true while retaining the bookmark and valid remaining evidence", () => {
+  const product = products.find((p) => p.id === "glenlivet-12")!;
+  const feature = product.features[0];
+  const positive = {
+    ...result(),
+    recommendations: [{ product: structuredClone(product), kind: "close" as const, score: 1,
+      similar: [{ factId: feature.id, label: feature.label, recordIds: ["own-record"], negativeIds: [] }],
+      cautions: [], unconfirmedFeatures: [] }],
+    recordCount: 1, sensoryRecordCount: 1,
+    evidenceRecords: [{ id: "own-record", name: "합성 기록", category: "whisky", date: "2026-10-27", revision: 1, revisit: "again", noteText: null }],
+    wishlist: [{ product_id: product.id, saved: true, revision: 1 }],
+  };
+  const parsed = parseDiscoveryResult(positive);
+  assert.deepEqual(parsed.recommendations, []);
+  assert.deepEqual(parsed.wishlist, positive.wishlist);
+  const unsaved = parseDiscoveryResult({ ...positive, wishlist: [{ ...positive.wishlist[0], saved: false, revision: 2 }] });
+  assert.equal(unsaved.recommendations[0].product.id, product.id);
+  // A filtered product is still validated, never a way to smuggle arbitrary URLs or products.
+  assert.throws(() => parseDiscoveryResult({ ...positive, recommendations: [{ ...positive.recommendations[0], product: { ...product, source: { ...product.source, url: "https://attacker.example" } } }] }), /INVALID_DISCOVERY_RESPONSE/);
+});

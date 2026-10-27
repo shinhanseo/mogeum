@@ -199,7 +199,19 @@ test(
         ),
         false,
       );
-      const glenlivet = value.recommendations.find(
+      assert.equal(value.wishlist[0].product_id, "glenlivet-12");
+      assert.ok(!value.recommendations.some((r: { product: { id: string } }) => ["glenlivet-12", "makers-mark"].includes(r.product.id)));
+      const unsave = await a.rpc("set_drink_wishlist", {
+        p_operation_id: randomUUID(), p_product_id: "glenlivet-12", p_saved: false, p_expected_revision: 1,
+      });
+      assert.equal(unsave.error, null);
+      const refreshedResponse = await request({}, token);
+      assert.equal(refreshedResponse.status, 200);
+      const refreshed = await refreshedResponse.json();
+      parseDiscoveryResult(refreshed);
+      assert.equal(refreshed.wishlist.find((r: { product_id: string }) => r.product_id === "glenlivet-12").saved, false);
+      assert.ok(!refreshed.recommendations.some((r: { product: { id: string } }) => ["glenfiddich-12", "makers-mark"].includes(r.product.id)));
+      const glenlivet = refreshed.recommendations.find(
         (r: { product: { id: string } }) => r.product.id === "glenlivet-12",
       );
       assert.ok(

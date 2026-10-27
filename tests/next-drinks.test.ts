@@ -196,3 +196,19 @@ test("positive matches retain contrary evidence, without padding the list with u
   assert.deepEqual(row.similar[0].recordIds, ["positive", "positive2"]);
   assert.deepEqual(row.cautions[0].negativeIds, ["negative"]);
 });
+
+test("saved products are excluded across category filters without altering history or bookmark state", () => {
+  const snapshot = { ...empty, records: [positiveRecord], totalRecords: 1 };
+  const saved = new Set(["glenlivet-12", "makers-mark"]);
+  const before = discoverDrinks(snapshot, []);
+  assert.ok(before.some((r) => saved.has(r.product.id)));
+  for (const category of [null, "whisky", "beer", "wine", "traditional"] as const) {
+    const rows = discoverDrinks(snapshot, [], category, saved);
+    assert.ok(rows.every((r) => !saved.has(r.product.id)));
+    assert.deepEqual(rows, discoverDrinks(snapshot, [], category).filter((r) => !saved.has(r.product.id)));
+  }
+  assert.deepEqual([...saved], ["glenlivet-12", "makers-mark"]);
+  assert.ok(discoverDrinks(snapshot, [], null, new Set()).some((r) => r.product.id === "glenlivet-12"));
+  const history = [{ entered_name: "The Glenlivet 12", category: "whisky", vintage_status: null, vintage_year: null }];
+  assert.ok(!discoverDrinks(snapshot, history, null, new Set()).some((r) => r.product.id === "glenlivet-12"));
+});
