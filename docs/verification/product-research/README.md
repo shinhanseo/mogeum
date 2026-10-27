@@ -14,3 +14,5 @@ AI SDK7.0.148/@ai-sdk/google4.0.102의 설치된 타입·소스와 [공식 Googl
 - 실제 SDK + 가짜 HTTP transport 테스트3/3통과. Google Search 요청·제품 입력·응답 grounding 처리, 개인 context 입력 거부, 출처 없는 답변 거부를 확인했다. 테스트는 --allow-net 없이 실행하며 유료 API를 호출하지 않는다. SDK import의 hostname 조회와 env 접근 권한만 부여한다.
 - npm run check422개 중411통과·환경 의존11제외.
 - 실제 Gemini 검색·비용·정확도, 관리형 배포·앱 개인화는 아직 검증하지 않았다. 이를 현재 AI 추천 완료로 표시하지 않는다.
+
+후속 [공유 조사 캐시·서버 호출 예약](../research-budget/README.md)을 추가했다. 내부 service가 예약→provider→candidate 저장을 연결한다. 공개 endpoint·실제 제품 사실 검증·자동 승격·앱 Gemini 추천은 여전히 연결되지 않았다.

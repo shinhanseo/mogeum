@@ -23,6 +23,7 @@
     "supabase/functions/taste-summary/index.ts",
     "supabase/functions/taste-summary/provider.ts",
     "supabase/functions/product-research/provider.ts",
+    "supabase/functions/product-research/service.ts",
     "supabase/functions/menu-recommend/index.ts",
     "supabase/functions/next-drinks/index.ts",
     "supabase/functions/delete-account/index.ts",
