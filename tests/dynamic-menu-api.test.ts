@@ -18,7 +18,7 @@ test('dynamic menu HTTP uses verified new products, hides candidates and preserv
   assert.equal((await admin.from('product_catalog').insert({id,family_id:id,category:document.category,normalized_name:'synthetic',document,status:'candidate'})).error,null);
   const photoId=randomUUID();
   const photos=[{id:photoId,imageRevision:1,width:1200,height:1600,engine:'apple-vision-v1',lines:[{id:`${photoId}:1:0`,text:'합성 새 술 30ml 15,000원',confidence:0.9,polygon:[{x:0.1,y:0.1},{x:0.9,y:0.1},{x:0.9,y:0.15},{x:0.1,y:0.15}]}]}];
-  const request=async(body:unknown)=>{const r=await client.functions.invoke('menu-recommend',{body,timeout:30000});assert.equal(r.error,null);return r.data;};
+  const request=async(body:Record<string,unknown>)=>{const r=await client.functions.invoke('menu-recommend',{body,timeout:30000});assert.equal(r.error,null);return r.data;};
   const candidate=await request({action:'parse',photos,catalogVersion:SHARED_CATALOG_VERSION});
   assert.ok(!candidate.catalog.some((p:{id:string})=>p.id===id));
   assert.equal((await admin.from('product_catalog').update({status:'verified',verified_at:new Date().toISOString()}).eq('id',id)).error,null);
