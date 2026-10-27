@@ -1,4 +1,7 @@
-import { products } from "../../../supabase/functions/_shared/product-catalog";
+import {
+  isCatalogProductId,
+  MAX_WISHLIST_ROWS,
+} from "../../../supabase/functions/_shared/catalog-contract";
 export type WishlistState = {
   productId: string;
   saved: boolean;
@@ -40,12 +43,13 @@ function object(v: unknown): Record<string, unknown> {
 function state(value: unknown): WishlistState {
   const v = object(value);
   if (
-    !products.some((p) => p.id === v.productId) ||
+    !isCatalogProductId(v.productId) ||
     typeof v.saved !== "boolean" ||
     !Number.isSafeInteger(v.revision) ||
     (v.revision as number) < 1
-  )
+  ) {
     return invalid();
+  }
   return {
     productId: v.productId as string,
     saved: v.saved,
@@ -53,10 +57,13 @@ function state(value: unknown): WishlistState {
   };
 }
 export function parseWishlist(value: unknown): WishlistState[] {
-  if (!Array.isArray(value) || value.length > products.length) return invalid();
-  const rows = value.map(state);
-  if (new Set(rows.map((r) => r.productId)).size !== rows.length)
+  if (!Array.isArray(value) || value.length > MAX_WISHLIST_ROWS) {
     return invalid();
+  }
+  const rows = value.map(state);
+  if (new Set(rows.map((r) => r.productId)).size !== rows.length) {
+    return invalid();
+  }
   return rows;
 }
 export function parseWishlistReceipt(
@@ -70,8 +77,9 @@ export function parseWishlistReceipt(
     row.saved !== operation.saved ||
     row.revision !== operation.expectedRevision + 1 ||
     typeof v.replayed !== "boolean"
-  )
+  ) {
     return invalid();
+  }
   return { ...row, replayed: v.replayed };
 }
 export function decodeWishlistOperation(
@@ -85,15 +93,16 @@ export function decodeWishlistOperation(
     v.owner !== owner ||
     !uuid(owner) ||
     !uuid(v.operationId) ||
-    !products.some((p) => p.id === v.productId) ||
+    !isCatalogProductId(v.productId) ||
     typeof v.saved !== "boolean" ||
     !Number.isSafeInteger(v.expectedRevision) ||
     (v.expectedRevision as number) < 0 ||
     (v.expectedRevision as number) >= 2147483647 ||
     (v.rejected !== undefined && v.rejected !== true) ||
     (v.rejected && v.receipt)
-  )
+  ) {
     return invalid();
+  }
   const operation: WishlistOperation = {
     version: 1,
     owner,
@@ -102,8 +111,9 @@ export function decodeWishlistOperation(
     saved: v.saved,
     expectedRevision: v.expectedRevision as number,
   };
-  if (v.receipt !== undefined)
+  if (v.receipt !== undefined) {
     operation.receipt = parseWishlistReceipt(v.receipt, operation);
+  }
   if (v.rejected) operation.rejected = true;
   return operation;
 }
@@ -139,8 +149,13 @@ export function createWishlistQueue(ports: Ports) {
         operation = { ...operation, receipt };
       } catch (error) {
         // Only an explicit server rejection proves no mutation was committed.
-        if ((error as { code?: string })?.code !== "STALE_WISHLIST")
+        if (
+          !["STALE_WISHLIST", "PRODUCT_NOT_VERIFIED"].includes(
+            (error as { code?: string })?.code ?? "",
+          )
+        ) {
           throw error;
+        }
         operation = { ...operation, rejected: true };
       }
       // Save to the initiating account even if the visible account changed during RPC.
@@ -157,8 +172,9 @@ export function createWishlistQueue(ports: Ports) {
         row.revision < operation.receipt!.revision ||
         (row.revision === operation.receipt!.revision &&
           row.saved !== operation.receipt!.saved))
-    )
+    ) {
       throw new Error("WISHLIST_REFRESH_INCONSISTENT");
+    }
     await ports.remove(owner);
     check(owner);
     return { state: current, conflicted: operation.rejected === true };
@@ -179,8 +195,9 @@ export function createWishlistQueue(ports: Ports) {
         JSON.stringify(input),
         input.owner,
       );
-      if (captured.receipt || captured.rejected)
+      if (captured.receipt || captured.rejected) {
         return Promise.reject(new Error("INVALID_WISHLIST"));
+      }
       return enqueue(captured.owner, async () => {
         check(captured.owner);
         const raw = await ports.read(captured.owner);
@@ -194,8 +211,9 @@ export function createWishlistQueue(ports: Ports) {
               o.saved,
               o.expectedRevision,
             ]);
-          if (identity(existing) !== identity(captured))
+          if (identity(existing) !== identity(captured)) {
             throw new Error("WISHLIST_PENDING");
+          }
           return finish(existing);
         }
         check(captured.owner);

@@ -1,8 +1,16 @@
+import {
+  catalogProduct,
+  isCatalogProductId,
+  MAX_CATALOG_PRODUCTS,
+  MAX_WISHLIST_ROWS,
+  parseCatalogDocument,
+  SHARED_CATALOG_VERSION,
+} from "../../../supabase/functions/_shared/catalog-contract";
 import { personalizedDrinks } from "../../../supabase/functions/_shared/next-drinks-domain";
 import {
-  products,
-  PRODUCT_CATALOG_VERSION,
   type Product,
+  PRODUCT_CATALOG_VERSION,
+  products,
 } from "../../../supabase/functions/_shared/product-catalog";
 import type {
   NextDrink,
@@ -19,6 +27,7 @@ type EvidenceRecord = {
   noteText: string | null;
 };
 export type DiscoveryResult = {
+  catalog: Product[];
   recommendations: NextDrink[];
   wishlist: { product_id: string; saved: boolean; revision: number }[];
   evidenceRecords: EvidenceRecord[];
@@ -28,13 +37,13 @@ export type DiscoveryResult = {
   omittedSensoryRecords: number;
   method: "evidence-rules-v1";
   modelUsed: false;
-  catalogVersion: typeof PRODUCT_CATALOG_VERSION;
+  catalogVersion: string;
   catalogSize: number;
   limitedCatalog: true;
 };
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
-  if (value && typeof value === "object")
+  if (value && typeof value === "object") {
     return (
       "{" +
       Object.entries(value)
@@ -43,6 +52,7 @@ function canonical(value: unknown): string {
         .join(",") +
       "}"
     );
+  }
   return JSON.stringify(value) ?? "undefined";
 }
 function clone<T>(value: T): T {
@@ -75,29 +85,44 @@ function nullableText(v: unknown, max: number): string | null {
   return v === null
     ? null
     : typeof v === "string" && v.length <= max
-      ? v
-      : fail();
+    ? v
+    : fail();
 }
 const categories = new Set(products.map((p) => p.category));
 /** Validate the transport boundary; sensory truth remains the authenticated server's responsibility. */
 export function parseDiscoveryResult(value: unknown): DiscoveryResult {
   const v = object(value);
   if (
-    v.catalogVersion !== PRODUCT_CATALOG_VERSION ||
-    v.catalogSize !== products.length ||
     v.method !== "evidence-rules-v1" ||
     v.modelUsed !== false ||
     v.limitedCatalog !== true
-  )
+  ) {
     return fail();
+  }
+  const legacy = v.catalogVersion === PRODUCT_CATALOG_VERSION;
+  if (!legacy && v.catalogVersion !== SHARED_CATALOG_VERSION) return fail();
+  let catalog: Product[];
+  try {
+    catalog = legacy ? clone(products) : unique(
+      list(v.catalog, MAX_CATALOG_PRODUCTS)
+        .map((raw) => catalogProduct(parseCatalogDocument(raw))),
+      (p) => p.id,
+    );
+  } catch {
+    return fail();
+  }
+  if (
+    v.catalogSize !== catalog.length || catalog.some((p) => !p.features.length)
+  ) return fail();
   const recordCount = count(v.recordCount),
     sensoryRecordCount = count(v.sensoryRecordCount),
     omittedSensoryRecords = count(v.omittedSensoryRecords);
   if (
     sensoryRecordCount > Math.min(recordCount, 200) ||
     omittedSensoryRecords > recordCount
-  )
+  ) {
     return fail();
+  }
   const evidenceRecords = unique(
     list(v.evidenceRecords, 200).map((row) => {
       const r = object(row);
@@ -105,12 +130,14 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
         !categories.has(r.category as Product["category"]) ||
         ![null, "again", "okay", "not_for_me"].includes(r.revisit as null) ||
         typeof r.date !== "string" ||
-        !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2}))?$/.test(
-          r.date,
-        ) ||
+        !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2}))?$/
+          .test(
+            r.date,
+          ) ||
         !Number.isFinite(Date.parse(r.date))
-      )
+      ) {
         return fail();
+      }
       return {
         id: text(r.id, 100),
         name: nullableText(r.name, 500),
@@ -126,11 +153,11 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
   if (evidenceRecords.length > sensoryRecordCount) return fail();
   const records = new Map(evidenceRecords.map((r) => [r.id, r]));
   const recommendations = unique(
-    list(v.recommendations, products.length).map((row) => {
+    list(v.recommendations, catalog.length).map((row) => {
       const r = object(row),
         supplied = object(r.product),
-        product = products.find((p) => p.id === supplied.id);
-      // Never expose a response-supplied URL or invented product facts to the UI.
+        product = catalog.find((p) => p.id === supplied.id);
+      // Recommendation facts must exactly match the validated authenticated catalog snapshot.
       if (!product || canonical(supplied) !== canonical(product)) return fail();
       function matches(input: unknown, positive: boolean): ProductMatch[] {
         return unique(
@@ -150,8 +177,9 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
                     (negative
                       ? record.revisit === "again"
                       : record.revisit === "not_for_me")
-                  )
+                  ) {
                     return fail();
+                  }
                   return id;
                 }),
                 (id) => id,
@@ -161,8 +189,9 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
             if (
               !(positive ? recordIds.length : negativeIds.length) ||
               recordIds.some((id) => negativeIds.includes(id))
-            )
+            ) {
               return fail();
+            }
             return {
               factId: feature.id,
               label: feature.label,
@@ -178,29 +207,32 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
       const observed = new Map(
         [...similar, ...cautions].map((f) => [f.factId, f]),
       );
-      for (const f of [...similar, ...cautions])
+      for (const f of [...similar, ...cautions]) {
         if (canonical(f) !== canonical(observed.get(f.factId))) return fail();
+      }
       const expectedUnconfirmed = product.features.filter(
         (f) => !observed.has(f.id),
       );
-      if (canonical(r.unconfirmedFeatures) !== canonical(expectedUnconfirmed))
+      if (canonical(r.unconfirmedFeatures) !== canonical(expectedUnconfirmed)) {
         return fail();
+      }
       const support = new Set(
         similar.flatMap((f) =>
-          f.recordIds.map((id) => `${f.factId.split(":")[0]}:${id}`),
+          f.recordIds.map((id) => `${f.factId.split(":")[0]}:${id}`)
         ),
       ).size;
       const opposition = new Set(
         cautions.flatMap((f) =>
-          f.negativeIds.map((id) => `${f.factId.split(":")[0]}:${id}`),
+          f.negativeIds.map((id) => `${f.factId.split(":")[0]}:${id}`)
         ),
       ).size;
       if (
         r.score !== support - opposition ||
         !["close", "new-category", "explore"].includes(r.kind as string) ||
         r.score > 0 !== (r.kind !== "explore")
-      )
+      ) {
         return fail();
+      }
       return {
         product: clone(product),
         similar,
@@ -213,13 +245,16 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
     (r) => r.product.id,
   );
   const wishlist = unique(
-    list(v.wishlist, products.length).map((raw) => {
+    list(v.wishlist, MAX_WISHLIST_ROWS).map((raw) => {
       const r = object(raw);
       if (
-        !products.some((p) => p.id === r.product_id) ||
+        !(legacy
+          ? products.some((p) => p.id === r.product_id)
+          : isCatalogProductId(r.product_id)) ||
         typeof r.saved !== "boolean"
-      )
+      ) {
         return fail();
+      }
       return {
         product_id: r.product_id as string,
         saved: r.saved,
@@ -234,6 +269,7 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
       recommendations,
       new Set(wishlist.filter((r) => r.saved).map((r) => r.product_id)),
     ),
+    catalog,
     wishlist,
     evidenceRecords,
     recordCount,
@@ -242,8 +278,8 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
     tasteHash: text(v.tasteHash, 200),
     method: "evidence-rules-v1",
     modelUsed: false,
-    catalogVersion: PRODUCT_CATALOG_VERSION,
-    catalogSize: products.length,
+    catalogVersion: v.catalogVersion as string,
+    catalogSize: catalog.length,
     limitedCatalog: true,
   };
 }

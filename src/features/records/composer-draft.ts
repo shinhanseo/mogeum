@@ -25,7 +25,7 @@ export function composerContext(entryId?: string, productId?: string) {
     return `entry:${entryId}`;
   }
   if (productId) {
-    if (!/^[a-z0-9_-]{1,120}$/i.test(productId))
+    if (!/^[a-z0-9_-]{1,160}$/i.test(productId))
       throw Error("INVALID_COMPOSER_CONTEXT");
     return `product:${productId}`;
   }
@@ -38,7 +38,7 @@ export function composerStorageKey(owner: string, context: string) {
     !(
       context === "new" ||
       (context.startsWith("entry:") && UUID.test(context.slice(6))) ||
-      /^product:[a-z0-9_-]{1,120}$/i.test(context)
+      /^product:[a-z0-9_-]{1,160}$/i.test(context)
     )
   )
     throw Error("INVALID_COMPOSER_CONTEXT");

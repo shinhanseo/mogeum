@@ -1,5 +1,5 @@
 import { useScreenBack } from '../src/hooks/useScreenBack';
-import { discoveryPrefill } from '../src/features/discovery/prefill';
+import { loadDiscoveryPrefill } from '../src/features/discovery/repository';
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import * as Crypto from 'expo-crypto';
 import { useAuth } from '../src/features/auth/AuthProvider';
@@ -106,7 +106,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
           }
         }
         if(entryId){const client=getSupabase();if(!client)throw new Error('Missing backend');const entry=await loadRepeatEntry(client,owner,entryId);if(active){setRepeatEntry(entry);setName(entry.name??'');setCategory(entry.category);setStep('info');}}
-        else { const initial=discoveryPrefill(productId);if(initial&&active){setName(initial.name);setCategory(initial.category);setVintageMode(initial.vintageMode);setVintageYear(initial.vintageYear);setVintage(initial.vintageYear || (initial.vintageMode==='NV'?'NV':initial.category==='와인'?'모름':''));setStep('info');} }
+        else if(productId) { const client=getSupabase();if(!client)throw new Error('Missing backend');const initial=await loadDiscoveryPrefill(client,owner,productId);if(initial&&active){setName(initial.name);setCategory(initial.category);setVintageMode(initial.vintageMode);setVintageYear(initial.vintageYear);setVintage(initial.vintageYear || (initial.vintageMode==='NV'?'NV':initial.category==='와인'?'모름':''));setStep('info');} }
         return;
       }
       setPending(value); setName(value.input.enteredName ?? '');

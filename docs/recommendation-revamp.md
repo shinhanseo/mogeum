@@ -30,8 +30,10 @@ Gemini 결과를 그대로 정식 제품으로 승격하지 않는다. 모델의
 4. [#176 주간 개인 추천·숨김·반복 관리](https://github.com/shinhanseo/mogeum/issues/176): 서버 기간·동시성·cache 무효·개인화.
 5. [#178 평가·행동 계측](https://github.com/shinhanseo/mogeum/issues/178): 노출→저장→실제 기록→음용 후 평가를 구분한다. 저장만으로 좋아한다고 간주하지 않는다.
 
-주간 생성, 동적 카탈로그, 120제품군, 새로운 Gemini 추천은 이 문서 작성 시 아직 미구현이다. 기존 요약 Gemini 연결 또는 첫 제외 개선을 전체 개편 완료로 표시하지 않는다.
+다음 한 잔의 동적 카탈로그·저장·기록 prefill은 후속 연결했다. 메뉴판의 동적 카탈로그, 주간 생성, 120제품군, 새로운 Gemini 추천은 아직 미완료다. 기존 요약 Gemini 연결 또는 첫 제외 개선을 전체 개편 완료로 표시하지 않는다.
 
 ## 후속 개발 착수 · 2026-10-27
 
 저장 제외 PR179와 자연스러운 노트 PR181은 CI 통과 후 병합했다. 공통 카탈로그 기반 PR182는 기존32개 보존·후보 RLS·북마크 FK를 추가한다. 공통 Gemini 제품 검색은 내부 어댑터·grounding 검증부터 착수했으며 [현재 범위](verification/product-research/README.md)를 참고한다. API/앱에 연결된 Gemini 개인 추천으로 주장하지 않는다.
+
+다음 한 잔의 동적 DB 연결과 구버전 호환·저장/기록 흐름의 검증은 [동적 카탈로그 보고서](verification/dynamic-discovery/README.md)에 기록한다. 후보 검증이나 실제 Gemini 개인 추천 완료로 확대 해석하지 않는다.

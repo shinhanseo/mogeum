@@ -1,8 +1,8 @@
 import { analyzeTaste, type TasteSnapshot } from "./taste-domain.ts";
 import {
-  products,
   normalizeProductName,
   type Product,
+  products,
 } from "./product-catalog.ts";
 export type DrinkHistory = {
   entered_name: string | null;
@@ -36,12 +36,15 @@ export function personalizedDrinks(
   );
 }
 /** Edition-aware history check. A missing/ambiguous wine vintage never confirms a catalog edition. */
-export function seenProductIds(history: DrinkHistory[]): Set<string> {
+export function seenProductIds(
+  history: DrinkHistory[],
+  catalog: readonly Product[] = products,
+): Set<string> {
   const found = new Set<string>();
   for (const r of history) {
     if (!r.entered_name) continue;
     const named = normalizeProductName(r.entered_name);
-    for (const p of products) {
+    for (const p of catalog) {
       if (p.category !== r.category) continue;
       const aliases = [p.name, ...p.aliases].map(normalizeProductName);
       if (p.category !== "wine") {
@@ -50,21 +53,24 @@ export function seenProductIds(history: DrinkHistory[]): Set<string> {
       }
       const year = p.edition.match(/(?:19|20)\d{2}/)?.[0];
       if (year) {
-        if (r.vintage_status === "nv" || r.vintage_status === "unknown")
+        if (r.vintage_status === "nv" || r.vintage_status === "unknown") {
           continue;
-        if (r.vintage_status === "year" && r.vintage_year !== Number(year))
+        }
+        if (r.vintage_status === "year" && r.vintage_year !== Number(year)) {
           continue;
-        const namedWithYear =
-          r.vintage_status === "year"
-            ? normalizeProductName(`${r.entered_name} ${r.vintage_year}`)
-            : "";
+        }
+        const namedWithYear = r.vintage_status === "year"
+          ? normalizeProductName(`${r.entered_name} ${r.vintage_year}`)
+          : "";
         if (
           aliases.includes(named) ||
           (namedWithYear && aliases.includes(namedWithYear))
-        )
+        ) {
           found.add(p.id);
-      } else if (r.vintage_status === "nv" && aliases.includes(named))
+        }
+      } else if (r.vintage_status === "nv" && aliases.includes(named)) {
         found.add(p.id);
+      }
     }
   }
   return found;
@@ -75,17 +81,21 @@ export function discoverDrinks(
   history: DrinkHistory[],
   category: Product["category"] | null = null,
   savedIds: ReadonlySet<string> = new Set(),
+  catalog: readonly Product[] = products,
 ): NextDrink[] {
   const analysis = analyzeTaste(snapshot),
-    seen = seenProductIds(history),
+    seen = seenProductIds(history, catalog),
     byId = new Map(snapshot.records.map((r) => [r.id, r]));
-  const ranked = products
-    .filter((p) => (!category || p.category === category) && !seen.has(p.id) && !savedIds.has(p.id))
+  const ranked = catalog
+    .filter((p) =>
+      (!category || p.category === category) && !seen.has(p.id) &&
+      !savedIds.has(p.id)
+    )
     .map((product) => {
       const sameCategory = analysis.facts.some((f) =>
         [...f.positiveIds, ...f.negativeIds, ...f.neutralIds].some(
           (id) => byId.get(id)?.category === product.category,
-        ),
+        )
       );
       const features = product.features.flatMap((feature) => {
         const fact = analysis.facts.find((f) => f.id === feature.id);
@@ -103,12 +113,12 @@ export function discoverDrinks(
         cautions = features.filter((f) => f.negativeIds.length);
       const positive = new Set(
         similar.flatMap((f) =>
-          f.recordIds.map((id) => `${f.factId.split(":")[0]}:${id}`),
+          f.recordIds.map((id) => `${f.factId.split(":")[0]}:${id}`)
         ),
       );
       const negative = new Set(
         cautions.flatMap((f) =>
-          f.negativeIds.map((id) => `${f.factId.split(":")[0]}:${id}`),
+          f.negativeIds.map((id) => `${f.factId.split(":")[0]}:${id}`)
         ),
       );
       const score = positive.size - negative.size;
@@ -136,13 +146,14 @@ export function discoverDrinks(
     "traditional",
   ];
   const queues = kinds.map((kind) =>
-    eligible.filter((r) => r.product.category === kind),
+    eligible.filter((r) => r.product.category === kind)
   );
   const output: NextDrink[] = [];
-  while (queues.some((q) => q.length))
+  while (queues.some((q) => q.length)) {
     for (const q of queues) {
       const row = q.shift();
       if (row) output.push(row);
     }
+  }
   return output;
 }

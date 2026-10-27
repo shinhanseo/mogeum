@@ -15,6 +15,7 @@ import type { DiscoveryResult } from "../../src/features/discovery/contract";
 import type { WishlistState } from "../../src/features/discovery/wishlist";
 import { colors, typography } from "../../src/theme/tokens";
 const preview: DiscoveryResult = {
+  catalog: products,
   recommendations: discoverDrinks(
     {
       hash: "synthetic-preview",
