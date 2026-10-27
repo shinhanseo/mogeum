@@ -171,3 +171,13 @@ test("corrupt or foreign persisted operations are preserved; stale refresh canno
   await assert.rejects(j.queue().submit(operation()), /REFRESH_INCONSISTENT/);
   assert.ok(decodeWishlistOperation(j.raw()!, owner).receipt);
 });
+
+test("product held between display and save does not trap the durable queue in endless retry", async () => {
+ const h=harness();
+ h.port.apply=async()=>{throw Object.assign(new Error("PRODUCT_NOT_VERIFIED"),{code:"PRODUCT_NOT_VERIFIED"});};
+ h.port.refresh=async()=>[];
+ const result=await h.queue().submit({...operation(),productId:"new-dynamic-product"});
+ assert.equal(result.conflicted,true);
+ assert.deepEqual(result.state,[]);
+ assert.equal(h.raw(),null);
+});

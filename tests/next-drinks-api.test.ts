@@ -1,3 +1,6 @@
+import { products } from "../supabase/functions/_shared/product-catalog";
+import { SHARED_CATALOG_VERSION } from "../supabase/functions/_shared/catalog-contract";
+import { loadDiscoveryPrefill } from "../src/features/discovery/repository";
 import { createWishlistQueue } from "../src/features/discovery/wishlist";
 import { parseDiscoveryResult } from "../src/features/discovery/contract";
 import assert from "node:assert/strict";
@@ -12,10 +15,9 @@ import { composeNote } from "../src/features/tasting/answers";
 test(
   "next drinks: real Auth, complete older history, sensory evidence, wishlist replay and owner isolation",
   {
-    skip:
-      process.env.MOGEUM_TEST_SUPABASE_HTTP !== "1"
-        ? "Needs isolated local Supabase HTTP"
-        : false,
+    skip: process.env.MOGEUM_TEST_SUPABASE_HTTP !== "1"
+      ? "Needs isolated local Supabase HTTP"
+      : false,
     timeout: 90000,
   },
   async () => {
@@ -31,6 +33,13 @@ test(
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const users: string[] = [];
+    const fixtureId = `synthetic-dynamic-${randomUUID()}`;
+    const originalEnv = [
+      process.env.EXPO_PUBLIC_SUPABASE_URL,
+      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    ];
+    process.env.EXPO_PUBLIC_SUPABASE_URL = status.API_URL;
+    process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = status.PUBLISHABLE_KEY;
     const make = (key = status.ANON_KEY) =>
       createClient(status.API_URL, key, {
         auth: { persistSession: false, autoRefreshToken: false },
@@ -56,7 +65,11 @@ test(
             "Content-Type": "application/json",
             ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(
+            typeof body === "object" && body !== null
+              ? { catalogVersion: SHARED_CATALOG_VERSION, ...body }
+              : body,
+          ),
           signal: AbortSignal.timeout(30000),
         });
       assert.equal((await request({})).status, 401);
@@ -200,37 +213,175 @@ test(
         false,
       );
       assert.equal(value.wishlist[0].product_id, "glenlivet-12");
-      assert.ok(!value.recommendations.some((r: { product: { id: string } }) => ["glenlivet-12", "makers-mark"].includes(r.product.id)));
+      assert.ok(
+        !value.recommendations.some((r: { product: { id: string } }) =>
+          ["glenlivet-12", "makers-mark"].includes(r.product.id)
+        ),
+      );
       const unsave = await a.rpc("set_drink_wishlist", {
-        p_operation_id: randomUUID(), p_product_id: "glenlivet-12", p_saved: false, p_expected_revision: 1,
+        p_operation_id: randomUUID(),
+        p_product_id: "glenlivet-12",
+        p_saved: false,
+        p_expected_revision: 1,
       });
       assert.equal(unsave.error, null);
       const refreshedResponse = await request({}, token);
       assert.equal(refreshedResponse.status, 200);
       const refreshed = await refreshedResponse.json();
       parseDiscoveryResult(refreshed);
-      assert.equal(refreshed.wishlist.find((r: { product_id: string }) => r.product_id === "glenlivet-12").saved, false);
-      assert.ok(!refreshed.recommendations.some((r: { product: { id: string } }) => ["glenfiddich-12", "makers-mark"].includes(r.product.id)));
+      assert.equal(
+        refreshed.wishlist.find((r: { product_id: string }) =>
+          r.product_id === "glenlivet-12"
+        ).saved,
+        false,
+      );
+      assert.ok(
+        !refreshed.recommendations.some((r: { product: { id: string } }) =>
+          ["glenfiddich-12", "makers-mark"].includes(r.product.id)
+        ),
+      );
       const glenlivet = refreshed.recommendations.find(
         (r: { product: { id: string } }) => r.product.id === "glenlivet-12",
       );
       assert.ok(
         glenlivet.similar.some((f: { recordIds: string[] }) =>
-          f.recordIds.includes(latest!.recordId),
+          f.recordIds.includes(latest!.recordId)
         ),
       );
       assert.equal(value.wishlist[0].product_id, "glenlivet-12");
+      // Only an isolated local service-role fixture can add/promote these synthetic facts.
+      const synthetic = {
+        ...products.find((p) => p.id === "glenlivet-12")!,
+        id: fixtureId,
+        familyId: fixtureId,
+        name: "합성 동적 제품",
+        aliases: ["Synthetic Dynamic"],
+        baseAliases: ["Synthetic Dynamic"],
+      };
+      assert.equal(
+        (await admin.from("product_catalog").insert({
+          id: fixtureId,
+          family_id: fixtureId,
+          category: "whisky",
+          normalized_name: "synthetic dynamic",
+          document: synthetic,
+          status: "candidate",
+        })).error,
+        null,
+      );
+      const candidate = await (await request({}, token)).json();
+      assert.ok(
+        !candidate.catalog.some((p: { id: string }) => p.id === fixtureId),
+      );
+      await assert.rejects(
+        loadDiscoveryPrefill(a, users[0], fixtureId),
+        /CATALOG_PRODUCT_UNAVAILABLE/,
+      );
+      assert.equal(
+        (await a.rpc("set_drink_wishlist", {
+          p_operation_id: randomUUID(),
+          p_product_id: fixtureId,
+          p_saved: true,
+          p_expected_revision: 0,
+        })).error?.message,
+        "PRODUCT_NOT_VERIFIED",
+      );
+      assert.equal(
+        (await admin.from("product_catalog").update({
+          status: "verified",
+          verified_at: new Date().toISOString(),
+        }).eq("id", fixtureId)).error,
+        null,
+      );
+      const dynamicResponse = await request({}, token);
+      assert.equal(dynamicResponse.status, 200);
+      const dynamic = parseDiscoveryResult(await dynamicResponse.json());
+      assert.ok(
+        dynamic.recommendations.some((r) => r.product.id === fixtureId),
+      );
+      assert.equal(
+        (await loadDiscoveryPrefill(a, users[0], fixtureId))?.name,
+        synthetic.name,
+      );
+      assert.equal(
+        (await a.rpc("set_drink_wishlist", {
+          p_operation_id: randomUUID(),
+          p_product_id: fixtureId,
+          p_saved: true,
+          p_expected_revision: 0,
+        })).error,
+        null,
+      );
+      const savedDynamic = parseDiscoveryResult(
+        await (await request({}, token)).json(),
+      );
+      assert.ok(
+        savedDynamic.wishlist.some((r) =>
+          r.product_id === fixtureId && r.saved
+        ),
+      );
+      assert.ok(
+        !savedDynamic.recommendations.some((r) => r.product.id === fixtureId),
+      );
+      assert.equal(
+        (await admin.from("product_catalog").update({ status: "held" }).eq(
+          "id",
+          fixtureId,
+        )).error,
+        null,
+      );
+      const held = parseDiscoveryResult(
+        await (await request({}, token)).json(),
+      );
+      assert.ok(!held.catalog.some((p) => p.id === fixtureId));
+      assert.ok(
+        held.wishlist.some((r) => r.product_id === fixtureId && r.saved),
+      );
+      await assert.rejects(
+        loadDiscoveryPrefill(a, users[0], fixtureId),
+        /CATALOG_PRODUCT_UNAVAILABLE/,
+      );
+      assert.equal(
+        (await a.rpc("set_drink_wishlist", {
+          p_operation_id: randomUUID(),
+          p_product_id: fixtureId,
+          p_saved: false,
+          p_expected_revision: 1,
+        })).error,
+        null,
+      );
+      // Existing installed binaries still receive their pinned contract during rollout.
+      const legacy = await a.functions.invoke("next-drinks", { body: {} });
+      assert.equal(legacy.error, null);
+      parseDiscoveryResult(legacy.data);
+      assert.equal(legacy.data.catalog, undefined);
       const foreign = await b.functions.invoke("next-drinks", { body: {} });
       assert.equal(foreign.error, null);
       assert.deepEqual(foreign.data.recommendations, []);
       assert.equal(foreign.data.evidenceRecords.length, 0);
       assert.equal(foreign.data.wishlist.length, 0);
     } finally {
+      for (
+        const [index, key] of [
+          "EXPO_PUBLIC_SUPABASE_URL",
+          "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+        ].entries()
+      ) {
+        const previous = originalEnv[index];
+        if (previous === undefined) delete process.env[key];
+        else process.env[key] = previous;
+      }
       for (const id of users) {
         const result = await admin.auth.admin.deleteUser(id);
-        if (result.error)
+        if (result.error) {
           throw new Error("Synthetic next-drinks cleanup failed");
+        }
       }
+      assert.equal(
+        (await admin.from("product_catalog").delete().eq("id", fixtureId))
+          .error,
+        null,
+      );
     }
   },
 );

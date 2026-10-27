@@ -166,3 +166,9 @@ wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아�
 ### 다음 한 잔 저장 제외 · #177
 
 `next-drinks`는 인증된 계정의 `drink_wishlist.saved=true` 제품을 신규 추천에서 제외한다. 북마크 응답은 그대로 보존한다. 앱도 검증한 응답의 저장 상태와 이후 durable wishlist 결과로 중복 노출을 막는다. 해제한 제품은 마신 이력이 없고 근거가 있으면 다시 추천될 수 있다. 메뉴판 추천의 후보를 이 규칙으로 전역 제거하지 않는다. 현 단계의 method/modelUsed는 evidence-rules-v1/false이며 Gemini·주간 cache 계약과 혼동하지 않는다.
+
+### 다음 한 잔 동적 카탈로그 계약 · shared-catalog-v1
+
+새 앱은 `next-drinks`에 `{category: null | whisky | beer | wine | traditional, catalogVersion: "shared-catalog-v1"}`을 보낸다. 응답은 기존 추천/근거/북마크/집계에 `catalog: CatalogDocument[]`를 추가하고 catalogSize를 실제 길이로 반환한다. 추천 제품은 동일 응답의 catalog 문서에서 familyId만 제외한 Product와 일치해야 한다. method=evidence-rules-v1, modelUsed=false는 유지한다. 확인된 제품 사실·개인 근거를 Gemini 결과로 오인하지 않는다.
+
+catalogVersion을 생략하는 기존 앱에는 고정32개 문서의 호환 응답을 제공한다. 저장 목록 DB와 동적 제품을 삭제하는 전환이 아니다. 새 앱용 추천·저장 목록은 후보/보류 제품의 문서를 노출하지 않는다. 보류 제품의 기존 북마크 ID/상태/리비전은 유지해 해제 가능하다. 기록 prefill은 인증 RLS로 검증 제품을 다시 조회한다. [검증 및 범위](verification/dynamic-discovery/README.md).

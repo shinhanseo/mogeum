@@ -13,7 +13,6 @@ import { Button } from "../../components/Button";
 import { ChoiceChip } from "../../components/ChoiceChip";
 import { colors, layout, radius, space, typography } from "../../theme/tokens";
 import {
-  products,
   type Product,
 } from "../../../supabase/functions/_shared/product-catalog";
 import type { NextDrink } from "../../../supabase/functions/_shared/next-drinks-domain";
@@ -53,7 +52,9 @@ export function DiscoveryScreen(props: Props) {
   );
   // Use the latest durable wishlist result, not the older recommendation response.
   const recommendations = personalizedDrinks(result?.recommendations ?? [], saved);
-  const rows = mode === "saved" ? products.filter((p) => saved.has(p.id)) : [];
+  const rows = mode === "saved" ? (result?.catalog ?? []).filter((p) => saved.has(p.id)) : [];
+  const knownIds = new Set(rows.map(p => p.id));
+  const unavailable = [...saved].filter(id => !knownIds.has(id));
   function explanation(row: NextDrink) {
     if (!row.similar.length)
       return row.cautions.length
@@ -170,7 +171,13 @@ export function DiscoveryScreen(props: Props) {
               />
             </View>
           ))}
-          {!busy && !error && !rows.length ? (
+          {!busy && !error && unavailable.map(id => (
+            <View key={id} style={s.wishRow}>
+              <View style={s.flex}><Text style={s.label}>제품 정보 확인 중</Text><Text style={s.caption}>저장은 유지돼요. 확인 후 다시 보여드릴게요.</Text></View>
+              <Button variant="text" label="저장 해제" disabled={saving} onPress={() => props.onSave(id)} style={s.recordLink} />
+            </View>
+          ))}
+          {!busy && !error && !saved.size ? (
             <Text style={s.body}>궁금한 술의 북마크를 눌러 모아보세요.</Text>
           ) : null}
           <View style={s.tip}>

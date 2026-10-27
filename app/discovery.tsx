@@ -144,7 +144,7 @@ function DiscoveryPanel({ owner }: { owner: string }) {
         setWishlist(resolution.state);
         if (resolution.conflicted)
           setError(
-            "다른 곳에서 저장 상태가 바뀌었어요. 최신 목록을 확인한 뒤 다시 눌러주세요.",
+            "제품 정보나 저장 상태가 바뀌었어요. 최신 목록을 확인한 뒤 다시 눌러주세요.",
           );
       }
     } catch {
