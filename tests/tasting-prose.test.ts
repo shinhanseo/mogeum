@@ -32,3 +32,8 @@ test('conditions and color do not become inferred sensory or preference claims',
  assert.equal(observationSentence('sweetness.level','단맛',['중간']),'단맛은 중간 정도로 느껴졌어요.');
  assert.equal(observationSentence('alcohol.feeling','느껴지는 자극',['거의 없어요']),'알코올의 느낌은 거의 느껴지지 않았어요.');
 });
+
+test('multiple textures and a clean finish stay grammatical without losing selected sensations',()=>{
+ assert.equal(observationSentence('body.texture','질감',['매끈해요','오일리해요']),'입안의 질감은 매끈했고 오일리했어요.');
+ assert.equal(observationSentence('finish.features','여운',['쓴맛','깔끔하게 사라져요']),'마신 뒤에는 쓴맛 느낌이 남았어요. 여운은 깔끔하게 사라졌어요.');
+});
