@@ -153,3 +153,8 @@ wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아�
 ## 메뉴 추천 입력 판본 재확인 · 2026-10-26
 
 서버가 추천을 만든 뒤 취향 context hash/totalRecords를 재조회한다. 생성 중 기록이 수정·삭제·추가됐으면409/MENU_EVIDENCE_STALE로 결과를 폐기하고 자동 재호출하지 않는다. 앱은 기존 메뉴 입력을 보존하고 최신 기록으로 다시 추천하도록 안내한다.
+
+
+## 술장 전체 삭제 · 2026-10-27
+
+[술장 삭제 계약·검증](verification/cellar-deletion/README.md). 단일 경험 삭제와 별도이며 전체 기록 수/snapshot을 확인한 RPC만 실행한다. 40001은 최신 내용을 재조회해 다시 확인해야 하고, 응답 유실은 같은 snapshot으로 재시도한다.

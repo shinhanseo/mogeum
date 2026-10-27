@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Image, Platform, Text } from "react-native";
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CellarScreen } from "../../src/features/cellar/CellarScreen";
 import { BottomTabBar } from "../../src/components/BottomTabBar";
@@ -12,6 +12,7 @@ import type { CellarFilter } from "../../src/features/cellar/repository";
 import type { Category } from "../../src/features/cellar/model";
 import { colors, typography } from "../../src/theme/tokens";
 export default function CellarPreview() {
+  const router = useRouter();
   const { photoFailure, count, longName } = useLocalSearchParams<{ photoFailure?: string; count?: string; longName?: string }>();
   const [renewals, setRenewals] = useState(0);
   const [state, setState] = useState(emptyCellarState),
@@ -77,6 +78,7 @@ export default function CellarPreview() {
         서버 미호출
       </Text>
       <CellarScreen
+        onManage={()=>router.push("/dev/cellar-manage")}
         items={state.items}
         totalCount={state.total}
         loading={state.loading}
