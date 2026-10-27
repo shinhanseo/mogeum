@@ -12,7 +12,7 @@ import type { CellarFilter } from "../../src/features/cellar/repository";
 import type { Category } from "../../src/features/cellar/model";
 import { colors, typography } from "../../src/theme/tokens";
 export default function CellarPreview() {
-  const { photoFailure } = useLocalSearchParams<{ photoFailure?: string }>();
+  const { photoFailure, count, longName } = useLocalSearchParams<{ photoFailure?: string; count?: string; longName?: string }>();
   const [renewals, setRenewals] = useState(0);
   const [state, setState] = useState(emptyCellarState),
     [category, setCategory] = useState<Category | "전체">("전체"),
@@ -24,9 +24,9 @@ export default function CellarPreview() {
       Image.resolveAssetSource(
         require("../../assets/fixtures/figma-whisky.jpg"),
       )?.uri ?? null;
-    const all = Array.from({ length: 61 }, (_, n) => ({
+    const all = Array.from({ length: count === undefined ? 61 : Math.min(61, Math.max(0, Number(count) || 0)) }, (_, n) => ({
       id: String(n),
-      name: `합성 위스키 ${n + 1}`,
+      name: longName === "1" && n === 0 ? "발베니 더블우드 싱글 몰트 12년" : `합성 위스키 ${n + 1}`,
       category: "위스키" as const,
       photoUri:
         n === 0 && photoFailure === "1"
@@ -65,7 +65,7 @@ export default function CellarPreview() {
       current.cancel();
       pager.current = null;
     };
-  }, [category, query, photoFailure]);
+  }, [category, query, photoFailure, count, longName]);
   if (!__DEV__ || Platform.OS === "web") return <Redirect href="/" />;
   return (
     <SafeAreaView
@@ -73,7 +73,7 @@ export default function CellarPreview() {
       style={{ flex: 1, backgroundColor: colors.background }}
     >
       <Text style={{ ...typography.caption, color: colors.muted }}>
-        개발용 합성 61개 · 불러옴 {state.items.length} · 사진 갱신 {renewals} ·
+        개발용 합성 기록 · 불러옴 {state.items.length} · 사진 갱신 {renewals} ·
         서버 미호출
       </Text>
       <CellarScreen

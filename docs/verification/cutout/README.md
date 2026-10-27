@@ -63,3 +63,8 @@ CI HTTP harness는 Node 환경이라 Expo native filesystem을 로드할 수 없
 iPhone17 Pro/iOS26.5 Simulator에 배경 분리 모듈이 포함된 기존 성공 빌드를 덮어 설치하고, 계정·서버 쓰기가 없는 bundled sample probe를 실행했다. Apple Vision은 `Could not create inference context` 및 CPU fallback이 없어 Simulator에서 foreground segmentation을 실행할 수 없다는 오류를 반환했다. 컴파일 성공과 실제 Vision 실행 성공은 다르다. iPhone 물리 기기 검증은 여전히 남아 있다. 로그인·기록·서버 삭제 검증 전체가 물리 기기를 요구하는 것은 아니다.
 
 누끼 오류 안내는 플랫폼별로 구분한다. Simulator에는 실제 iPhone/원본 사용 안내, 일반 iOS 실패에는 사진 재시도/원본 안내를 표시한다. Android 첫 모델 다운로드 안내는 Android에만 유지한다. 기존 토큰·레이아웃·공통 컴포넌트는 변경하지 않았다. 사용자 계정 삭제·로그아웃·실제 사진 처리는 하지 않았다.
+
+
+### Galaxy Release 최적화 보완 · 2026-10-27
+
+[Galaxy QA](../galaxy-taste-cutout/README.md)에서 Debug 실제 처리(756ms, 201×447 PNG)와 minified Release 내부 provider null 오류를 구분해 재현했다. subject와 ML Kit common 패키지 보존 후 같은 기기의 Release 처리 완료를 확인했다. config plugin이 Expo prebuild 때 별도 proguard 파일을 연결한다. iPhone 물리 기기 검증과 다양한 실제 사진의 품질 검증은 계속 남아 있다.

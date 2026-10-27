@@ -20,7 +20,9 @@ export default function Preview() {
         require("../../assets/fixtures/figma-whisky.jpg"),
       );
       await a.downloadAsync();
-      if (active) setUri(a.localUri ?? a.uri);
+      const path = FS.cacheDirectory + "cutout-fixture.jpg";
+      await FS.copyAsync({ from: a.localUri ?? a.uri, to: path });
+      if (active) setUri(path);
     })();
     return () => {
       active = false;

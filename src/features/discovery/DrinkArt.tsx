@@ -1,6 +1,5 @@
-import { Asset } from "expo-asset";
 import { StyleSheet, View } from "react-native";
-import { SvgUri } from "react-native-svg";
+import { BundledSvg } from "../../components/BundledSvg";
 import type { Product } from "../../../supabase/functions/_shared/product-catalog";
 const assets = {
   whisky: require("../../../assets/discovery/whisky.svg"),
@@ -20,13 +19,13 @@ export function DrinkArt({
   return (
     <View accessible={false} style={{ width: size, height: size }}>
       <View style={[styles.original, size === 64 && styles.small]}>
-        <SvgUri uri={Asset.fromModule(assets[category]).uri} />
+        <BundledSvg module={assets[category]} />
       </View>
     </View>
   );
 }
 export function BookmarkArt() {
-  return <SvgUri uri={Asset.fromModule(bookmark).uri} />;
+  return <BundledSvg module={bookmark} />;
 }
 const styles = StyleSheet.create({
   original: { width: 88, height: 88 },
