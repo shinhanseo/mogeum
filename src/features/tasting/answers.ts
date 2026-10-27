@@ -1,3 +1,4 @@
+import { observationSentence } from './prose';
 import { activeAroma } from './aroma';
 import { aromaCatalogs } from './catalog';
 import type { Answer, TastingDraft } from './draft';
@@ -48,7 +49,7 @@ export const aromaLabel = (code: string) => aromaLabels[code] ?? code;
 export function composeNote(draft: TastingDraft): string {
   const answers = serializeAnswers(draft);
   const fields = questionsFor(draft.category, draft.mode).flatMap(q => q.fields.map(f => ({ ...f, questionTitle: q.title.replace(/\n/g, ' ') })));
-  return answers.flatMap(answer => {
+  const sentences = answers.flatMap(answer => {
     if (answer.status === 'skipped' || answer.status === 'unanswered') return [];
     const field = fields.find(f => f.id === answer.questionId);
     if (!field) {
@@ -61,8 +62,8 @@ export function composeNote(draft: TastingDraft): string {
     const label = field.label || field.questionTitle;
     const shortLabels:Record<string,string>={nose:'향',palate:'맛',body:'무게감',alcohol:'알코올 자극',finish:'여운',tannin:'떫은 느낌',carbonation:'탄산',texture:'질감'};
     const descriptionLabel=draft.mode==='light'?(shortLabels[field.id]??label):label.replace(' · 복수 선택', '');
-    if (answer.status === 'unknown') return [`${descriptionLabel}: 잘 구분하지 못했어요.`];
-    if (answer.status === 'none') return [`${descriptionLabel}: 없었어요.`];
+    if (answer.status === 'unknown') return [`${descriptionLabel.replace(/ · .*/, '')}에 대해서는 잘 구분하지 못했어요.`];
+    if (answer.status === 'none') return [`${descriptionLabel.replace(/ · .*/, '')}은 느껴지지 않았어요.`];
     if (field.kind === 'aroma') {
       const aroma = activeAroma(draft.modes[draft.mode].aromas[field.id], aromaCatalogs[draft.category]);
       const labels = aroma.families.flatMap(f => aroma.details[f]?.length ? aroma.details[f].map(aromaLabel) : [aromaLabel(f)]);
@@ -78,6 +79,7 @@ export function composeNote(draft: TastingDraft): string {
       }
       return [`${field.id==='alcohol'?'알코올의 자극은 ':field.id==='finish'?'여운은 ':'입안에서는 '}${values.join(', ')}.`];
     }
-    return [labels.length ? `${label ? `${label}: ` : ''}${labels.join(', ')}.` : '', answer.freeText ?? ''].filter(Boolean);
-  }).join('\n');
+    return [labels.length ? observationSentence(field.id, descriptionLabel, labels as string[]) : '', answer.freeText ?? ''].filter(Boolean);
+  });
+  return sentences.join(' ');
 }
