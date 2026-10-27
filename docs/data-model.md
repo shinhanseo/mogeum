@@ -77,3 +77,7 @@ public.drink_wishlist는 (user_id, product_id) 복합 키와 saved/revision/upda
 ## 술장 대표 사진 가용성 · 10번째 migration
 
 `20261025090000_cellar_ready_photos.sql`은 `cellar_overview`에서 같은 소유자·술장에 연결된 `ready` 사진만 선택한다. 지정 대표가 `missing`이면 최근 유효 사진으로 대체하고, 모두 없으면 `photo_path=null`로 중립 표시한다. 기록 수와 술장 항목은 유지하며 지정 대표 ID를 지우지 않아 상태 복구 시 원래 선택을 다시 사용한다. 사용자 사진을 삭제하거나 누락 상태를 자동 추정하지 않는다. 관리형 DB 적용은 별도 확인이 필요하다.
+
+## 공통 추천 제품 DB 기반 · #175
+
+`product_catalog`는 문자열 제품 ID·제품군·판본 문서·출처·candidate/verified/held·검증 시각·revision을 보관한다. 기존 UUID drinks/개인 술장 연결은 유지한다. 활성 인증 사용자는 verified만 읽고 서버만 후보를 제안한다. `stage_catalog_candidate`는 승격/기존 문서 덮어쓰기를 하지 않는다. drink_wishlist는 제품 ID FK를 사용하며 기존 영수증은 유지한다. 동적 API·앱 전환은 후속 단계다. [검증과 남은 범위](verification/shared-catalog/README.md).
