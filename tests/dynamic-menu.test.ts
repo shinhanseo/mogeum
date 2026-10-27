@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { products, productCandidates } from '../supabase/functions/_shared/product-catalog';
+import { parseMenu, validateItems, recommendMenu, type MenuPhoto } from '../supabase/functions/_shared/menu-domain';
+import { stableMenuRecommendation } from '../supabase/functions/_shared/menu-recommendation';
+import { SHARED_CATALOG_VERSION } from '../supabase/functions/_shared/catalog-contract';
+const product={...products[0],id:'synthetic-new-menu',familyId:'synthetic-new-menu',name:'합성 새 술',aliases:['합성 새 술'],baseAliases:['합성 새 술']};
+const photo:MenuPhoto={id:'90000000-0000-4000-8000-000000000001',imageRevision:1,width:1200,height:1600,engine:'apple-vision-v1',lines:[{id:'90000000-0000-4000-8000-000000000001:1:0',text:'합성 새 술 30ml 15,000원',confidence:0.9,polygon:[{x:0.1,y:0.1},{x:0.9,y:0.1},{x:0.9,y:0.15},{x:0.1,y:0.15}]}]};
+const snapshot={hash:'synthetic',records:[],totalRecords:0,omittedCount:0};
+test('new server catalog identity resolves only matching aliases and preserves OCR price/serving/location',async()=>{
+ assert.equal(productCandidates(product.name).length,0);
+ assert.equal(productCandidates(product.name,[product])[0].id,product.id);
+ const parsed=parseMenu([photo],[product]);
+ assert.equal(parsed.length,1);
+ assert.equal(parsed[0].price,15000);assert.equal(parsed[0].serving,'30ml');
+ assert.deepEqual(parsed[0].lineIds,[photo.lines[0].id]);
+ const items=[{...parsed[0],confirmed:true,productId:product.id}];
+ validateItems(items,[photo],'catalog',false,[product]);
+ assert.throws(()=>validateItems(items,[photo]));
+ assert.throws(()=>validateItems([{...items[0],name:'다른 술'}],[photo],'catalog',false,[product]));
+ const result=await stableMenuRecommendation(items,async()=>snapshot,[product]);
+ assert.equal(result.catalogVersion,SHARED_CATALOG_VERSION);
+ assert.equal(result.catalogSize,1);
+ assert.equal(result.recommendations[0].productId,product.id);
+ assert.equal(result.recommendations[0].status,'unmatched');
+ assert.deepEqual(result.recommendations[0].similar,[]);
+ assert.equal(recommendMenu(items,snapshot,[])[0].status,'unverified');
+});
+test('ambiguous editions remain candidates, explicit unsupported vintage never falls back',()=>{
+ const wine={...product,category:'wine' as const,edition:'2024',aliases:['합성 와인 2024'],baseAliases:['합성 와인']};
+ const older={...wine,id:'synthetic-wine-2023',edition:'2023',aliases:['합성 와인 2023']};
+ assert.equal(productCandidates('합성 와인',[wine,older]).length,2);
+ assert.deepEqual(productCandidates('합성 와인 2022',[wine,older]),[]);
+});

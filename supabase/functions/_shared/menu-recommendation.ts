@@ -1,3 +1,4 @@
+import { catalogProduct, type CatalogDocument, SHARED_CATALOG_VERSION } from "./catalog-contract.ts";
 import { withStableDiscoverySnapshot } from "./discovery-snapshot.ts";
 import {
   recommendMenu,
@@ -10,9 +11,10 @@ import type { TasteSnapshot } from "./taste-domain.ts";
 export function stableMenuRecommendation(
   items: MenuItem[],
   load: () => Promise<TasteSnapshot>,
+  catalog?: CatalogDocument[],
 ) {
   return withStableDiscoverySnapshot(load, async (snapshot) => {
-    const recommendations = recommendMenu(items, snapshot);
+    const recommendations = recommendMenu(items, snapshot, catalog?.map(catalogProduct));
     const evidenceIds = new Set(
       recommendations.flatMap((r) => [
         ...r.similar.flatMap((f) => [...f.recordIds, ...f.negativeIds]),
@@ -37,8 +39,9 @@ export function stableMenuRecommendation(
       recordCount: snapshot.totalRecords,
       method: "evidence-rules-v1",
       limitedCatalog: true,
-      catalogVersion: PRODUCT_CATALOG_VERSION,
-      catalogSize: products.length,
+      ...(catalog ? {catalog} : {}),
+      catalogVersion: catalog ? SHARED_CATALOG_VERSION : PRODUCT_CATALOG_VERSION,
+      catalogSize: catalog?.length ?? products.length,
     };
   });
 }
