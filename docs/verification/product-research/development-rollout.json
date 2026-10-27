@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-27",
+  "project": "mogeum-dev",
+  "migration": "20261027020000_shared_product_catalog",
+  "migrationApplied": true,
+  "nextDrinksBuild": "next-drinks-8f0bec17ae5bd249",
+  "invalidTokenStatus": 401,
+  "backendMetadataIssues": [],
+  "scope": "migration ledger, deployment build and invalid-token boundaries only; no actual Gemini search invoked",
+  "personalRecordsModified": false
+}
