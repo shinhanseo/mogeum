@@ -21,3 +21,12 @@
 - 설치된 기기의 새 삭제 UI 업데이트는 코드 구현/DB 배포와 구분해서 기록한다.
 
 UI 스크린샷은 로컬 `artifacts/qa/167-cellar-delete/`에 있다.
+
+
+## iPhone 설치 확인
+
+동일 코드의 실제 iPhone(iOS 26.6)용 standalone Release를 재빌드했다. 번들 검사 문제 0개, codesign strict 검증 통과 후 기존 앱 위에 설치하고 devicectl 실행 성공을 확인했다. 실제 사용자 기록의 삭제는 실행하지 않았다. Android code11 APK의 번들/서명 검사는 통과했으나 USB 기기가 없어 설치하지 못했고, 이 삭제 기능을 포함한 code12 EAS 빌드는 진행 중이다.
+
+![술 관리 합성 화면](manage.png)
+
+![전체 삭제 확인 합성 화면](confirm.png)
