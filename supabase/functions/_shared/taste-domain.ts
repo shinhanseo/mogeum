@@ -10,7 +10,7 @@ export type SummaryResult={version:typeof SUMMARY_VERSION;selection:TasteSelecti
 type Field={id:string;label?:string;kind:string;options?:readonly {code:string;label:string}[];when?:{field:string;includes:string};unless?:{field:string;includes:string}};
 const categories=featureCatalog as unknown as Record<string,Record<string,Field[]>>;
 const evaluation=(r:TasteRecord)=>r.revisit==='again'?'positive':r.revisit==='not_for_me'?'negative':r.revisit==='okay'?'neutral':r.rating!==null&&r.rating>=4?'positive':r.rating!==null&&r.rating<=2?'negative':'neutral';
-function feature(field:Field,label:string){
+export function feature(field:Field,label:string){
  const dimension=field.id==='nose'?'향':field.id.startsWith('palate')||field.id.startsWith('sweetness')||field.id.startsWith('acidity')?'맛':field.id.startsWith('finish')?'여운':field.id.startsWith('body')?'질감':field.id.startsWith('alcohol')?'알코올 자극':field.id.startsWith('tannin')?'떫은 느낌':'탄산';
  const aliases:Record<string,string>={'가벼웠어요':'가벼운 바디','묵직했어요':'묵직한 바디','달콤해요':'달콤한 맛','달콤했어요':'달콤한 맛','상큼해요':'상큼한 맛','상큼했어요':'상큼한 맛','새콤해요':'새콤한 맛','새콤했어요':'새콤한 맛','쌉쌀해요':'쌉쌀한 맛','쌉쌀했어요':'쌉쌀한 맛','고소해요':'고소한 맛','고소했어요':'고소한 맛','깔끔했어요':'깔끔한 여운','과일':'과일 향','꽃':'꽃 향','꿀·바닐라':'꿀·바닐라 향','나무':'나무 향','연기':'연기 향','알코올':'알코올 향','가벼워요':'가벼운 바디','물처럼 가벼워요':'가벼운 바디','묵직해요':'묵직한 바디','매끈해요':'매끈한 질감','크리미해요':'크리미한 질감'};
  const short=dimension==='향'?aliases[label]??(label.endsWith('향')?label:`${label} 향`):dimension==='질감'?aliases[label]??label:aliases[label]??`${field.label||dimension} · ${label}`;
