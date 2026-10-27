@@ -56,9 +56,39 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
 
     await t.test('private tables enable RLS and bucket is private', async () => {
       const { rows } = await db.query("select relname,relrowsecurity from pg_class join pg_namespace n on n.oid=relnamespace where n.nspname='public' and relkind='r'");
-      assert.equal(rows.length, 13);
+      assert.equal(rows.length, 14);
       assert.ok(rows.every(row => row.relrowsecurity === true));
       assert.equal((await db.query("select public from storage.buckets where id='record-photos'")).rows[0].public, false);
+    });
+    await t.test('shared catalog preserves seed IDs, hides candidates and allows only verified products to be saved', async()=>{
+      await db.exec('reset role');
+      const original=(await db.query('select document from public.product_catalog where id=$1',['glenlivet-12'])).rows[0].document as JsonObject;
+      const candidate={...original,id:'synthetic-candidate',familyId:'synthetic-family'};
+      await db.query("insert into public.product_catalog(id,family_id,category,normalized_name,document) values('synthetic-candidate','synthetic-family','whisky','synthetic',$1::jsonb)",[candidate]);
+      await as(a);
+      await assert.rejects(db.query('select public.stage_catalog_candidate($1::jsonb,$2)',[candidate,'synthetic']),{code:'42501'});
+      assert.equal((await db.query('select count(*)::integer n from public.product_catalog')).rows[0].n,32);
+      assert.equal((await db.query("select * from public.product_catalog where id='synthetic-candidate'")).rows.length,0);
+      await assert.rejects(db.query("update public.product_catalog set status='verified' where id='synthetic-candidate'"),{code:'42501'});
+      const write=(op:number,saved:boolean,revision:number)=>db.query('select public.set_drink_wishlist($1,$2,$3,$4)',[operation(op),'synthetic-candidate',saved,revision]);
+      await assert.rejects(write(701,true,0),/PRODUCT_NOT_VERIFIED/);
+      await db.exec('reset role');
+      await db.query("update public.product_catalog set status='verified',verified_at=now() where id='synthetic-candidate'");
+      await as(a);assert.equal((await db.query("select * from public.product_catalog where id='synthetic-candidate'")).rows.length,1);
+      await write(702,true,0);
+      await as(b);assert.equal((await db.query("select * from public.drink_wishlist where product_id='synthetic-candidate'")).rows.length,0);
+      await db.exec('reset role');await db.query("update public.product_catalog set status='held' where id='synthetic-candidate'");
+      await as(a);await assert.rejects(write(703,true,1),/PRODUCT_NOT_VERIFIED/);
+      await write(704,false,1);
+      // A historical receipt must remain replayable after a product is held.
+      await write(702,true,0);
+      assert.equal((await db.query("select saved from public.drink_wishlist where product_id='synthetic-candidate'")).rows[0].saved,false);
+      await as(null);await assert.rejects(db.query('select * from public.product_catalog'),{code:'42501'});
+      await db.exec('reset role');await db.exec('set role service_role');
+      const unchanged=(await db.query('select public.stage_catalog_candidate($1::jsonb,$2) result',[{...original,name:'DO NOT OVERWRITE'},'wrong'])).rows[0].result as JsonObject;
+      assert.equal(unchanged.status,'verified');
+      assert.deepEqual((await db.query('select document from public.product_catalog where id=$1',['glenlivet-12'])).rows[0].document,original);
+      await db.exec('reset role');await db.query("delete from public.drink_wishlist where product_id='synthetic-candidate'");await db.query("delete from public.product_catalog where id='synthetic-candidate'");
     });
     await t.test('wishlist revisions and immutable receipts preserve ownership without becoming tasting records', async()=>{
       await as(a);
