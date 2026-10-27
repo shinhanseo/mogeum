@@ -172,3 +172,7 @@ wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아�
 새 앱은 `next-drinks`에 `{category: null | whisky | beer | wine | traditional, catalogVersion: "shared-catalog-v1"}`을 보낸다. 응답은 기존 추천/근거/북마크/집계에 `catalog: CatalogDocument[]`를 추가하고 catalogSize를 실제 길이로 반환한다. 추천 제품은 동일 응답의 catalog 문서에서 familyId만 제외한 Product와 일치해야 한다. method=evidence-rules-v1, modelUsed=false는 유지한다. 확인된 제품 사실·개인 근거를 Gemini 결과로 오인하지 않는다.
 
 catalogVersion을 생략하는 기존 앱에는 고정32개 문서의 호환 응답을 제공한다. 저장 목록 DB와 동적 제품을 삭제하는 전환이 아니다. 새 앱용 추천·저장 목록은 후보/보류 제품의 문서를 노출하지 않는다. 보류 제품의 기존 북마크 ID/상태/리비전은 유지해 해제 가능하다. 기록 prefill은 인증 RLS로 검증 제품을 다시 조회한다. [검증 및 범위](verification/dynamic-discovery/README.md).
+
+### 메뉴판 동적 카탈로그 서버 선행 계약
+
+`menu-recommend`의 parse/recommend 요청은 선택적으로 `catalogVersion: "shared-catalog-v1"`을 받는다. 이 경우 verified-only RLS 제품을 사용하고 응답에 catalog 문서를 포함한다. 버전 없는 기존 앱 응답은 유지한다. 현재 앱은 아직 opt-in하지 않는다. [서버 구현과 남은 앱 전환](verification/dynamic-menu/README.md).

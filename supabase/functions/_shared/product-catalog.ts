@@ -1298,15 +1298,15 @@ export const normalizeProductName = (name: string) =>
     .replace(/(?<=\d)[.,](?=\d)/g, "decimal")
     .replace(/[^\p{L}\p{N}]/gu, "");
 /** Only full curated aliases qualify. Explicit unsupported vintages/ABV/editions never fall back. */
-export function productCandidates(name: string): Product[] {
+export function productCandidates(name: string, catalog: readonly Product[] = products): Product[] {
   const n = normalizeProductName(name);
   if (!n) return [];
-  const exact = products.filter((p) =>
+  const exact = catalog.filter((p) =>
     p.aliases.some((a) => normalizeProductName(a) === n),
   );
   if (exact.length) return exact;
   if (/(?:19|20)\d{2}/.test(name.normalize("NFKC"))) return [];
-  return products.filter((p) =>
+  return catalog.filter((p) =>
     p.baseAliases.some((a) => normalizeProductName(a) === n),
   );
 }

@@ -34,6 +34,7 @@ export {
   type Product,
 } from "./product-catalog.ts";
 import {
+  products, type Product,
   productCandidates,
   normalizeProductName as norm,
 } from "./product-catalog.ts";
@@ -180,7 +181,7 @@ function splitMenuColumns(row: MenuLine[], layout: typeof bounds): MenuLine[][] 
   return groups;
 }
 /** Conservative row parser. No cross-row price association and no inferred servings. */
-export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
+export function parseMenu(photos: MenuPhoto[], catalog: readonly Product[] = products): MenuItem[] {
   validatePhotos(photos);
   const output: MenuItem[] = [];
   for (const p of photos) {
@@ -262,7 +263,7 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
         if (
           !prices.length &&
           !damaged.length &&
-          !productCandidates(name).length
+          !productCandidates(name, catalog).length
         )
           continue;
         output.push({
@@ -291,6 +292,7 @@ export function validateItems(
   photos: MenuPhoto[],
   productMode: "catalog" | "stored" = "catalog",
   incompleteDraft = false,
+  catalog: readonly Product[] = products,
 ): MenuItem[] {
   if (!Array.isArray(input) || input.length > 100)
     throw new Error("INVALID_ITEMS");
@@ -323,7 +325,7 @@ export function validateItems(
           !item.productId.trim() ||
           item.productId.length > 160 ||
           (productMode === "catalog" &&
-            !productCandidates(item.name).some(
+            !productCandidates(item.name, catalog).some(
               (p) => p.id === item.productId,
             ))))
     )
@@ -349,12 +351,13 @@ export type MenuRecommendation = {
 export function recommendMenu(
   items: MenuItem[],
   snapshot: TasteSnapshot,
+  catalog: readonly Product[] = products,
 ): MenuRecommendation[] {
   const analysis = analyzeTaste(snapshot);
   return items
     .filter((i) => i.confirmed)
     .map((item) => {
-      const product = productCandidates(item.name).find(
+      const product = productCandidates(item.name, catalog).find(
         (p) => p.id === item.productId,
       );
       const known = snapshot.records.filter(
