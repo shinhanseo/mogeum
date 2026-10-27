@@ -1,5 +1,6 @@
 import { requireOptionalNativeModule } from "expo-modules-core";
 import { Platform } from "react-native";
+import { withModelReadiness } from "./model-readiness";
 export type CutoutImage = { uri: string; width: number; height: number };
 type Native = {
   removeBackground: (
@@ -27,10 +28,10 @@ export function createCutout(uri: string): Promise<CutoutImage> {
       if (!cutoutAvailable() || !native) throw Error("CUTOUT_UNAVAILABLE");
       if (!/^(file|content):\/\//.test(uri))
         throw Error("LOCAL_IMAGE_REQUIRED");
-      const result = await native.removeBackground(uri, {
+      const result = await withModelReadiness(() => native.removeBackground(uri, {
         cropToSubject: true,
         maxDimension: 1600,
-      });
+      }), Platform.OS === "android");
       if (
         !result.uri.startsWith("file://") ||
         !Number.isInteger(result.width) ||
@@ -44,6 +45,11 @@ export function createCutout(uri: string): Promise<CutoutImage> {
     });
   running = task;
   return task;
+}
+export function cutoutUnavailableMessage() {
+  if (Platform.OS === 'ios' && Number.parseInt(String(Platform.Version), 10) < 17)
+    return '배경 분리는 iOS 17 이상에서 사용할 수 있어요. 지금은 원본 사진으로 놓아주세요.';
+  return '배경 분리 기능을 불러오지 못했어요. 모금 앱을 최신 버전으로 업데이트한 뒤 다시 확인해주세요. 원본 사진은 그대로 사용할 수 있어요.';
 }
 export function cutoutError(error?: unknown) {
   if (error instanceof Error && error.message.includes("does not work on the iOS Simulator"))

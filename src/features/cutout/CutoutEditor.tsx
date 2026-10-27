@@ -10,6 +10,7 @@ import {
   createCutout,
   cutoutAvailable,
   cutoutError,
+  cutoutUnavailableMessage,
   type CutoutImage,
 } from "./native";
 export function CutoutEditor({
@@ -25,6 +26,8 @@ export function CutoutEditor({
   const [selected, setSelected] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [available, setAvailable] = useState(cutoutAvailable);
+  const [processing, setProcessing] = useState(false);
   const derivative = useRef<string | null>(null);
   const alive = useRef(true);
   const lock = useRef(false);
@@ -40,6 +43,7 @@ export function CutoutEditor({
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
+    setProcessing(true);
     setError("");
     try {
       const next = await createCutout(source);
@@ -52,7 +56,7 @@ export function CutoutEditor({
       if (alive.current) setError(cutoutError(error));
     } finally {
       lock.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) { setBusy(false); setProcessing(false); }
     }
   }
   async function apply() {
@@ -104,7 +108,7 @@ export function CutoutEditor({
               if (result) setSelected(true);
               else void run();
             }}
-            disabled={busy || !cutoutAvailable()}
+            disabled={busy || !available}
           />
         </View>
         {!result && (
@@ -113,15 +117,11 @@ export function CutoutEditor({
             variant="secondary"
             onPress={() => void run()}
             loading={busy}
-            disabled={!cutoutAvailable()}
+            disabled={!available}
           />
         )}
-        {!cutoutAvailable() && (
-          <Text style={s.body}>
-            이 기기에서는 배경 분리를 사용할 수 없어요. 지원되는 개발용 빌드와
-            iOS 17 이상 또는 Google Play 서비스가 필요해요.
-          </Text>
-        )}
+        {processing ? <Text accessibilityRole="progressbar" style={s.body}>사진에서 배경을 분리하고 있어요. 첫 사용에는 필요한 모델을 준비할 수 있어요.</Text> : null}
+        {!available ? <View style={{ gap: 8 }}><Text style={s.body}>{cutoutUnavailableMessage()}</Text><Button label="기능 다시 확인" variant="text" onPress={() => setAvailable(cutoutAvailable())} /></View> : null}
         {!!error && (
           <Text accessibilityRole="alert" style={s.body}>
             {error}

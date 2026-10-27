@@ -1,6 +1,11 @@
-const { withAndroidManifest } = require("expo/config-plugins");
-module.exports = (config) =>
-  withAndroidManifest(config, (result) => {
+const { withAndroidManifest, withAppBuildGradle } = require("expo/config-plugins");
+module.exports = (config) => {
+  config = withAppBuildGradle(config, result => {
+    const rule = 'android.buildTypes.release.proguardFiles(file("../../plugins/subject-segmentation.pro"))';
+    if (!result.modResults.contents.includes(rule)) result.modResults.contents += `\n// Preserve ML Kit subject segmentation component bindings during R8.\n${rule}\n`;
+    return result;
+  });
+  return withAndroidManifest(config, (result) => {
     const manifest = result.modResults.manifest;
     manifest.$["xmlns:tools"] = "http://schemas.android.com/tools";
     const app = manifest.application[0];
@@ -20,3 +25,5 @@ module.exports = (config) =>
     else entries.push({ $: value });
     return result;
   });
+
+};

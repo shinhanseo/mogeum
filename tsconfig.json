@@ -26,6 +26,7 @@
     "supabase/functions/next-drinks/index.ts",
     "supabase/functions/delete-account/index.ts",
     "supabase/functions/provider-credentials/index.ts",
-    "supabase/tests/**"
+    "supabase/tests/**",
+    "artifacts/**"
   ]
 }

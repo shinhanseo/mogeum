@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   card: { padding: 4, backgroundColor: colors.surface, borderRadius: 3, gap: 4 }, photo: { width: '100%', aspectRatio: 3 / 4 },
   cutoutCard: { backgroundColor: 'transparent' },
   fallback: { backgroundColor: colors.cabinet.top, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  name: { minHeight: 32, fontSize: 11, lineHeight: 16, fontFamily: fonts.bold, color: colors.text, textAlign: 'center' }, category: { fontSize: 10, lineHeight: 16, fontFamily: fonts.regular, color: colors.muted, textAlign: 'center' },
+  name: { fontSize: 11, lineHeight: 16, fontFamily: fonts.bold, color: colors.text, textAlign: 'center' }, category: { fontSize: 10, lineHeight: 16, fontFamily: fonts.regular, color: colors.muted, textAlign: 'center' },
   shelfTop: { height: 6, backgroundColor: colors.cabinet.top }, shelfFront: { height: 10, backgroundColor: colors.cabinet.front, borderBottomWidth: 2, borderBottomColor: colors.cabinet.shadow },
   empty: { position: 'absolute', top: 36, left: 14, right: 14, gap: 12 }, emptyTitle: { fontSize: 20, lineHeight: 24, color: colors.muted, fontFamily: fonts.regular, textAlign: 'center' },
   emptyBody: { fontSize: 14, lineHeight: 20, color: colors.muted, fontFamily: fonts.regular, textAlign: 'center' }, noResults: { padding: 24, gap: 20 },
