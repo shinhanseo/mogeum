@@ -126,6 +126,7 @@ Deno.serve(async (request) => {
           snapshot,
           history,
           category as Product["category"] | null,
+          new Set((wishlist.data ?? []).filter((r) => r.saved).map((r) => r.product_id)),
         );
         const evidenceIds = new Set(
           recommendations.flatMap((r) =>

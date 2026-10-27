@@ -162,3 +162,7 @@ wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아�
 ## 메뉴 해석 geometry-v5
 
 `Glass 150ml`, `Bottle 750ml`, `Pint 568ml` 및 단위 앞뒤의 잔/병 표시를 하나의 serving으로 보존하고 제품명에서 전체 구문을 제외한다. 동일 와인의 잔/병을 합치지 않으며 price/product 확인 규칙은 유지한다. [생성 사진 관측 및 제약](verification/generated-menu-ocr/README.md).
+
+### 다음 한 잔 저장 제외 · #177
+
+`next-drinks`는 인증된 계정의 `drink_wishlist.saved=true` 제품을 신규 추천에서 제외한다. 북마크 응답은 그대로 보존한다. 앱도 검증한 응답의 저장 상태와 이후 durable wishlist 결과로 중복 노출을 막는다. 해제한 제품은 마신 이력이 없고 근거가 있으면 다시 추천될 수 있다. 메뉴판 추천의 후보를 이 규칙으로 전역 제거하지 않는다. 현 단계의 method/modelUsed는 evidence-rules-v1/false이며 Gemini·주간 cache 계약과 혼동하지 않는다.

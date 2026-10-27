@@ -25,9 +25,14 @@ export type NextDrink = {
   score: number;
 };
 /** A discovery catalog entry is not a personal recommendation without net positive, cited evidence. */
-export function personalizedDrinks(rows: NextDrink[]): NextDrink[] {
+export function personalizedDrinks(
+  rows: NextDrink[],
+  excludedIds: ReadonlySet<string> = new Set(),
+): NextDrink[] {
   return rows.filter(
-    (row) => row.score > 0 && row.similar.some((f) => f.recordIds.length > 0),
+    (row) =>
+      !excludedIds.has(row.product.id) &&
+      row.score > 0 && row.similar.some((f) => f.recordIds.length > 0),
   );
 }
 /** Edition-aware history check. A missing/ambiguous wine vintage never confirms a catalog edition. */
@@ -69,12 +74,13 @@ export function discoverDrinks(
   snapshot: TasteSnapshot,
   history: DrinkHistory[],
   category: Product["category"] | null = null,
+  savedIds: ReadonlySet<string> = new Set(),
 ): NextDrink[] {
   const analysis = analyzeTaste(snapshot),
     seen = seenProductIds(history),
     byId = new Map(snapshot.records.map((r) => [r.id, r]));
   const ranked = products
-    .filter((p) => (!category || p.category === category) && !seen.has(p.id))
+    .filter((p) => (!category || p.category === category) && !seen.has(p.id) && !savedIds.has(p.id))
     .map((product) => {
       const sameCategory = analysis.facts.some((f) =>
         [...f.positiveIds, ...f.negativeIds, ...f.neutralIds].some(

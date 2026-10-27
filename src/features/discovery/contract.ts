@@ -230,7 +230,10 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
   );
   return {
     // Older deployments returned uncited catalog exploration here. Never render it as personal advice.
-    recommendations: personalizedDrinks(recommendations),
+    recommendations: personalizedDrinks(
+      recommendations,
+      new Set(wishlist.filter((r) => r.saved).map((r) => r.product_id)),
+    ),
     wishlist,
     evidenceRecords,
     recordCount,
