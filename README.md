@@ -186,7 +186,7 @@ SQL Editor로 적용한 개발 DB 13개 변경의 CLI 이력을 스키마·권�
 
 기본 기록·수정의 이름/날짜/빈티지에도 Done을 연결했습니다. [iOS 완료 동작과 사진 포함 초안의 종료·복구·실제 저장 검증](docs/verification/record-input-done/README.md). Android 완료 동작은 별도 미검증입니다.
 
-내부 베타 Android9/iOS EAS7의 설치·검사·포함 소스와 남은 범위는 [최신 베타 QA](docs/verification/beta-qa-batch/README.md)에 정리했습니다.
+내부 베타 Android10/iOS EAS9의 파일 검사·갤럭시 설치·포함 소스와 남은 범위는 [최신 베타 QA](docs/verification/beta-device-20261027/README.md)에 정리했습니다. Android 직접 확인은 [실기기 수동 QA](docs/beta/android-manual-qa.md)를 참고하세요. [이전 Android9/iOS EAS7 검증](docs/verification/beta-qa-batch/README.md)도 보존합니다.
 
 기본 기록 사진 변환의 중간 캐시 누적을 수정하고 iOS 사진 교체/재실행 및 양 플랫폼 native 모듈에서 확인했습니다. [캐시 정리·계정 초안 격리 검증](docs/verification/record-image-cache/README.md).
 
