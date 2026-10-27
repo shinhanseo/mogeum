@@ -76,7 +76,7 @@ jobs:
         run: npx -y deno check --config supabase/tests/deno.json supabase/tests/verify-summary-provider.ts
       - name: Typecheck and test grounded product research without a provider key
         run: |
-          npx -y deno check --config supabase/tests/deno.json supabase/functions/product-research/provider.ts
+          npx -y deno check --config supabase/tests/deno.json supabase/functions/product-research/provider.ts supabase/functions/product-research/service.ts
           npx -y deno test --allow-sys=hostname --allow-env --config supabase/tests/deno.json supabase/tests/product-research-provider.test.ts
       - name: Typecheck the next-drinks endpoint
         run: npx -y deno check supabase/functions/next-drinks/index.ts
