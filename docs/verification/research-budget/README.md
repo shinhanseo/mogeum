@@ -8,4 +8,4 @@
 - begin/finish RPC는 service_role 전용이다. private 테이블은 RLS 및 클라이언트 접근 차단. 전체 예산을 사용자별로 나누거나 body의 한도로 우회할 수 없다.
 - 공개 Edge endpoint/앱 요청은 아직 없다. 실제 제품·판본/주장 검증·정규화·승격·주간 개인 추천은 후속이다. 현재 앱이 Gemini로 미등록 술을 추천한다고 주장하지 않는다.
 
-검증: PGlite에서 실제 신규 migration을 실행해 RPC 권한·후보 캐시·동시 슬롯·실패 backoff·이전 lease 거부·일/월 시도 제한을 확인했다. orchestration은 차단/캐시에서 provider 미호출·실패 정리·개인 context 거부를 검증했다. 전체421통과/환경12제외. Deno service/provider 타입 검사 통과. 실제 SDK fake transport3/3은 기존 검증이며 실제 Gemini 검색/가격/정확도·실제 PostgreSQL 동시성·관리형 적용은 아직 미수행이다.
+검증: PGlite에서 실제 신규 migration을 실행해 RPC 권한·후보 캐시·동시 슬롯·실패 backoff·이전 lease 거부·일/월 시도 제한을 확인했다. orchestration은 차단/캐시에서 provider 미호출·실패 정리·개인 context 거부를 검증했다. 전체421통과/환경12제외. Deno service/provider 타입 검사 통과. 실제 SDK fake transport3/3은 기존 검증이며 실제 Gemini 검색/가격/정확도·관리형 적용은 아직 미수행이다. 별도로 생성한 임시 PostgreSQL DB에서 동일 키 동시 요청의 acquired/running 분리, 전체 동시2건 제한, 다른 lease 완료 거부와 authenticated RPC 차단을 확인하고 해당 임시 DB를 정리했다. 기존 공유 DB는 초기화하지 않았다.
