@@ -25,7 +25,7 @@ export default function HomeScreen() {
   const openRecord = () => router.push(owner ? '/record' : '/login');
   return <SafeAreaView edges={['top', 'left', 'right']} style={styles.page}>
     <WebStatusSpace /><View style={styles.main}>
-      {tab === 'cellar' ? <CellarScreen onManage={entryId=>router.push({pathname:"/cellar-manage",params:{entryId}})} items={cellar.items} totalCount={cellar.total} loading={cellar.loading} error={cellar.error} onNext={cellar.next} onRetry={cellar.retry} onPhotoError={cellar.refreshPhoto} category={category} onCategory={setCategory} query={query} onQuery={setQuery} onRecord={openRecord} onOpen={entryId => router.push({ pathname: '/detail', params: { entryId } })} /> : <TastePanel key={owner??'browse'} owner={owner} onRecord={openRecord} />}
+      {tab === 'cellar' ? <CellarScreen items={cellar.items} totalCount={cellar.total} loading={cellar.loading} error={cellar.error} onNext={cellar.next} onRetry={cellar.retry} onPhotoError={cellar.refreshPhoto} category={category} onCategory={setCategory} query={query} onQuery={setQuery} onRecord={openRecord} onOpen={entryId => router.push({ pathname: '/detail', params: { entryId } })} /> : <TastePanel key={owner??'browse'} owner={owner} onRecord={openRecord} />}
 
     </View><BottomTabBar selected={tab} onSelect={setTab} onRecord={openRecord} />
   </SafeAreaView>;
