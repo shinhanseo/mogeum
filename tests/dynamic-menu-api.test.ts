@@ -1,3 +1,4 @@
+import { validateMenuResult, menuCatalog } from "../src/features/menu/result-contract";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -28,6 +29,8 @@ test('dynamic menu HTTP uses verified new products, hides candidates and preserv
   const items=[{...parsed.items[0],productId:id,confirmed:true}];
   const result=await request({action:'recommend',photos,items,catalogVersion:SHARED_CATALOG_VERSION});
   assert.equal(result.catalogVersion,SHARED_CATALOG_VERSION);
+  assert.ok(menuCatalog(parsed).some(p=>p.id===id));
+  assert.ok(validateMenuResult(result,items).catalog?.some(p=>p.id===id));
   assert.equal(result.recommendations[0].productId,id);
   assert.deepEqual(result.recommendations[0].similar,[]);
   const invalid=await client.functions.invoke('menu-recommend',{body:{action:'recommend',photos,items:[{...items[0],name:'다른 제품'}],catalogVersion:SHARED_CATALOG_VERSION}});

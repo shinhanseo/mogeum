@@ -1,3 +1,4 @@
+import { parseCatalogDocument, catalogProduct, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION } from "../../../supabase/functions/_shared/catalog-contract";
 import {
   productCandidates,
   products,
@@ -9,6 +10,7 @@ import type {
   MenuRecommendation,
 } from "../../../supabase/functions/_shared/menu-domain";
 export type MenuResult = {
+  catalog?: import("../../../supabase/functions/_shared/product-catalog").Product[];
   evidenceRecords: {
     id: string;
     name: string | null;
@@ -50,7 +52,7 @@ function ids(value: unknown, allowed: Set<string>, nonempty = false): string[] {
   return list as string[];
 }
 export function requireCatalogVersion(value: unknown) {
-  if (obj(value).catalogVersion !== PRODUCT_CATALOG_VERSION)
+  if (![PRODUCT_CATALOG_VERSION, SHARED_CATALOG_VERSION].includes(obj(value).catalogVersion as string))
     throw new Error("MENU_CATALOG_MISMATCH");
 }
 /** Validate before exposing a remote result. Ownership is enforced by verified JWT/RLS on the server, not by this client check. */
@@ -68,7 +70,8 @@ export function validateMenuResult(
     (data.recordCount as number) < 0
   )
     fail();
-  if (data.catalogSize !== products.length) fail();
+  const catalog = menuCatalog(value);
+  if (data.catalogSize !== catalog.length) fail();
   const records = array(data.evidenceRecords, 1000);
   if (records.length > (data.recordCount as number)) fail();
   const recordById = new Map<string, Record<string, unknown>>();
@@ -106,7 +109,7 @@ export function validateMenuResult(
     const item = typeof r.itemId === "string" ? byId.get(r.itemId) : undefined;
     if (!item || seen.has(item.id)) fail();
     seen.add(item.id);
-    const product = productCandidates(item.name).find(
+    const product = productCandidates(item.name, catalog).find(
       (p) => p.id === item.productId,
     );
     if (r.productId !== (product?.id ?? null)) fail();
@@ -181,7 +184,7 @@ export function validateMenuResult(
       fail();
   }
   if (used.size !== allowed.size) fail();
-  return value as MenuResult;
+  return data.catalogVersion === SHARED_CATALOG_VERSION ? {...data, catalog} as MenuResult : value as MenuResult;
 }
 export function menuFailureMessage(
   error: unknown,
@@ -198,4 +201,16 @@ export function menuFailureMessage(
   return action === "parse"
     ? "메뉴를 정리하지 못했어요. 연결을 확인하고 다시 시도해주세요."
     : "저장 또는 추천을 완료하지 못했어요. 입력은 보관했어요. 다시 시도해주세요.";
+}
+
+/** Documents are trusted only from the authenticated server; format validation is not factual verification. */
+export function menuCatalog(value: unknown) {
+ requireCatalogVersion(value);
+ const data=obj(value);
+ if(data.catalogVersion===PRODUCT_CATALOG_VERSION)return products;
+ try {
+  const catalog=array(data.catalog,MAX_CATALOG_PRODUCTS).map(raw=>catalogProduct(parseCatalogDocument(raw)));
+  if(new Set(catalog.map(p=>p.id)).size!==catalog.length||catalog.some(p=>!p.features.length))fail();
+  return catalog;
+ } catch { return fail(); }
 }

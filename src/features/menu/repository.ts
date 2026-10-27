@@ -1,3 +1,4 @@
+import { SHARED_CATALOG_VERSION, verifiedCatalogRow, catalogProduct, MAX_CATALOG_PRODUCTS } from "../../../supabase/functions/_shared/catalog-contract";
 import { refreshMenuEvidence } from "./evidence";
 import { tastePhotoUrls } from "../taste/repository";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -9,7 +10,7 @@ import {
   type MenuItem,
 } from "../../../supabase/functions/_shared/menu-domain";
 import {
-  requireCatalogVersion,
+  requireCatalogVersion, menuCatalog,
   validateMenuResult,
   type MenuResult,
 } from "./result-contract";
@@ -35,12 +36,12 @@ export async function menuRequest(
   owner: string,
   photos: MenuPhoto[],
   items?: MenuItem[],
-): Promise<{ items: MenuItem[] } | MenuResult> {
+): Promise<{ items: MenuItem[]; catalog: import("../../../supabase/functions/_shared/product-catalog").Product[] } | MenuResult> {
   validatePhotos(photos);
-  if (items) validateItems(items, photos);
+  if (items) validateItems(items, photos, "stored");
   const scoped = await menuClient(client, owner);
   const { data, error } = await scoped.functions.invoke("menu-recommend", {
-    body: { action: items ? "recommend" : "parse", photos, items },
+    body: { action: items ? "recommend" : "parse", photos, items, catalogVersion: SHARED_CATALOG_VERSION },
     timeout: 30000,
   });
   if (error) {
@@ -61,7 +62,8 @@ export async function menuRequest(
   }
   requireCatalogVersion(data);
   if (items) return validateMenuResult(data, items);
-  return { items: validateItems(data?.items, photos) };
+  const catalog=menuCatalog(data);
+  return { items: validateItems(data?.items, photos, "catalog", false, catalog), catalog };
 }
 export async function saveMenuSession(
   client: SupabaseClient,
@@ -110,4 +112,21 @@ export async function loadMenuEvidence(
         result.evidenceRecords.map((r) => r.id),
       ),
   });
+}
+
+export async function loadMenuCatalog(client: SupabaseClient, owner: string) {
+ const scoped=await menuClient(client,owner), signal=AbortSignal.timeout(20000);
+ const catalog: import("../../../supabase/functions/_shared/product-catalog").Product[]=[];
+ let cursor:string|null=null;
+ for(;;){
+  let query=scoped.from("product_catalog").select("id,family_id,category,status,revision,document").eq("status","verified").order("id").limit(200);
+  if(cursor)query=query.gt("id",cursor);
+  const {data,error}=await query.abortSignal(signal);
+  if(error||!data)throw new Error("MENU_CATALOG_UNAVAILABLE");
+  catalog.push(...data.map(row=>catalogProduct(verifiedCatalogRow(row))));
+  if(catalog.length>MAX_CATALOG_PRODUCTS)throw new Error("MENU_CATALOG_UNAVAILABLE");
+  if(data.length<200)break;
+  cursor=data.at(-1)!.id;
+ }
+ return catalog;
 }

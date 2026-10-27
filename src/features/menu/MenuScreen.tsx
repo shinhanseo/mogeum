@@ -23,7 +23,8 @@ import { Icon } from "../../components/Icon";
 import { colors, fonts, typography } from "../../theme/tokens";
 import {
   productCandidates,
-  products,
+  products as bundledProducts,
+  type Product,
   type MenuItem,
   type MenuRecommendation,
 } from "../../../supabase/functions/_shared/menu-domain";
@@ -39,6 +40,7 @@ export type MenuStep =
   | "evidence"
   | "original";
 type Props = {
+  catalog?: Product[];
   draft: MenuDraft;
   restoreState?: "loading" | "ready" | "failed";
   onRestoreRetry?: () => void;
@@ -61,6 +63,7 @@ type Props = {
   onEvidence: (id: string) => void;
 };
 export function MenuScreen(p: Props) {
+  const products=p.result?.catalog ?? p.catalog ?? bundledProducts;
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<MenuItem | null>(null);
@@ -341,13 +344,13 @@ export function MenuScreen(p: Props) {
                       <Text style={s.primary}>수정</Text>
                     </Pressable>
                   </View>
-                  {productCandidates(item.name).length > 1 && (
+                  {productCandidates(item.name, products).length > 1 && (
                     <Text style={s.body}>
                       빈티지를 확인해 주세요. 다른 연도라면 제품을 선택하지
                       않아도 돼요.
                     </Text>
                   )}
-                  {productCandidates(item.name).map((candidate) => (
+                  {productCandidates(item.name, products).map((candidate) => (
                     <ChoiceChip
                       key={candidate.id}
                       compact
@@ -566,7 +569,7 @@ export function MenuScreen(p: Props) {
               </Text>
             </View>
             {selectedRec.productId && (
-              <ProductSource productId={selectedRec.productId} />
+              <ProductSource catalog={products} productId={selectedRec.productId} />
             )}
             <Button
               label="비교에 쓰인 내 기록 보기"
@@ -851,13 +854,13 @@ export function MenuScreen(p: Props) {
                     maxLength={60}
                   />
                   <Text style={s.label}>제품 확인</Text>
-                  {productCandidates(editing.name).length > 1 && (
+                  {productCandidates(editing.name, products).length > 1 && (
                     <Text style={s.body}>
                       메뉴에 빈티지가 없어요. 실제 병의 연도를 확인한 뒤 선택해
                       주세요.
                     </Text>
                   )}
-                  {productCandidates(editing.name).map((candidate) => (
+                  {productCandidates(editing.name, products).map((candidate) => (
                     <ChoiceChip
                       key={candidate.id}
                       label={`이 제품이 맞아요 · ${candidate.name}`}
@@ -912,9 +915,9 @@ export function MenuScreen(p: Props) {
     </SafeAreaView>
   );
 }
-function ProductSource({ productId }: { productId: string }) {
+function ProductSource({ productId, catalog }: { productId: string; catalog: Product[] }) {
   const [error, setError] = useState(false);
-  const product = products.find((p) => p.id === productId);
+  const product = catalog.find((p) => p.id === productId);
   if (!product) return null;
   return (
     <View style={s.section}>

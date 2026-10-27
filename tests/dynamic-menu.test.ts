@@ -1,3 +1,4 @@
+import { menuCatalog, validateMenuResult } from "../src/features/menu/result-contract";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { products, productCandidates } from '../supabase/functions/_shared/product-catalog';
@@ -20,6 +21,9 @@ test('new server catalog identity resolves only matching aliases and preserves O
  assert.throws(()=>validateItems([{...items[0],name:'다른 술'}],[photo],'catalog',false,[product]));
  const result=await stableMenuRecommendation(items,async()=>snapshot,[product]);
  assert.equal(result.catalogVersion,SHARED_CATALOG_VERSION);
+ assert.equal(menuCatalog(result)[0].id,product.id);
+ assert.equal(validateMenuResult(result,items).catalog?.[0].id,product.id);
+ assert.throws(()=>menuCatalog({...result,catalog:[{...product,source:{...product.source,url:"https://localhost/private"}}]}));
  assert.equal(result.catalogSize,1);
  assert.equal(result.recommendations[0].productId,product.id);
  assert.equal(result.recommendations[0].status,'unmatched');

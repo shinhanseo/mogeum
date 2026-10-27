@@ -1,3 +1,4 @@
+import { products as bundledProducts, type Product } from "../../../supabase/functions/_shared/product-catalog";
 import { menuRequestQueue } from "./request-queue";
 import { menuFailureMessage } from "./result-contract";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,7 +25,7 @@ import {
 } from "./review";
 import { submitMenu } from "./submission";
 import {
-  menuRequest,
+  menuRequest, loadMenuCatalog,
   saveMenuSession,
   loadMenuEvidence,
   type MenuResult,
@@ -61,9 +62,17 @@ export function MenuFlow({
   const [evidencePhotos, setEvidencePhotos] = useState<Record<string, string>>(
     {},
   );
+  const [catalog,setCatalog]=useState<Product[]>(adapter ? bundledProducts : []);
   const [result, setResult] = useState<MenuResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useEffect(()=>{
+    if(adapter)return;
+    let active=true;
+    const client=getSupabase();
+    if(client)void loadMenuCatalog(client,owner).then(rows=>{if(active)setCatalog(rows);}).catch(()=>{if(active)setError("제품 정보를 불러오지 못했어요. 메뉴 다시 읽기를 눌러 다시 확인해주세요.");});
+    return ()=>{active=false;};
+  },[owner,adapter]);
   const alive = useRef(true);
   const epoch = useRef(0);
   const lock = useRef(false);
@@ -340,9 +349,10 @@ export function MenuFlow({
     async parse(photos) {
       const client = getSupabase();
       if (!client) throw new Error("NO_BACKEND");
-      return (
-        (await menuRequest(client, owner, photos)) as { items: MenuItem[] }
-      ).items;
+      const version=epoch.current;
+      const value=await menuRequest(client,owner,photos) as {items:MenuItem[];catalog:Product[]};
+      if(valid(version))setCatalog(value.catalog);
+      return value.items;
     },
     async recommend(photos, items) {
       const client = getSupabase();
@@ -472,6 +482,7 @@ export function MenuFlow({
   return (
     <>
       <MenuScreen
+        catalog={catalog}
         draft={draft}
         restoreState={restoreState}
         onRestoreRetry={() => void loadDraft()}
