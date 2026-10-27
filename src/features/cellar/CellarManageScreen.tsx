@@ -5,8 +5,8 @@ import { Button } from '../../components/Button';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { colors, fonts, layout, radius, space, typography } from '../../theme/tokens';
 import type { CellarDeletionContext } from './deletion';
-export function CellarManageScreen({ context, onClose, onRecords, onDelete, onReload }: { context: CellarDeletionContext; onClose: () => void; onRecords: (id: string | null) => void; onDelete: () => Promise<void>; onReload: () => void }) {
-  const [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [conflict, setConflict] = useState(false), [uncertain, setUncertain] = useState(false);
+export function CellarManageScreen({ context, onClose, onRecords, onDelete, onReload, initialConfirm = false }: { context: CellarDeletionContext; onClose: () => void; onRecords: (id: string | null) => void; onDelete: () => Promise<void>; onReload: () => void; initialConfirm?: boolean }) {
+  const [confirm, setConfirm] = useState(initialConfirm), [busy, setBusy] = useState(false), [error, setError] = useState(''), [conflict, setConflict] = useState(false), [uncertain, setUncertain] = useState(false);
   const lock = useRef(false);
   async function remove() {
     if (lock.current) return;

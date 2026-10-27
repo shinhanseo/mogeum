@@ -10,18 +10,18 @@ import { clearDraft } from '../src/features/tasting/persistence';
 import { drainPhotoDeletions } from '../src/features/records/edit';
 import { colors, typography } from '../src/theme/tokens';
 export default function Manage() {
-  const auth = useAuth(); const { entryId } = useLocalSearchParams<{ entryId: string }>();
+  const auth = useAuth(); const { entryId, confirm } = useLocalSearchParams<{ entryId: string; confirm?: string }>();
   if (auth.status === 'loading') return <ActivityIndicator color={colors.primary} />;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
-  return <Connected key={`${auth.session.user.id}:${entryId}`} owner={auth.session.user.id} entryId={entryId} />;
+  return <Connected key={`${auth.session.user.id}:${entryId}`} owner={auth.session.user.id} entryId={entryId} initialConfirm={confirm === "1"} />;
 }
-function Connected({ owner, entryId }: { owner: string; entryId: string }) {
+function Connected({ owner, entryId, initialConfirm }: { owner: string; entryId: string; initialConfirm: boolean }) {
   const router = useRouter(); const [context, setContext] = useState<CellarDeletionContext | null>(null), [error, setError] = useState(false), [revision, setRevision] = useState(0); const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => { let active = true; const client = getSupabase(); if (client) void cellarDeletionContext(client, entryId).then(value => { if (active) setContext(value); }).catch(() => { if (active) setError(true); }); return () => { active = false; }; }, [entryId, revision]);
   const close = () => router.replace('/');
   const reload = () => { setContext(null); setError(false); setRevision(n => n + 1); };
-  if (context) return <CellarManageScreen key={revision} context={context} onClose={close} onReload={reload} onRecords={id => { if (!id) return; router.push(context.deleted || context.count > 1 ? { pathname: '/detail', params: { entryId } } : { pathname: '/edit', params: { recordId: id } }); }} onDelete={async () => {
+  if (context) return <CellarManageScreen key={revision} context={context} initialConfirm={initialConfirm} onClose={close} onReload={reload} onRecords={id => { if (!id) return; router.push(context.deleted || context.count > 1 ? { pathname: '/detail', params: { entryId } } : { pathname: '/edit', params: { recordId: id } }); }} onDelete={async () => {
     const client = getSupabase(); if (!client) throw Error('UNAVAILABLE');
     const ids = await deleteCellarEntry(client, owner, context);
     // Server deletion is authoritative. Local cleanup failure must not turn a completed delete into a new delete request.
