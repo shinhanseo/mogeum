@@ -42,6 +42,8 @@ iOS 컨테이너 경로가 달라져도 현재 앱 폴더에 남아 있는 메�
 
 Galaxy QA로 술장 카드 간격·내 취향 초기/요약/갱신 레이아웃과 원본 주종 SVG의 Android 표시를 보완했습니다. [확인한 화면과 배경 분리 검증 범위](docs/verification/galaxy-taste-cutout/README.md).
 
+술장 카드의 관리 버튼에서 날짜별 수정·삭제와 전체 술 삭제를 구분합니다. [삭제 계약과 검증 범위](docs/verification/cellar-deletion/README.md).
+
 ## 출시 범위
 
 - 사진만으로 기록 → 질문형 테이스팅 노트 → 술장·검색·상세·수정·삭제·재음용 기록

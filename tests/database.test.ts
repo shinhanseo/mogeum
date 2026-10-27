@@ -265,6 +265,48 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await as(b);await assert.rejects(db.query('select public.complete_photo_deletion($1)',[Number(job.id)]),{code:'42501'});await as(a);
       if(!databaseUrl){await db.query('delete from storage.objects where name=$1',[path(a,70)]);assert.equal((await db.query('select public.complete_photo_deletion($1) result',[Number(job.id)])).rows[0].result,true);}
     });
+    await t.test('whole cellar deletion checks ownership and exact confirmed group; retries keep photo jobs and tombstones', async () => {
+      await as(a); await uploadMetadata(a,90001);
+      const one=await saved(90001,{enteredName:'Delete group',category:'whisky',photo:photo(a,90001)});
+      const two=await saved(90002,{enteredName:'Second date',category:'whisky'},one.cellarEntryId);
+      const context=async()=> (await db.query<{result:{snapshot:string;count:number;deleted:boolean}}>('select public.cellar_deletion_context($1) result',[one.cellarEntryId])).rows[0].result;
+      const before=await context();assert.equal(before.count,2);
+      await as(b);
+      await code('select public.cellar_deletion_context($1)',[one.cellarEntryId],'P0002');
+      await code('select public.delete_cellar_entry($1,$2)',[one.cellarEntryId,before.snapshot],'P0002');
+      await as(a);
+      const three=await saved(90003,{enteredName:'New after confirmation',category:'whisky'},one.cellarEntryId);
+      await code('select public.delete_cellar_entry($1,$2)',[one.cellarEntryId,before.snapshot],'40001');
+      assert.equal((await context()).count,3);
+      const fresh=await context();
+      await db.query('select public.edit_tasting_record($1,$2,$3::jsonb)',[two.recordId,two.revision,{rating:4}]);
+      await code('select public.delete_cellar_entry($1,$2)',[one.cellarEntryId,fresh.snapshot],'40001');
+      const confirmed=await context();
+      type Receipt={recordIds:string[];replayed:boolean};
+      const remove=async()=> (await db.query<{result:Receipt}>('select public.delete_cellar_entry($1,$2) result',[one.cellarEntryId,confirmed.snapshot])).rows[0].result;
+      const result=await remove();assert.equal(result.replayed,false);assert.deepEqual(result.recordIds.sort(),[one.recordId,two.recordId,three.recordId].sort());
+      assert.equal((await db.query('select id from public.cellar_entries where id=$1',[one.cellarEntryId])).rows.length,0);
+      assert.equal((await context()).deleted,true);
+      const retry=await remove();assert.equal(retry.replayed,true);assert.deepEqual(retry.recordIds,result.recordIds);
+      assert.equal((await db.query('select id from public.photo_deletion_jobs where storage_path=$1',[path(a,90001)])).rows.length,1);
+      await code('select * from private.deleted_cellar_entries',[],'42501');
+      await assert.rejects(saved(90001,{enteredName:'Delete group',category:'whisky',photo:photo(a,90001)}),{code:'P0002'});
+    });
+    await t.test('a concurrent new experience survives an older whole-drink confirmation', {skip: !databaseUrl ? 'Requires independent PostgreSQL sessions' : false}, async () => {
+      await as(a); const one=await saved(90011,{enteredName:'Concurrent group',category:'beer'});
+      const before=(await db.query<{result:{snapshot:string}}>('select public.cellar_deletion_context($1) result',[one.cellarEntryId])).rows[0].result;
+      const writer=postgres(databaseUrl!,{max:1,onnotice:()=>{}}),remover=postgres(databaseUrl!,{max:1,onnotice:()=>{}});
+      try {
+        for(const client of [writer,remover]) { await client`select set_config('request.jwt.claim.sub',${a},false)`; await client.unsafe('set role authenticated'); }
+        await writer.unsafe('begin');
+        await writer`select public.create_tasting_record(${operation(90012)}::uuid,${writer.json({enteredName:'New concurrent date',category:'beer'})}::jsonb,${one.cellarEntryId}::uuid)`;
+        const deleting=remover`select public.delete_cellar_entry(${one.cellarEntryId}::uuid,${before.snapshot})`.then(()=>({code:'unexpected-success'}),e=>({code:e.code as string}));
+        assert.equal(await Promise.race([deleting,new Promise(resolve=>setTimeout(()=>resolve('waiting'),30))]),'waiting');
+        await writer.unsafe('commit');
+        assert.equal((await deleting).code,'40001');
+        assert.equal((await db.query<{n:number}>('select count(*)::int n from public.tasting_records where cellar_entry_id=$1',[one.cellarEntryId])).rows[0].n,2);
+      } finally { await writer.unsafe('rollback').catch(()=>{}); await Promise.all([writer.end(),remover.end()]); }
+    });
     await t.test('photo replacement and explicit regrouping are atomic, owner-scoped and replay safely', async () => {
       await as(a); await uploadMetadata(a,90); await uploadMetadata(a,91);
       const source=await saved(90,{enteredName:'Source',category:'whisky',rating:4,photo:photo(a,90)});
