@@ -1,6 +1,7 @@
+import { useConfirmDialog } from '../../components/ConfirmDialog';
 import { useScreenBack } from '../../hooks/useScreenBack';
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../components/Button';
 import { ChoiceChip } from '../../components/ChoiceChip';
@@ -15,6 +16,7 @@ import { ModeSheet } from './ModeSheet';
 type Props = { initial: TastingDraft; onChange: (draft: TastingDraft) => void; onSave: (draft: TastingDraft, note: string, edited: boolean) => Promise<void>; onClose: () => void; previewOnly?: boolean };
 const categoryLabels = { whisky:'위스키',wine:'와인',beer:'맥주',traditional:'전통주' };
 export function TastingComposer({ initial, onChange, onSave, onClose, previewOnly }: Props) {
+  const dialog = useConfirmDialog();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState(initial);
   const [view, setView] = useState<TastingView>(()=>restoredTastingView(initial));
@@ -94,7 +96,7 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
     if(edited&&value.composition?.sourceRevision===value.revision){changeView('preview',value);return;}
     const generated = composeNote(value);
     if (edited && note !== generated) {
-      Alert.alert('직접 다듬은 문장이 있어요', '기존 문장을 유지하거나 새 답변으로 다시 정리할 수 있어요.', [
+      dialog.show('직접 다듬은 문장이 있어요', '기존 문장을 유지하거나 새 답변으로 다시 정리할 수 있어요.', [
         { text:'기존 문장 유지', onPress:()=>changeView('preview',value) },
         { text:'다시 정리', onPress:()=>{setNote(generated);setEdited(false);changeView('preview',{...value,composition:{text:generated,edited:false,sourceRevision:value.revision}});} },
       ]); return;
@@ -171,7 +173,7 @@ export function TastingComposer({ initial, onChange, onSave, onClose, previewOnl
     </ScrollView>
     <View style={styles.actions}>{view==='questions'?<><Button label={index===questions.length-1?'내 노트 미리보기':'다음'} onPress={()=>move(index+1)}/><Button label={draft.mode==='deep'?'이 질문 건너뛰기':'건너뛰기'} variant="text" onPress={skip}/></>:view==='preview'?<><Button label={note.trim()?'노트 저장':'기록으로 돌아가기'} loading={saving} onPress={()=>{if(note.trim())void save();else onClose();}}/><Button label="답변 수정" disabled={saving||retryOnly} variant="text" onPress={()=>changeView('questions')}/></>:<><Button label="수정한 문장 적용" onPress={()=>{setNote(editText);setEdited(true);changeView('preview',{...draft,composition:{text:editText,edited:true,sourceRevision:draft.revision}});}}/><Button label="취소" variant="text" onPress={cancelEdit}/></>}</View>
     <ModeSheet visible={sheet} category={draft.category} onChoose={selectMode} onClose={()=>setSheet(false)}/>
-  </KeyboardAvoidingView></SafeAreaView>;
+  </KeyboardAvoidingView>{dialog.modal}</SafeAreaView>;
 }
 const styles=StyleSheet.create({
   page:{flex:1,backgroundColor:colors.background},flex:{flex:1},header:{height:48,marginHorizontal:24,flexDirection:'row',alignItems:'center'},back:{minWidth:44,minHeight:44,justifyContent:'center'},backText:{fontFamily:fonts.bold,fontSize:24,color:colors.primary},nav:{position:'absolute',left:44,right:44,textAlign:'center',...typography.questionNav,color:colors.text,pointerEvents:'none'},mode:{marginLeft:'auto',minWidth:84,minHeight:44,justifyContent:'center',alignItems:'center'},modeText:{...typography.button,color:colors.primary},
