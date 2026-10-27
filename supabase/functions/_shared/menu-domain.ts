@@ -234,8 +234,8 @@ export function parseMenu(photos: MenuPhoto[]): MenuItem[] {
           .trim();
         const serving =
           labelText.match(
-            /\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b|한\s*잔|글라스|바틀|보틀|glass|bottle/iu,
-          )?.[0] ?? null;
+            /(?:\b(?:glass|bottle|pint)\b|한\s*잔|글라스|바틀|보틀|파인트)\s*\(?\s*\d+(?:\.\d+)?\s*(?:ml|cl|l)\b\s*\)?|\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b\s*\(?\s*(?:\b(?:glass|bottle|pint)\b|한\s*잔|글라스|바틀|보틀|파인트)\)?|\b\d+(?:\.\d+)?\s*(?:ml|cl|l)\b|한\s*잔|글라스|바틀|보틀|파인트|\b(?:glass|bottle|pint)\b/iu,
+          )?.[0]?.trim() ?? null;
         // OCR can damage one of two prices (15,000% / 150,000), making the
         // valid-price filter see only one. Preserve the ambiguity before filtering.
         const amountHints = [

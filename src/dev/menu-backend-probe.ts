@@ -77,7 +77,7 @@ export async function probeNativeMenu(input: {
     await phase("server_parse_native_ocr");
     const parsed = await invoke(client, { action: "parse", photos });
     draft.items = validateItems(parsed.items, photos);
-    ensure(parsed.parser === "geometry-v4" && draft.items.length > 0);
+    ensure(parsed.parser === "geometry-v5" && draft.items.length > 0);
     for (const photo of photos)
       ensure(draft.items.some((item) => item.photoId === photo.id));
     await pass("actual_edge_parse_from_both_photos");

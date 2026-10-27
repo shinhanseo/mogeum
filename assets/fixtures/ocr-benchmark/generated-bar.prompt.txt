@@ -1,0 +1,18 @@
+Mode: built-in image_gen. Use case: photorealistic-natural.
+Prompt: Generate one legible smartphone photograph of a printed drinks menu on a dark walnut bar table, portrait 2:3. Entire paper visible; warm bright bar lighting, subtle paper grain, 2-degree perspective, no glare or shadow on text. Large black typography with burgundy headings. Three aligned columns item/serving/price. No phones, hands or bottles. Render the following text verbatim; pipes indicate alignment, not literal characters.
+모금 바
+DRINK MENU
+WHISKY · 위스키
+글렌리벳 12년 | 30ml | 15,000원
+메이커스 마크 | 30ml | 12,000원
+WINE · 와인
+클라우디 베이 소비뇽 블랑 2024 | Glass 150ml | 18,000원
+클라우디 베이 소비뇽 블랑 2024 | Bottle 750ml | 90,000원
+BEER · 맥주
+기네스 드래프트 | Pint 568ml | 11,000원
+바이엔슈테판 헤페바이스비어 | 500ml | 12,000원
+TRADITIONAL · 전통주
+화요 25 | Bottle 375ml | 25,000원
+복순도가 손막걸리 | Bottle 935ml | 28,000원
+Footer: OCR 테스트용 가상 메뉴 · 실제 판매 가격이 아닙니다.
+No intentional blur. Preserve all wine names/vintages and distinct glass/bottle servings and prices.
