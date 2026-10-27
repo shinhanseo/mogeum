@@ -1,3 +1,4 @@
+import { composerContext, composerStorageKey } from "../src/features/records/composer-draft";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { products } from "../supabase/functions/_shared/product-catalog";
@@ -198,4 +199,12 @@ test("database row identity/status must match its document before use", () => {
       { revision: 0 },
     ]
   ) assert.throws(() => verifiedCatalogRow({ ...row, ...patch }));
+});
+
+test("dynamic 160-character product identities remain valid draft contexts without breaking old keys", () => {
+ const owner="10000000-0000-4000-8000-000000000001", id="a".repeat(160);
+ assert.ok(composerStorageKey(owner,composerContext(undefined,id)).endsWith(`product:${id}`));
+ assert.ok(composerStorageKey(owner,"product:legacy_id").endsWith("product:legacy_id"));
+ assert.throws(()=>composerContext(undefined,"a".repeat(161)));
+ assert.throws(()=>composerStorageKey(owner,"product:../bad"));
 });
