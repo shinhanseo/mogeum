@@ -344,3 +344,25 @@ test("percent OCR suffix cannot turn into a KRW price, valid ABV plus price stil
   assert.equal(parseMenu([photo(["맥주 15,000%", "맥주 15,000％"])]).length, 0);
   assert.equal(parseMenu([photo(["맥주 5.4% 9,000원"])])[0].price, 9000);
 });
+
+test('serving label and volume stay together instead of leaking into product names',()=>{
+ const items=parseMenu([photo([
+  '클라우디 베이 소비뇽 블랑 2024 Glass 150ml 18,000원',
+  '클라우디 베이 소비뇽 블랑 2024 Bottle 750ml 90,000원',
+  '기네스 드래프트 Pint 568ml 11,000원',
+  '화요 25 보틀 375ml 25,000원',
+  '복순도가 손막걸리 935ml Bottle 28,000원',
+  '클라우디 베이 소비뇽 블랑 2024 Bottle (750ml) 90,000원',
+ ])]);
+ assert.deepEqual(items.map(i=>[i.name,i.serving,i.price]),[
+  ['클라우디 베이 소비뇽 블랑 2024','Glass 150ml',18000],
+  ['클라우디 베이 소비뇽 블랑 2024','Bottle 750ml',90000],
+  ['기네스 드래프트','Pint 568ml',11000],
+  ['화요 25','보틀 375ml',25000],
+  ['복순도가 손막걸리','935ml Bottle',28000],
+  ['클라우디 베이 소비뇽 블랑 2024','Bottle (750ml)',90000],
+ ]);
+ assert.notEqual(items[0].id,items[1].id);
+ const named=parseMenu([photo(['Bottled in Bond Bourbon 30ml 15,000원'])])[0];
+ assert.equal(named.name,'Bottled in Bond Bourbon');
+});

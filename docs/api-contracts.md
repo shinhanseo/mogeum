@@ -158,3 +158,7 @@ wishlist는 product_id/saved/revision이며 사진·테이스팅 기록이 아�
 ## 술장 전체 삭제 · 2026-10-27
 
 [술장 삭제 계약·검증](verification/cellar-deletion/README.md). 단일 경험 삭제와 별도이며 전체 기록 수/snapshot을 확인한 RPC만 실행한다. 40001은 최신 내용을 재조회해 다시 확인해야 하고, 응답 유실은 같은 snapshot으로 재시도한다.
+
+## 메뉴 해석 geometry-v5
+
+`Glass 150ml`, `Bottle 750ml`, `Pint 568ml` 및 단위 앞뒤의 잔/병 표시를 하나의 serving으로 보존하고 제품명에서 전체 구문을 제외한다. 동일 와인의 잔/병을 합치지 않으며 price/product 확인 규칙은 유지한다. [생성 사진 관측 및 제약](verification/generated-menu-ocr/README.md).

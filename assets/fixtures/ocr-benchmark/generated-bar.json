@@ -1,0 +1,47 @@
+{
+  "id": "generated-bar",
+  "label": "생성된 바 메뉴 사진 · 한영 혼합·잔/병 구분",
+  "parseable": true,
+  "expected": [
+    {
+      "name": "글렌리벳 12년",
+      "price": 15000,
+      "serving": "30ml"
+    },
+    {
+      "name": "메이커스 마크",
+      "price": 12000,
+      "serving": "30ml"
+    },
+    {
+      "name": "클라우디 베이 소비뇽 블랑 2024",
+      "price": 18000,
+      "serving": "Glass 150ml"
+    },
+    {
+      "name": "클라우디 베이 소비뇽 블랑 2024",
+      "price": 90000,
+      "serving": "Bottle 750ml"
+    },
+    {
+      "name": "기네스 드래프트",
+      "price": 11000,
+      "serving": "Pint 568ml"
+    },
+    {
+      "name": "바이엔슈테판 헤페바이스비어",
+      "price": 12000,
+      "serving": "500ml"
+    },
+    {
+      "name": "화요 25",
+      "price": 25000,
+      "serving": "Bottle 375ml"
+    },
+    {
+      "name": "복순도가 손막걸리",
+      "price": 28000,
+      "serving": "Bottle 935ml"
+    }
+  ]
+}

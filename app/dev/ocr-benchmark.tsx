@@ -8,6 +8,7 @@ import { randomUUID } from "expo-crypto";
 import { Button } from "../../src/components/Button";
 import { colors, typography } from "../../src/theme/tokens";
 import manifest from "../../assets/fixtures/ocr-benchmark/manifest.json";
+import generatedMenu from "../../assets/fixtures/ocr-benchmark/generated-bar.json";
 import type { BenchmarkCase } from "../../src/features/menu/benchmark-metrics";
 import { benchmarkMetrics } from "../../src/features/menu/benchmark-metrics";
 import {
@@ -51,7 +52,7 @@ type Report = {
 };
 const elapsed = (start: number) => Math.round(performance.now() - start);
 export default function OcrBenchmark() {
-  const query = useLocalSearchParams<{ run?: string; runId?: string }>(),
+  const query = useLocalSearchParams<{ run?: string; runId?: string; fixture?: string }>(),
     router = useRouter();
   const runId =
     query.runId && /^[a-z0-9_-]{1,60}$/i.test(query.runId)
@@ -90,7 +91,7 @@ export default function OcrBenchmark() {
     try {
       setError("");
       await publish();
-      for (const fixture of ocrBenchmarkFixtures) {
+      for (const fixture of query.fixture === "generated-bar" ? [generatedMenu as BenchmarkCase] : ocrBenchmarkFixtures) {
         if (!active.current || sequence.current !== token) {
           value.status = "cancelled";
           break;
@@ -191,7 +192,7 @@ export default function OcrBenchmark() {
       ).catch(() => {});
       busy.current = false;
     }
-  }, [runId]);
+  }, [runId, query.fixture]);
   const stop = useCallback(() => {
     active.current = false;
     sequence.current++;
