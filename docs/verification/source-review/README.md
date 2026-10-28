@@ -11,3 +11,5 @@ mogeum-dev에 호출 예산 migration과 관리자 함수를 배포했다. 실�
 이후 provider429에서 예약을 실패 처리하고 전체 조사에15분 backoff를 적용한다. 캐시는 계속 읽고 신규 제품명으로 우회해도 모델을 호출하지 않는다. 서비스 전용 pause RPC는60~3600초만 허용하고 일반 클라이언트는 실행하지 못한다. 공급자 backoff는 앱 요약의 하루5회 제한과 별개다.
 
 검증: 타입·린트·단위427통과/환경13제외, 실제SDK fake429의1회 요청·lease 정리·공유 pause1/1통과, 실제 로컬 Auth/DB/Storage HTTP9/9통과. 사용자 토큰/공개 키/누락 키 거부와 관리자 잘못된 입력의 모델 호출 전 거부 포함. 실제 네이티브 추천 UI·성공한 미등록4주종 Gemini E2E·검토 승격은 남아 있다.
+
+AI Studio에서 Mogeum Dev 무료 등급을 확인했고, [공식 요금표](https://ai.google.dev/gemini-api/docs/pricing)상3.5 Flash-Lite 검색은 무료 등급 미제공임을 확인했다. 일반 요약 GEMINI_MODEL과 검색 전용 MOGEUM_RESEARCH_MODEL을 분리하고 검색 기본값을2.5 Flash-Lite로 설정했다. 후자는 공식 표상 무료 검색 지원 모델이며 실제 성공 여부는 backoff 종료 후 별도 검증한다. 유료 전환/결제 설정은 변경하지 않았다.

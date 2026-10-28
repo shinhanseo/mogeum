@@ -103,7 +103,7 @@ Galaxy QA로 술장 카드 간격·내 취향 초기/요약/갱신 레이아웃�
 
 ## 실행 안내
 
-Node **24.22.0**, npm **11.12.1**, Expo **58.0.19**, React Native **0.88.0**, React **19.3.0** 기준입니다. 실제 의존성은 package-lock.json에 고정합니다.
+Node **24.22.0**, npm **11.12.1**, Expo **58.0.20**, React Native **0.88.0**, React **19.3.0** 기준입니다. 실제 의존성은 package-lock.json에 고정합니다.
 
 ```sh
 nvm use

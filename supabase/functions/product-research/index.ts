@@ -4,7 +4,8 @@ import {reviewResearchSources} from '../_shared/source-review.ts';
 import {budgetedProductResearch} from './service.ts';
 const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const key=Deno.env.get('GOOGLE_GENERATIVE_AI_API_KEY');
-const model=Deno.env.get('GEMINI_MODEL')??'gemini-3.5-flash-lite';
+// Search grounding has different free-tier support from plain text summarization.
+const model=Deno.env.get('MOGEUM_RESEARCH_MODEL')??'gemini-2.5-flash-lite';
 Deno.serve(researchAdminHandler({secret:Deno.env.get("MOGEUM_RESEARCH_ADMIN_SECRET")??serviceKey,async run(input){
  if(!serviceKey||!key)throw Error('PRODUCT_RESEARCH_NOT_CONFIGURED');
  const signal=AbortSignal.timeout(40000);
