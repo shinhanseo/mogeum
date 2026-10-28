@@ -4,4 +4,4 @@
 
 새 handler는 SUMMARY_DAILY_LIMIT/다음UTC자정까지 retryAfterSeconds, SUMMARY_COOLDOWN/20초, 실제 provider429의 AI_PROVIDER_LIMITED/60초를 구분한다. 공급자 오류 원문은 반환하지 않는다. 구버전 migration의 limited도 RATE_LIMITED로 계속 지원하며 새 앱은 이 경우 하루 한도를 추측하지 않는 일반 대기 문구를 사용한다. 기존 저장 기록/요약/캐시를 지우지 않는다.
 
-단위429통과/환경13제외. PGlite 실제 전체 migration에서 cooldown·daily-limit·UTC 다음 날짜의daily_calls1 초기화·사용자 RPC 차단 검증,30통과/동시성2제외. 실제 네이티브 오류 상태 캡처와 새 서버 배포는 아직 남아 있다. 서버 코드를 먼저 배포한 뒤 이유를 구분하는 migration을 적용하면 배포 중 기존 limited도 처리한다.
+단위429통과/환경13제외. PGlite 실제 전체 migration에서 cooldown·daily-limit·UTC 다음 날짜의daily_calls1 초기화·사용자 RPC 차단 검증,30통과/동시성2제외. 별도로 만든 임시 PostgreSQL DB에서도 전체 migration replay 후32/32통과했고 해당 임시 DB를 정리했다. 실제 네이티브 오류 상태 캡처와 새 서버 배포는 아직 남아 있다. 서버 코드를 먼저 배포한 뒤 이유를 구분하는 migration을 적용하면 배포 중 기존 limited도 처리한다.
