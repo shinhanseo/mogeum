@@ -433,3 +433,7 @@ verify_jwt = false
 [functions.provider-credentials]
 # Verifies the Supabase user and refreshed provider identity before storing encrypted material.
 verify_jwt = false
+
+[functions.product-research]
+# Internal operations endpoint validates exact service-role secret; user JWTs cannot trigger it.
+verify_jwt = false
