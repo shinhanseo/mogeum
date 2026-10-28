@@ -88,6 +88,7 @@ jobs:
         run: npm run test:discovery-deploy
         env:
           MOGEUM_TEST_SUPABASE_HTTP: '1'
+          MOGEUM_TEST_WEEKLY_NO_KEY: '1'
       - name: Stop ephemeral containers
         if: always()
         run: |

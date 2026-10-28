@@ -23,3 +23,5 @@ weekly-service는 검증된 owner와 서버 계산 후보만 받는 내부 adapt
 next-drinks에서 shared-catalog-v1과 recommendationVersion=weekly-selection-v1을 함께 보낸 경우만 새 생성 경로를 선택한다. 기존 앱/구버전은 evidence-rules-v1을 유지한다. 사용자 ID는 검증한 JWT에서 가져오고 서버 생성 예약은 service-role 내부 호출로만 수행한다. 필터 전 전체 주종 후보로 한 번 생성하고 결과에만 주종 필터를 적용한다. 기록 부족은 모델 없이 insufficient, 공급자 키 누락은 예약 전에503 AI_NOT_CONFIGURED다.
 
 생성/캐시 복원 전후 개인 snapshot을 확인하고 추가로 카탈로그/저장 목록을 다시 페이지 조회한다. 중간 변경은409로 이전 결과를 숨긴다. 이는 응답 이후 실시간 구독을 보장하지 않는다. 현재 앱은 새 버전을 아직 요청하지 않는다. 실제 Gemini 생성·저장·다른 기기 캐시 재사용은 추가 검증해야 하며 완료로 처리하지 않았다.
+
+로컬 실제 Auth/Data API/RPC와 Gemini SDK의 합성 transport를 연결해 generated → cached → 입력 변경 invalidated를 확인했다. 모델 요청은 최초1회였고 임시 사용자는 테스트 후 삭제해 개인 캐시 cascade도 적용했다. 실제 Gemini 호출은 아니다. 성공 직후 서버의 완료 영수증을 다시 읽어 생성 시각/다음 갱신 시각을 반환하며 기기 시계로 기한을 계산하지 않는다. 관리형 개발 DB에는 CI 통과한20261028030000 migration만 적용했다. 앱 새 버전 전환·실제 제공자 E2E 전에는 새 endpoint를 관리형 서버에 배포하지 않았다.
