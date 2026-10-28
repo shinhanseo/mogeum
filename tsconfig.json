@@ -31,6 +31,8 @@
     "supabase/functions/delete-account/index.ts",
     "supabase/functions/provider-credentials/index.ts",
     "supabase/tests/**",
-    "artifacts/**"
+    "artifacts/**",
+    "supabase/functions/next-drinks/select.ts",
+    "supabase/functions/next-drinks/weekly-service.ts"
   ]
 }
