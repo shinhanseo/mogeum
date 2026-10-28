@@ -22,6 +22,11 @@ export function tasteHandler(ports:SummaryPorts){return async(request:Request):P
   const candidateLease=crypto.randomUUID();const state=await ports.begin(owner,hash,candidateLease);
   if(state==='cached')return response(200,{state:'ready',hash,cached:true});
   if(state==='running')return response(202,{state:'running',hash,retryAfterSeconds:5});
+  if(state==='daily-limit'){
+   const now=new Date();const next=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()+1);
+   return response(429,{code:'SUMMARY_DAILY_LIMIT',retryable:true,retryAfterSeconds:Math.max(1,Math.ceil((next-now.getTime())/1000))});
+  }
+  if(state==='cooldown')return response(429,{code:'SUMMARY_COOLDOWN',retryable:true,retryAfterSeconds:20});
   if(state==='limited')return response(429,{code:'RATE_LIMITED',retryable:true,retryAfterSeconds:20});
   if(state!=='acquired')return response(409,{code:'STALE_INPUT',retryable:true});
   lease=candidateLease;const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),27000);
@@ -31,6 +36,7 @@ export function tasteHandler(ports:SummaryPorts){return async(request:Request):P
   lease=null;return response(200,{state:'ready',hash,cached:false});
  }catch(error){
   if(owner&&hash&&lease)try{await ports.finish(owner,hash,lease,null);}catch{/* Lease expires. Never log personal inputs or provider errors. */}
+  if((error as {statusCode?:unknown})?.statusCode===429)return response(429,{code:'AI_PROVIDER_LIMITED',retryable:true,retryAfterSeconds:60});
   return response(502,{code:error instanceof Error && ['TimeoutError','AbortError'].includes(error.name)?'ANALYSIS_TIMEOUT':'ANALYSIS_FAILED',retryable:true});
  }
 };}

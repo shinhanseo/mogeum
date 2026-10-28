@@ -383,7 +383,14 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await as(a);assert.deepEqual((await context()).cached,result);
       await db.query("select public.update_tasting_record($1,$2,'{\"rating\":2}')",[source.recordId,source.revision]);
       const stale=await context();assert.notEqual(stale.snapshot.hash,before.snapshot.hash);assert.equal(stale.cached,null);assert.equal(stale.stale,true);
-      await db.exec('reset role');await db.exec('set role service_role');assert.equal(await begin(113,stale.snapshot.hash),'limited');assert.equal(await begin(113,before.snapshot.hash),'stale');
+      await db.exec('reset role');await db.exec('set role service_role');assert.equal(await begin(113,stale.snapshot.hash),'cooldown');assert.equal(await begin(113,before.snapshot.hash),'stale');
+      await db.exec('reset role');
+      await db.query("update private.taste_summary_jobs set call_day=(now() at time zone 'UTC')::date,daily_calls=5 where user_id=$1",[a]);
+      await db.exec('set role service_role');assert.equal(await begin(113,stale.snapshot.hash),'daily-limit');
+      await db.exec('reset role');
+      await db.query("update private.taste_summary_jobs set call_day=(now() at time zone 'UTC')::date-1,started_at=now()-interval '21 seconds' where user_id=$1",[a]);
+      await db.exec('set role service_role');assert.equal(await begin(113,stale.snapshot.hash),'acquired');
+      await db.exec('reset role');assert.equal((await db.query('select daily_calls from private.taste_summary_jobs where user_id=$1',[a])).rows[0].daily_calls,1);
       await as(a);await assert.rejects(db.query('select * from private.taste_summary_jobs'),{code:'42501'});
       await as(null);await assert.rejects(db.query('select public.taste_summary_context()'),{code:'42501'});await as(a);
     });
