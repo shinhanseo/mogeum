@@ -10,7 +10,7 @@ test('research runner reserves before provider, validates cache and never calls 
  let calls=0,finishes=0;
  const ports:ResearchPorts={version:'test-model-contract-v1',begin:async()=>({state:'acquired'}),finish:async()=>{finishes++;return true;},research:async()=>{calls++;return {research:candidate};}};
  const result=await runProductResearch(query,ports);assert.equal(result.state,'candidate');assert.equal(calls,1);assert.equal(finishes,1);
- for(const state of ['running','backoff','busy','daily-limit','monthly-limit'])assert.equal((await runProductResearch(query,{...ports,begin:async()=>({state})})).state,state);
+ for(const state of ['running','backoff','busy','daily-limit','monthly-limit','provider-backoff'])assert.equal((await runProductResearch(query,{...ports,begin:async()=>({state})})).state,state);
  assert.equal(calls,1);
  assert.equal((await runProductResearch(query,{...ports,begin:async()=>({state:'cached',result:candidate})})).state,'candidate');assert.equal(calls,1);
  await assert.rejects(runProductResearch(query,{...ports,begin:async()=>({state:'cached',result:{...candidate,query:{...query,name:'다른 제품'}}})}));
@@ -22,6 +22,7 @@ test('durable research budget isolates service RPCs, caches candidates and enfor
  try{
   await db.exec('create schema private;create role anon;create role authenticated;create role service_role;grant usage on schema public to anon,authenticated,service_role;');
   await db.exec(await readFile('supabase/migrations/20261027030000_product_research_budget.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261028010000_research_provider_backoff.sql','utf8'));
   const hash=(n:number)=>n.toString(16).padStart(64,'0');
   const begin=async(n:number,lease=randomUUID())=>(await db.query<{result:{state:string;result?:unknown}}>('select public.begin_product_research($1,$2) result',[hash(n),lease])).rows[0].result;
   const finish=async(n:number,lease:string,result:unknown)=>(await db.query<{result:boolean}>('select public.finish_product_research($1,$2,$3::jsonb) result',[hash(n),lease,result===null?null:JSON.stringify(result)])).rows[0].result;
@@ -34,6 +35,10 @@ test('durable research budget isolates service RPCs, caches candidates and enfor
   await assert.rejects(finish(1,lease,{status:'verified'}));
   assert.equal(await finish(1,lease,candidate),true);
   assert.equal((await begin(1)).state,'cached');
+  await db.query('select public.pause_product_research_provider(900)');
+  assert.equal((await begin(1)).state,'cached');
+  assert.equal((await begin(10)).state,'provider-backoff');
+  await db.exec('reset role');await db.exec("update private.product_research_control set provider_backoff_until=now()-interval '1 second'");await db.exec('set role service_role');
   const a=randomUUID(),b=randomUUID();assert.equal((await begin(2,a)).state,'acquired');assert.equal((await begin(3,b)).state,'acquired');assert.equal((await begin(4)).state,'busy');
   assert.equal(await finish(2,a,null),true);assert.equal((await begin(2)).state,'backoff');assert.equal(await finish(3,b,null),true);
   await db.exec('reset role');

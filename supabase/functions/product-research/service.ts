@@ -6,7 +6,7 @@ type RpcPort={rpc:(name:string,args:Record<string,unknown>)=>PromiseLike<{data:u
 export function budgetedProductResearch(database:RpcPort,config:{apiKey:string;model:string;transport?:typeof fetch}){
  return async(input:unknown)=>{
   if(!config.apiKey||!config.model)throw new Error('PRODUCT_RESEARCH_NOT_CONFIGURED');
-  return runProductResearch(input,{
+  try { return await runProductResearch(input,{
    version:`grounded-research-claims-v2:${config.model}`,
    async begin(hash,lease){
     const {data,error}=await database.rpc('begin_product_research',{p_hash:hash,p_lease:lease});
@@ -20,6 +20,13 @@ export function budgetedProductResearch(database:RpcPort,config:{apiKey:string;m
    },
    research:(query,signal)=>researchProduct(query,{...config,signal}),
    extract:(research,signal)=>extractProductClaims(research,{...config,signal}),
-  });
+  }); } catch(error) {
+   if((error as {statusCode?:unknown})?.statusCode===429){
+    const paused=await database.rpc('pause_product_research_provider',{p_seconds:900});
+    if(paused.error||paused.data!==true)throw new Error('RESEARCH_BUDGET_UNAVAILABLE');
+    throw new Error('RESEARCH_PROVIDER_LIMITED');
+   }
+   throw error;
+  }
  };
 }

@@ -1,7 +1,7 @@
 import {validateResearchClaims,type ResearchClaims} from "./research-claims.ts";
 import { groundedResearch, researchQuery, type GroundedResearch, type ResearchQuery } from './product-research.ts';
 export type ReviewResearch=GroundedResearch & {claims?:ResearchClaims};
-export type ResearchState='running'|'backoff'|'busy'|'daily-limit'|'monthly-limit';
+export type ResearchState='running'|'backoff'|'busy'|'daily-limit'|'monthly-limit'|'provider-backoff';
 export type ResearchPorts={
  version:string;
  begin:(hash:string,lease:string)=>Promise<{state:string;result?:unknown}>;
@@ -28,7 +28,7 @@ export async function runProductResearch(input:unknown,ports:ResearchPorts){
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');
  const lease=crypto.randomUUID(), job=await ports.begin(hash,lease);
  if(job.state==='cached')return {state:'candidate' as const,cached:true,research:researchCandidate(job.result,query)};
- if(['running','backoff','busy','daily-limit','monthly-limit'].includes(job.state))return {state:job.state as ResearchState};
+ if(['running','backoff','busy','daily-limit','monthly-limit','provider-backoff'].includes(job.state))return {state:job.state as ResearchState};
  if(job.state!=='acquired')throw new Error('INVALID_RESEARCH_RESERVATION');
  try{
   const signal=AbortSignal.timeout(25000);

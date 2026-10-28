@@ -76,8 +76,8 @@ jobs:
         run: npx -y deno check --config supabase/tests/deno.json supabase/tests/verify-summary-provider.ts
       - name: Typecheck and test grounded product research without a provider key
         run: |
-          npx -y deno check --config supabase/tests/deno.json supabase/functions/product-research/provider.ts supabase/functions/product-research/service.ts
-          npx -y deno test --allow-sys=hostname --allow-env --config supabase/tests/deno.json supabase/tests/product-research-provider.test.ts supabase/tests/product-claims-provider.test.ts
+          npx -y deno check --config supabase/tests/deno.json supabase/functions/product-research/provider.ts supabase/functions/product-research/service.ts supabase/functions/product-research/index.ts
+          npx -y deno test --allow-sys=hostname --allow-env --config supabase/tests/deno.json supabase/tests/product-research-provider.test.ts supabase/tests/product-claims-provider.test.ts supabase/tests/product-research-service.test.ts
       - name: Typecheck the next-drinks endpoint
         run: npx -y deno check supabase/functions/next-drinks/index.ts
       - name: Verify generated deployment through real Auth, Storage binary and Data API
