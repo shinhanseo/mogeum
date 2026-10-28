@@ -54,6 +54,42 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
     await db.exec('reset role');
     await db.query('insert into auth.users(id,email) values ($1,$2),($3,$4)', [a, 'mogeum-a@example.test', b, 'mogeum-b@example.test']);
 
+    await t.test('weekly generation is per user, durable, idempotent and hides changed evidence', async()=>{
+      await db.exec('reset role');
+      const hash='a'.repeat(64),changed='b'.repeat(64),version='weekly-v1';
+      const begin=async(owner:string,h:string,lease:number)=>(await db.query<{result:JsonObject}>('select public.begin_discovery_generation($1,$2,$3,$4) result',[owner,h,version,operation(lease)])).rows[0].result;
+      const finish=async(lease:number,result:JsonObject|null)=>(await db.query('select public.finish_discovery_generation($1,$2,$3,$4,$5) ok',[a,hash,version,operation(lease),result])).rows[0].ok;
+      assert.equal((await begin(a,hash,800)).state,'acquired');
+      assert.equal((await begin(a,hash,801)).state,'running');
+      assert.equal(await finish(801,{products:[]}),false);
+      const batch={products:['synthetic-product']};assert.equal(await finish(800,batch),true);
+      const cached=await begin(a,hash,802);assert.equal(cached.state,'cached');assert.deepEqual(cached.result,batch);
+      const interval=(new Date(String(cached.nextGenerationAt)).getTime()-new Date(String(cached.generatedAt)).getTime());assert.equal(interval,7*24*60*60*1000);
+      assert.equal(await finish(800,batch),true);assert.equal((await begin(a,hash,803)).nextGenerationAt,cached.nextGenerationAt);
+      assert.equal(await finish(800,{products:['different']}),false);
+      const invalid=await begin(a,changed,804);assert.equal(invalid.state,'invalidated');assert.equal(invalid.result,undefined);
+      assert.equal((await begin(b,hash,805)).state,'acquired');
+      await db.query("update private.discovery_generations set next_generation_at=clock_timestamp()-interval '1 second' where user_id=$1",[a]);
+      assert.equal((await begin(a,hash,806)).state,'acquired');assert.equal(await finish(806,null),true);
+      assert.equal((await begin(a,hash,807)).state,'backoff');
+      await db.query("update private.discovery_generations set started_at=clock_timestamp()-interval '61 seconds' where user_id=$1",[a]);
+      assert.equal((await begin(a,hash,808)).state,'acquired');
+      await db.query("update private.discovery_generations set started_at=clock_timestamp()-interval '91 seconds' where user_id=$1",[a]);
+      assert.equal(await finish(808,batch),false);assert.equal((await begin(a,hash,809)).state,'acquired');
+      await as(a);await assert.rejects(db.query('select public.begin_discovery_generation($1,$2,$3,$4)',[a,hash,version,operation(810)]),{code:'42501'});
+      await assert.rejects(db.query('select * from private.discovery_generations'),{code:'42501'});
+      await db.exec('reset role');await db.query('delete from private.discovery_generations where user_id in ($1,$2)',[a,b]);
+      const disposable=operation(899);await db.query('insert into auth.users(id,email) values($1,$2)',[disposable,'weekly-cascade@example.test']);
+      assert.equal((await begin(disposable,hash,813)).state,'acquired');await db.query('delete from auth.users where id=$1',[disposable]);
+      assert.equal((await db.query('select * from private.discovery_generations where user_id=$1',[disposable])).rows.length,0);
+    });
+    await t.test('weekly generation acquisition serializes two independent sessions', {skip:!databaseUrl?'Requires independent PostgreSQL sessions':false},async()=>{
+      await db.exec('reset role');const sql=postgres(databaseUrl!,{max:2,onnotice:()=>{}});
+      try{
+        const results=await Promise.all([811,812].map(lease=>sql.unsafe('select public.begin_discovery_generation($1,$2,$3,$4) result',[a,'a'.repeat(64),'weekly-v1',operation(lease)])));
+        assert.deepEqual(results.map(rows=>rows[0].result.state).sort(),['acquired','running']);
+      }finally{await sql.end();await db.query('delete from private.discovery_generations where user_id=$1',[a]);}
+    });
     await t.test('private tables enable RLS and bucket is private', async () => {
       const { rows } = await db.query("select relname,relrowsecurity from pg_class join pg_namespace n on n.oid=relnamespace where n.nspname='public' and relkind='r'");
       assert.equal(rows.length, 14);
