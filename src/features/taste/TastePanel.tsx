@@ -1,3 +1,4 @@
+import {tasteSummaryFailureMessage} from "./failure-message";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -116,17 +117,7 @@ export function TastePanel({
     } catch (error) {
       if (active()) {
         const code = (error as { code?: string })?.code;
-        setError(
-          code === "AI_NOT_CONFIGURED"
-            ? "AI 요약을 아직 사용할 수 없어요. 남긴 기록은 그대로 보관돼요."
-            : code === "ANALYSIS_TIMEOUT"
-              ? "AI 요약이 평소보다 오래 걸리고 있어요. 기록은 보관했어요. 잠시 후 다시 시도해주세요."
-              : code === "RATE_LIMITED"
-                ? "잠시 쉬었다가 다시 살펴봐요. 오늘 요약 횟수를 모두 썼을 수도 있어요."
-                : code === "STALE_INPUT"
-                  ? "분석 중 기록이 바뀌었어요. 최신 기록으로 다시 살펴봐요."
-                  : "취향 요약을 불러오지 못했어요. 다시 시도해주세요.",
-        );
+        setError(tasteSummaryFailureMessage(code));
         await refresh();
       }
     } finally {
