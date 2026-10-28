@@ -11,3 +11,11 @@ Deno.test('provider 429 ends its lease and opens a shared backoff without automa
  let code='';try{await run({name:'Synthetic malt',category:'whisky',edition:null});}catch(e){code=(e as Error).message;}
  if(code!=='RESEARCH_PROVIDER_LIMITED'||requests!==1||calls.join(',')!=='begin_product_research,finish_product_research,pause_product_research_provider')throw Error('PROVIDER_BACKOFF_CONTRACT');
 });
+Deno.test('unavailable model closes its lease once and reports configuration failure',async()=>{
+ const calls:string[]=[];let requests=0;
+ const run=budgetedProductResearch({rpc:async(name)=>{
+  calls.push(name);return {data:name==='begin_product_research'?{state:'acquired'}:true,error:null};
+ }},{apiKey:'synthetic',model:'unavailable-model',transport:async()=>{requests++;return Response.json({error:{code:404,message:'synthetic missing model',status:'NOT_FOUND'}},{status:404});}});
+ let code='';try{await run({name:'Synthetic malt',category:'whisky',edition:null});}catch(e){code=(e as Error).message;}
+ if(code!=='RESEARCH_MODEL_UNAVAILABLE'||requests!==1||calls.join(',')!=='begin_product_research,finish_product_research')throw Error('MODEL_UNAVAILABLE_CONTRACT');
+});

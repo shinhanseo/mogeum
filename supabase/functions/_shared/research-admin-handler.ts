@@ -15,7 +15,7 @@ export function researchAdminHandler(ports:Ports){return async(request:Request)=
  try{input=researchQuery(JSON.parse(await readMenuBody(request,1024)));}catch{return reply({code:'INVALID_RESEARCH_QUERY'},400);}
  try{return reply(await ports.run(input));}catch(error){
   const code=error instanceof Error?error.message:'';
-  const safeCodes=new Set(['RESEARCH_BUDGET_UNAVAILABLE','RESEARCH_COMPLETION_FAILED','RESEARCH_LEASE_EXPIRED','PRODUCT_RESEARCH_UNGROUNDED','INVALID_PRODUCT_RESEARCH','INVALID_RESEARCH_CLAIMS','INVALID_RESEARCH_CACHE','RESEARCH_PROVIDER_LIMITED']);
+  const safeCodes=new Set(['RESEARCH_BUDGET_UNAVAILABLE','RESEARCH_COMPLETION_FAILED','RESEARCH_LEASE_EXPIRED','PRODUCT_RESEARCH_UNGROUNDED','INVALID_PRODUCT_RESEARCH','INVALID_RESEARCH_CLAIMS','INVALID_RESEARCH_CACHE','RESEARCH_PROVIDER_LIMITED','RESEARCH_MODEL_UNAVAILABLE']);
   const status=(error as {statusCode?:unknown})?.statusCode;
   return reply({code:code==='PRODUCT_RESEARCH_NOT_CONFIGURED'?'AI_NOT_CONFIGURED':safeCodes.has(code)?code:'PRODUCT_RESEARCH_FAILED',...(Number.isInteger(status)&&Number(status)>=400&&Number(status)<=599?{providerStatus:status}:{})},code==='PRODUCT_RESEARCH_NOT_CONFIGURED'?503:502);
  }

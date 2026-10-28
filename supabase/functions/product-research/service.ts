@@ -21,6 +21,7 @@ export function budgetedProductResearch(database:RpcPort,config:{apiKey:string;m
    research:(query,signal)=>researchProduct(query,{...config,signal}),
    extract:(research,signal)=>extractProductClaims(research,{...config,signal}),
   }); } catch(error) {
+   if((error as {statusCode?:unknown})?.statusCode===404)throw new Error('RESEARCH_MODEL_UNAVAILABLE');
    if((error as {statusCode?:unknown})?.statusCode===429){
     const paused=await database.rpc('pause_product_research_provider',{p_seconds:900});
     if(paused.error||paused.data!==true)throw new Error('RESEARCH_BUDGET_UNAVAILABLE');

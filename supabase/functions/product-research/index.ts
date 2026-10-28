@@ -4,10 +4,10 @@ import {reviewResearchSources} from '../_shared/source-review.ts';
 import {budgetedProductResearch} from './service.ts';
 const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const key=Deno.env.get('GOOGLE_GENERATIVE_AI_API_KEY');
-// Search grounding has different free-tier support from plain text summarization.
-const model=Deno.env.get('MOGEUM_RESEARCH_MODEL')??'gemini-2.5-flash-lite';
+// Search availability and billing differ from text generation; configure explicitly.
+const model=Deno.env.get('MOGEUM_RESEARCH_MODEL')?.trim();
 Deno.serve(researchAdminHandler({secret:Deno.env.get("MOGEUM_RESEARCH_ADMIN_SECRET")??serviceKey,async run(input){
- if(!serviceKey||!key)throw Error('PRODUCT_RESEARCH_NOT_CONFIGURED');
+ if(!serviceKey||!key||!model)throw Error('PRODUCT_RESEARCH_NOT_CONFIGURED');
  const signal=AbortSignal.timeout(40000);
  const admin=createClient(Deno.env.get('SUPABASE_URL')!,serviceKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(url,init)=>fetch(url,{...init,signal})}});
  const result=await budgetedProductResearch(admin,{apiKey:key,model})(input);
