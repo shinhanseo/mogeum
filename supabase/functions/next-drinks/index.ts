@@ -201,7 +201,9 @@ Deno.serve(async (request) => {
             const key=Deno.env.get('GOOGLE_GENERATIVE_AI_API_KEY'),serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
             if(!key||!serviceKey)throw Error('WEEKLY_AI_NOT_CONFIGURED');
             const admin=createClient(Deno.env.get('SUPABASE_URL')!,serviceKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(url,init)=>fetch(url,{...init,signal})}});
-            const generated=await generateWeeklySelection(admin,{owner,hash:snapshot.hash,eligible,unchanged:async()=>{
+            const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(snapshot.hash));
+            const generationHash=Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');
+            const generated=await generateWeeklySelection(admin,{owner,hash:generationHash,eligible,unchanged:async()=>{
               const current=await client.rpc('taste_summary_context');
               if(current.error||!current.data?.snapshot)throw Error('CONTEXT_FAILED');
               return current.data.snapshot.hash===snapshot.hash;
