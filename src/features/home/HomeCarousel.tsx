@@ -9,6 +9,7 @@ import {
 import {
   AccessibilityInfo,
   Animated,
+  Easing,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,8 +28,11 @@ export function HomeCarousel({
   labels: string[];
   children: ReactNode;
 }) {
+  const [heights, setHeights] = useState<Record<number, number>>({});
   const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const [offset] = useState(() => new Animated.Value(0));
+  const [animatedHeight] = useState(() => new Animated.Value(0));
+  const heightSeeded = useRef(false);
   const [index, setIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
@@ -45,10 +49,32 @@ export function HomeCarousel({
       sub.remove();
     };
   }, []);
+  const targetHeight = heights[index];
+  useEffect(() => {
+    if (!targetHeight) return;
+    if (reduceMotion) {
+      animatedHeight.stopAnimation();
+      animatedHeight.setValue(targetHeight);
+      return;
+    }
+    const transition = Animated.timing(animatedHeight, {
+      toValue: targetHeight,
+      duration: 250,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      useNativeDriver: false,
+    });
+    transition.start();
+    return () => transition.stop();
+  }, [targetHeight, animatedHeight, reduceMotion]);
+
   return (
     <>
       <Animated.ScrollView
         ref={pager}
+        style={
+          targetHeight ? { height: animatedHeight, flexGrow: 0 } : undefined
+        }
+        contentContainerStyle={{ alignItems: "flex-start" }}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -70,7 +96,23 @@ export function HomeCarousel({
         }
       >
         {Children.map(children, (child, i) => (
-          <View key={labels[i]} style={{ width }}>
+          <View
+            key={labels[i]}
+            style={{ width, alignSelf: "flex-start" }}
+            onLayout={(event) => {
+              const height = Math.ceil(event.nativeEvent.layout.height);
+              if (height > 0 && i === index && !heightSeeded.current) {
+                animatedHeight.setValue(height);
+                heightSeeded.current = true;
+              }
+              if (height > 0)
+                setHeights((previous) =>
+                  previous[i] === height
+                    ? previous
+                    : { ...previous, [i]: height },
+                );
+            }}
+          >
             {child}
           </View>
         ))}
