@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { HomeTasteMetrics } from "../../src/features/home/HomeTasteMetrics";
 import { colors, typography } from "../../src/theme/tokens";
 import type { TasteSnapshot } from "../../supabase/functions/_shared/taste-domain";
-const snapshot: TasteSnapshot = {
+export const snapshot: TasteSnapshot = {
   hash: "synthetic-home-metrics",
   totalRecords: 5,
   omittedCount: 0,

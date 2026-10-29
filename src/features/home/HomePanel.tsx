@@ -215,10 +215,7 @@ export function HomePanel({
           labels={pages.map((page) => page.title)}
         >
           {pages.map((page) => (
-            <View
-              key={page.id}
-              style={[s.slide, fontScale <= 1.3 && { height: 400 }]}
-            >
+            <View key={page.id} style={s.slide}>
               <Text style={s.eyebrow}>{page.eyebrow}</Text>
               {page.id !== "taste" ? (
                 <Text style={s.meta}>{page.meta}</Text>
@@ -423,7 +420,7 @@ const s = StyleSheet.create({
   description: { ...typography.body, color: colors.surface },
   hint: { ...typography.caption, color: colors.onPrimaryMuted },
   heroAction: {
-    marginTop: "auto",
+    marginTop: 4,
     paddingTop: 0,
     minHeight: 44,
     flexDirection: "row",
