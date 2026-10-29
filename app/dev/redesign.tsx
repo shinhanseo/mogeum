@@ -63,14 +63,18 @@ const context: TasteContext = {
 };
 /** Explicit synthetic native visual fixture. No account, API call or saved record. */
 export default function RedesignPreview() {
-  const params = useLocalSearchParams<{ screen?: string }>();
+  const params = useLocalSearchParams<{ screen?: string; count?: string }>();
   const [tab, setTab] = useState<MainTab>(
     params.screen === "taste" ? "taste" : "cellar",
   );
   const [category, setCategory] = useState<Category | "전체">("전체"),
     [query, setQuery] = useState("");
   if (!__DEV__) return <Redirect href="/" />;
-  const filtered = items.filter(
+  const previewItems = items.slice(
+    0,
+    ["0", "1", "2"].includes(params.count ?? "") ? Number(params.count) : 12,
+  );
+  const filtered = previewItems.filter(
     (i) =>
       (category === "전체" || i.category === category) &&
       i.name.includes(query),
@@ -96,7 +100,7 @@ export default function RedesignPreview() {
         ) : (
           <CellarScreen
             items={filtered}
-            totalCount={items.length}
+            totalCount={previewItems.length}
             loading={false}
             error={false}
             onNext={() => {}}

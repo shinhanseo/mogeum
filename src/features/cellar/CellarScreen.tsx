@@ -298,7 +298,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: colors.text,
     textAlign: "center",
-    minHeight: 34,
   },
   category: {
     fontSize: 10,
