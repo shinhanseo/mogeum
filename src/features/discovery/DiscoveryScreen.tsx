@@ -17,6 +17,7 @@ import {
 } from "../../../supabase/functions/_shared/product-catalog";
 import type { NextDrink } from "../../../supabase/functions/_shared/next-drinks-domain";
 import type { DiscoveryResult } from "./contract";
+import { generationCopy } from "./generation-copy";
 import type { WishlistState } from "./wishlist";
 import { BookmarkArt, DrinkArt } from "./DrinkArt";
 export const categoryLabels = {
@@ -46,6 +47,7 @@ type Props = {
 /** 04 / 19:784 and 19:972. Error/empty states extend the captured design. */
 export function DiscoveryScreen(props: Props) {
   const { result, wishlist, mode, busy, saving, error, category } = props;
+  const generation = generationCopy(result?.generation);
   const [editingSaved, setEditingSaved] = useState(false);
   const saved = new Set(
     wishlist.filter((r) => r.saved).map((r) => r.productId),
@@ -104,9 +106,9 @@ export function DiscoveryScreen(props: Props) {
             />
           </View>
           <Text style={s.body}>
-            {recommendations.length
+            {generation?.body ?? (recommendations.length
               ? "좋게 남긴 느낌과 닮은 한 잔을 찾아봤어요."
-              : "내가 남긴 느낌을 바탕으로 찾아드려요."}
+              : "내가 남긴 느낌을 바탕으로 찾아드려요.")}
           </Text>
           {recommendations.length > 0 && (
             <ScrollView
@@ -250,12 +252,12 @@ export function DiscoveryScreen(props: Props) {
                 <Mogu />
               </View>
               <Text style={s.emptyTitle}>
-                {!result.sensoryRecordCount
+                {generation?.title ?? (!result.sensoryRecordCount
                   ? "한 잔의 느낌부터 남겨볼까요?"
-                  : "새롭게 추천할 술이 아직 없어요."}
+                  : "새롭게 추천할 술이 아직 없어요.")}
               </Text>
               <Text style={s.emptyCopy}>
-                {!result.sensoryRecordCount
+                {generation ? "추천을 기다리는 동안에도 한 잔의 기록은 남길 수 있어요." : !result.sensoryRecordCount
                   ? "어떤 향과 맛이 좋았는지 알려주면\n그 느낌과 닮은 술을 찾아드려요."
                   : "마신 술과 저장한 술은 제외하고 찾아요.\n좋게 남긴 느낌이 더 쌓이면 다시 비교해볼게요."}
               </Text>
