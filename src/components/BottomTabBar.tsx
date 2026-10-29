@@ -42,8 +42,16 @@ export function BottomTabBar({
                 onPress={onAccount}
                 style={styles.tab}
               >
-                <Text style={styles.more}>···</Text>
-                <Text style={styles.label}>더보기</Text>
+                <Text allowFontScaling={false} style={styles.more}>
+                  ···
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={1.4}
+                  numberOfLines={1}
+                  style={styles.label}
+                >
+                  더보기
+                </Text>
               </Pressable>
             ) : (
               <Pressable
@@ -65,6 +73,8 @@ export function BottomTabBar({
                   color={selected === tab ? colors.primary : colors.muted}
                 />
                 <Text
+                  maxFontSizeMultiplier={1.4}
+                  numberOfLines={1}
                   style={[
                     styles.label,
                     {
