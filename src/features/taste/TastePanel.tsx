@@ -145,10 +145,13 @@ export function TastePanel({
           void refresh();
         }
       }}
-      onEvidence={(factId) =>
+      onEvidence={(factId, category) =>
         router.push({
           pathname: "/taste-evidence",
-          params: factId ? { factId } : {},
+          params: {
+            ...(factId ? { factId } : {}),
+            ...(category ? { category } : {}),
+          },
         })
       }
       onRecord={addFeeling}

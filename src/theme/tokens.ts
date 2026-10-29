@@ -2,6 +2,7 @@ export const colors = {
   apple: '#252322', kakao: '#FEE500', background: '#FAF7F2', surface: '#FFFDFA', primary: '#783F4B', selected: '#F2E5E8',
   text: '#332D2B', muted: '#776B65', border: '#E6DDD4', chip: '#F0EBE2', illustration: '#EEE5D7', disabled: '#E7E1DD',
   scrim: '#00000055',
+  onPrimaryMuted: '#E5CDD4', chartOther: '#C5B3B8',
   cabinet: { back: '#EDE5DB', side: '#D9CBB9', front: '#E2D6C6', top: '#F3EDE4', shadow: '#CCBDA9' },
 };
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, huge: 48 };

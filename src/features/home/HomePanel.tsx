@@ -327,7 +327,7 @@ const s = StyleSheet.create({
   },
   white: { ...typography.body, color: colors.surface },
   slide: { padding: 24, minHeight: 330, gap: 16 },
-  eyebrow: { ...typography.caption, color: "#E5CDD4" },
+  eyebrow: { ...typography.caption, color: colors.onPrimaryMuted },
   lead: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: {
     flex: 1,
@@ -337,7 +337,7 @@ const s = StyleSheet.create({
     color: colors.surface,
   },
   description: { ...typography.body, color: colors.surface },
-  hint: { ...typography.caption, color: "#E5CDD4" },
+  hint: { ...typography.caption, color: colors.onPrimaryMuted },
   heroAction: {
     marginTop: "auto",
     paddingTop: 16,

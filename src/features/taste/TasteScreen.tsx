@@ -16,7 +16,7 @@ type Props = {
   busy?: boolean;
   error?: string;
   onGenerate: () => void;
-  onEvidence: (factId?: string) => void;
+  onEvidence: (factId?: string, category?: string) => void;
   onRecord: () => void;
   onOpen: (id: string) => void;
   onMenu?: () => void;
@@ -170,7 +170,7 @@ export function TasteScreen({
             <Pressable
               key={category}
               accessibilityRole="button"
-              onPress={() => onEvidence(f[0].id)}
+              onPress={() => onEvidence(f[0].id, category)}
               style={s.category}
             >
               <CellarArt id={category} category={category} size={48} />
@@ -272,7 +272,7 @@ const s = StyleSheet.create({
     gap: 3,
   },
   good: { backgroundColor: colors.primary, borderRadius: 3 },
-  other: { backgroundColor: "#C5B3B8", borderRadius: 3 },
+  other: { backgroundColor: colors.chartOther, borderRadius: 3 },
   legend: { flexDirection: "row", gap: 24 },
   goodLabel: { ...typography.caption, color: colors.primary },
   section: {
