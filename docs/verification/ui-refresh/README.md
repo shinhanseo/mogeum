@@ -32,3 +32,5 @@ EAS의 PR199 소스(6eef1aa) Android code13 및 iOS simulator 순번10 빌드가
 
 ## 큰 글자 후속 QA
 작은 iPhone 시뮬레이터를 accessibility-large로 설정하고 개발 앱을 재실행했다. 홈 한글 제목의 단어 중간 줄바꿈, 바텀바 더보기의 두 줄 표시, 최근 기록 제목 옆 전체 보기의 가로 잘림을 확인해 보완했다. 제목은 iOS hangul-word/Android balanced 줄바꿈, 큰 글자(fontScale>1.3)의 섹션 제목·링크는 세로 배치다. 본문/주요 행동의 확대는 유지한다. 고정 아이콘 바의 짧은 탭 라벨만1.4배 상한과 한 줄을 적용하고, 점3개 아이콘은 문자 확대를 끈다(접근성 이름은 계정 관리). 확대 상태로 세로 스크롤해 전체 보기와 첫 기록 버튼 및 중앙+가 보이는 것을 확인했다. `ios-accessibility-home.png` 참고. 설정은 원래 large로 복구했다. Android 큰 글자는 아직 미검증이다. 타입/린트/테스트441통과/14환경 제외.
+
+후속 CI가 Expo SDK58 요구 react-native0.88.1을 보고해 해당 패치와 lockfile을 맞췄다. 로컬 expo install --check 및441테스트가 통과했다. 패치 변경 이전 EAS Android14/iOS simulator11 빌드와 혼동하지 않는다.
