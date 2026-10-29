@@ -52,6 +52,7 @@ test("when positive observations exist, unrelated disliked sensations are not pr
     ]),
   );
   assert.equal(view.observationsOnly, false);
+  assert.equal(view.analysis.facts.length, 2);
   assert.equal(view.facts.length, 1);
   assert.deepEqual(view.originIds, ["liked"]);
   assert.deepEqual(view.facts[0].positiveIds, ["liked"]);

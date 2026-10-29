@@ -84,7 +84,11 @@ export function TasteScreen({
         <Text style={s.caption}>
           {observationsOnly ? "내가 남긴 감각" : "좋게 남긴 잔에서"}
         </Text>
-        <Text style={s.subtitle}>
+        <Text
+          style={s.subtitle}
+          lineBreakStrategyIOS="hangul-word"
+          textBreakStrategy="balanced"
+        >
           {observationsOnly ? "기록에서 만난 느낌" : "자주 만난 느낌"}
         </Text>
         <Text style={s.caption}>
@@ -122,7 +126,13 @@ export function TasteScreen({
             style={s.fact}
           >
             <View style={[s.factTitle, largeText && s.stack]}>
-              <Text style={s.factName}>{fact.label}</Text>
+              <Text
+                style={s.factName}
+                lineBreakStrategyIOS="hangul-word"
+                textBreakStrategy="balanced"
+              >
+                {fact.label}
+              </Text>
               <Text style={s.number}>
                 {observationsOnly ? positive + other : positive}
                 <Text style={s.caption}>
@@ -196,7 +206,11 @@ export function TasteScreen({
             >
               <CellarArt id={category} category={category} size={48} />
               <View style={s.copy}>
-                <Text style={s.factName}>
+                <Text
+                  style={s.factName}
+                  lineBreakStrategyIOS="hangul-word"
+                  textBreakStrategy="balanced"
+                >
                   {(
                     {
                       whisky: "위스키",
@@ -230,7 +244,13 @@ export function TasteScreen({
               >
                 <CellarArt id={r.entryId} category={r.category} size={48} />
                 <View style={s.copy}>
-                  <Text style={s.factName}>{r.name ?? "이름 없는 술"}</Text>
+                  <Text
+                    style={s.factName}
+                    lineBreakStrategyIOS="hangul-word"
+                    textBreakStrategy="balanced"
+                  >
+                    {r.name ?? "이름 없는 술"}
+                  </Text>
                   <Text style={s.caption}>{r.date.slice(0, 10)}</Text>
                 </View>
                 <Text style={s.caption}>›</Text>
