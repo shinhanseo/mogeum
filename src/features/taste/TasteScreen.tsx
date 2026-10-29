@@ -36,9 +36,7 @@ export function TasteScreen({
 }: Props) {
   const analysis = context ? analyzeTaste(context.snapshot) : null;
   const facts =
-    analysis && !context?.stale
-      ? analysis.facts.filter((f) => f.positiveIds.length > 0).slice(0, 3)
-      : [];
+    analysis?.facts.filter((f) => f.positiveIds.length > 0).slice(0, 3) ?? [];
   const selected =
     analysis && context?.cached && !context.stale
       ? selectedFacts(analysis, context.cached)
@@ -82,7 +80,7 @@ export function TasteScreen({
       </View>
       {context?.stale ? (
         <Text style={s.caption}>
-          기록이 바뀌었어요. 최신 기록으로 다시 살펴봐요.
+          집계는 최신 기록이에요. AI 공통점은 다시 요약해주세요.
         </Text>
       ) : null}
       {error ? (
