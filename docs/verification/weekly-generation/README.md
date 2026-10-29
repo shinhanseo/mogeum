@@ -27,3 +27,7 @@ next-drinks에서 shared-catalog-v1과 recommendationVersion=weekly-selection-v1
 로컬 실제 Auth/Data API/RPC와 Gemini SDK의 합성 transport를 연결해 generated → cached → 입력 변경 invalidated를 확인했다. 모델 요청은 최초1회였고 임시 사용자는 테스트 후 삭제해 개인 캐시 cascade도 적용했다. 실제 Gemini 호출은 아니다. 성공 직후 서버의 완료 영수증을 다시 읽어 생성 시각/다음 갱신 시각을 반환하며 기기 시계로 기한을 계산하지 않는다. 관리형 개발 DB에는 CI 통과한20261028030000 migration만 적용했다. 앱 새 버전 전환·실제 제공자 E2E 전에는 새 endpoint를 관리형 서버에 배포하지 않았다.
 
 생성된 next-drinks 배포 번들을 실제 로컬 Edge Runtime에 로드한 뒤 Auth/Storage/메뉴/다음 한 잔/노트 저장 통합9/9를 통과했다. 새 버전의 기록 부족·키 누락503도 포함한다. 검증 후 원본 entry 파일 복원을 확인했다. 이 번들은 아직 관리형 서버에 배포하지 않았다.
+
+## 실패 시도 비용 상한
+
+실패가 7일 성공 슬롯을 소모하지 않는 대신 반복 실패를 통해 무제한 호출하지 못하게 사용자별 UTC 하루 최대5회 acquired 예약을 허용한다. running/backoff/cache/invalidated 응답은 새 시도로 세지 않고, 성공 캐시는 상한과 관계없이 읽는다. 일자가 바뀌면 다음 acquired에서1회로 시작한다. 일반 사용자에게 횟수 테이블/RPC 권한을 추가하지 않는다. provider 호출 전 서버 예약에서 daily-limit으로 종료하며 앱 상태 표시는 후속 연결한다. PGlite 전체 migration 테스트31통과/독립 세션3제외, weekly orchestration 회귀3통과. 실제 Gemini 호출·관리형 DB 배포는 이 결과와 별도다.

@@ -26,7 +26,7 @@ test('weekly orchestration avoids unnecessary calls and rejects evidence changed
  const eligible=discoverDrinks(snapshot,[]);let calls=0;const finishes:unknown[]=[];
  const ports:WeeklyPorts={begin:async()=>({state:'acquired'}),finish:async(_lease,value)=>{finishes.push(value);return true;},select:async()=>{calls++;return {version:WEEKLY_DISCOVERY_VERSION,productIds:[eligible[0].product.id]};},unchanged:async()=>true};
  assert.equal((await runWeeklyGeneration([],ports)).state,'insufficient');assert.equal(calls,0);
- for(const state of ['running','backoff','invalidated','cached'])assert.equal((await runWeeklyGeneration(eligible,{...ports,begin:async()=>({state})})).state,state);
+ for(const state of ['running','backoff','invalidated','daily-limit','cached'])assert.equal((await runWeeklyGeneration(eligible,{...ports,begin:async()=>({state})})).state,state);
  assert.equal(calls,0);assert.equal((await runWeeklyGeneration(eligible,ports)).state,'generated');assert.equal(calls,1);
  await assert.rejects(runWeeklyGeneration(eligible,{...ports,unchanged:async()=>false}),/TASTE_CONTEXT_CHANGED/);assert.equal(finishes.at(-1),null);
  await assert.rejects(runWeeklyGeneration(eligible,{...ports,select:async()=>{throw Error('PROVIDER_FAILURE');}}),/PROVIDER_FAILURE/);assert.equal(finishes.at(-1),null);
