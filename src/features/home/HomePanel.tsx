@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentRef,
-} from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -28,6 +22,7 @@ import {
 } from "../taste/repository";
 import { loadDiscovery } from "../discovery/repository";
 import { createHomeLoader, type HomeLoadState } from "./latest";
+import { HomeCarousel } from "./HomeCarousel";
 export function HomePanel({
   owner,
   onRecord,
@@ -40,9 +35,7 @@ export function HomePanel({
   onTaste: () => void;
 }) {
   const router = useRouter();
-  const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const [state, setState] = useState<HomeLoadState>({ status: "loading" });
-  const [position, setPosition] = useState({ key: "", index: 0 });
   const { width: windowWidth, fontScale } = useWindowDimensions();
   const width = Math.min(windowWidth, 600);
   const loader = useMemo(
@@ -98,7 +91,8 @@ export function HomePanel({
   );
   const data = state.status === "ready" ? state.data : null;
   const failed = state.status === "failed";
-  const facts = data ? analyzeTaste(data.context.snapshot).facts : [];
+  const analysis = data ? analyzeTaste(data.context.snapshot) : null;
+  const facts = analysis?.facts ?? [];
   const recommendations = data?.discovery?.recommendations ?? [];
   const unique = recommendations
     .filter(
@@ -109,43 +103,60 @@ export function HomePanel({
     )
     .slice(0, 4);
   const pagerKey = `${data?.context.snapshot.hash ?? "empty"}:${unique.map((row) => row.product.id).join(":")}:${width}`;
-  const slide = position.key === pagerKey ? position.index : 0;
   const loading = Boolean(owner && !data && !failed);
   const hasPositive = facts.some((fact) => fact.positiveIds.length > 0);
   const pages = [
-    ...unique.map((row) => ({
-      title: row.product.name,
-      eyebrow: "내 기록에서 이어지는 한 잔",
-      description: row.similar
-        .slice(0, 2)
-        .map((f) => f.label)
-        .join(" · "),
-      hint: row.cautions.length
-        ? "다른 느낌도 함께 확인해요."
-        : "제품 특징과 내 기록의 닮은 점을 확인해요.",
-      category: row.product.category,
-      id: row.product.id,
-      action: () =>
-        router.push({
-          pathname: "/discovery",
-          params: { productId: row.product.id },
-        }),
-      link: "왜 골랐는지 보기",
-    })),
+    ...unique.map((row) => {
+      const match = row.similar[0];
+      const source = data?.context.snapshot.records.find((record) =>
+        match?.recordIds.includes(record.id),
+      );
+      return {
+        title: row.product.name,
+        eyebrow: "내 기록에서 이어지는 한 잔",
+        description: source?.name
+          ? `${source.name}에서 좋게 남긴 ${match.label}. 이 술의 제품 설명에도 같은 특징이 있어요.`
+          : `${row.similar
+              .slice(0, 2)
+              .map((f) => f.label)
+              .join(" · ")}을 좋게 남긴 기록과 이어져요.`,
+        hint: row.cautions.length
+          ? `${row.cautions[0].label}은 아쉽게 남긴 기록도 있어요. 함께 살펴봐요.`
+          : row.unconfirmedFeatures.length
+            ? `${row.unconfirmedFeatures[0].label}은 새롭게 살펴볼 특징이에요. 아직 내 선호는 몰라요.`
+            : "제품 설명과 내 경험은 다를 수 있어요. 닮은 점부터 골라봤어요.",
+        category: row.product.category,
+        meta: `${{ whisky: "위스키", wine: "와인", beer: "맥주", traditional: "전통주" }[row.product.category]} · ${row.product.edition}`,
+        id: row.product.id,
+        action: () =>
+          router.push({
+            pathname: "/discovery",
+            params: { productId: row.product.id },
+          }),
+        link: "내 기록과 비교하기",
+      };
+    }),
     {
       title: loading
         ? "내 기록을\n살펴보고 있어요"
-        : (facts.find((f) => f.positiveIds.length > 0)?.label ??
-          (facts.length
+        : hasPositive
+          ? "좋게 남긴 잔의\n공통점을 찾았어요."
+          : facts.length
             ? "기록에 남긴 감각을\n다시 살펴볼까요?"
-            : "한 잔의 느낌부터\n모아볼까요?")),
+            : "한 잔의 느낌부터\n모아볼까요?",
       eyebrow: "내 기록에서 발견한 느낌",
+      meta: "내가 직접 남긴 감각",
       description: hasPositive
-        ? "좋게 남긴 특징과 다른 평가를 함께 살펴봐요."
+        ? (() => {
+            const f = facts.find((f) => f.positiveIds.length > 0)!;
+            return `“${f.label}” — 좋게 남긴 ${f.positiveIds.length}잔에 이 감각을 기록했어요. 이 술들을 좋아한 이유라고 단정하지는 않아요.`;
+          })()
         : facts.length
           ? "남긴 감각과 평가를 함께 확인해요."
           : "사진에 느낌을 더하면 취향을 살펴볼 수 있어요.",
-      hint: "내가 남긴 기록이 다음 선택의 출발점이에요.",
+      hint: facts.length
+        ? `느낌을 남긴 ${analysis?.recordCount ?? 0}잔에서 살펴봤어요. 기록을 더하면 발견도 달라져요.`
+        : "좋았는지와 느낀 감각을 남기면, 다음 한 잔을 고를 때 활용해요.",
       category: null,
       id: "taste",
       action: onTaste,
@@ -154,8 +165,10 @@ export function HomePanel({
     {
       title: "메뉴판에서\n내 취향 찾기",
       eyebrow: "지금 메뉴판 앞이라면",
-      description: "여러 장을 모아 내 기록과 비교해요.",
-      hint: "읽은 이름·가격·용량을 직접 확인할 수 있어요.",
+      meta: "사진 여러 장도 한 번에",
+      description:
+        "낯선 술 이름 사이에서, 내가 좋게 남긴 향과 맛이 닮은 메뉴를 찾아봐요.",
+      hint: "사진 올리기 → 읽은 메뉴 확인 → 내 기록과 비교. 확실히 찾지 못한 술은 따로 알려줘요.",
       category: null,
       id: "menu",
       action: () => router.push(owner ? "/menu" : "/login"),
@@ -195,22 +208,15 @@ export function HomePanel({
             <Text style={s.hint}>추천을 불러오지 못했어요. 다시 시도 ›</Text>
           </Pressable>
         ) : null}
-        <ScrollView
-          ref={pager}
+        <HomeCarousel
           key={pagerKey}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(e) =>
-            setPosition({
-              key: pagerKey,
-              index: Math.round(e.nativeEvent.contentOffset.x / width),
-            })
-          }
+          width={width}
+          labels={pages.map((page) => page.title)}
         >
           {pages.map((page) => (
-            <View key={page.id} style={[s.slide, { width }]}>
+            <View key={page.id} style={s.slide}>
               <Text style={s.eyebrow}>{page.eyebrow}</Text>
+              <Text style={s.meta}>{page.meta}</Text>
               <View style={s.lead}>
                 <Text
                   lineBreakStrategyIOS="hangul-word"
@@ -223,7 +229,14 @@ export function HomePanel({
                   <CellarArt id={page.id} category={page.category} size={82} />
                 ) : null}
               </View>
-              <Text style={s.description}>{page.description}</Text>
+              <View style={s.rule} />
+              <Text
+                lineBreakStrategyIOS="hangul-word"
+                textBreakStrategy="balanced"
+                style={s.description}
+              >
+                {page.description}
+              </Text>
               <Text style={s.hint}>{page.hint}</Text>
               <Pressable
                 accessibilityRole="button"
@@ -235,24 +248,7 @@ export function HomePanel({
               </Pressable>
             </View>
           ))}
-        </ScrollView>
-      </View>
-      <View style={s.dots}>
-        {pages.map((page, i) => (
-          <Pressable
-            key={page.id}
-            accessibilityRole="button"
-            accessibilityLabel={`${i + 1}/${pages.length} · ${page.title.replaceAll("\n", " ")}`}
-            accessibilityState={{ selected: slide === i }}
-            style={s.pageTarget}
-            onPress={() => {
-              pager.current?.scrollTo({ x: width * i, animated: true });
-              setPosition({ key: pagerKey, index: i });
-            }}
-          >
-            <View style={[s.dot, slide === i && s.activeDot]} />
-          </Pressable>
-        ))}
+        </HomeCarousel>
       </View>
       <View style={s.records}>
         <View style={[s.sectionRow, fontScale > 1.3 && s.sectionStack]}>
@@ -379,7 +375,14 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   white: { ...typography.body, color: colors.surface },
-  slide: { padding: 24, minHeight: 330, gap: 16 },
+  slide: { padding: 24, paddingTop: 20, gap: 12 },
+  meta: { ...typography.caption, color: colors.onPrimaryMuted },
+  rule: {
+    height: 1,
+    backgroundColor: colors.onPrimaryMuted,
+    opacity: 0.35,
+    marginVertical: 4,
+  },
   eyebrow: { ...typography.caption, color: colors.onPrimaryMuted },
   lead: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: {
@@ -392,7 +395,7 @@ const s = StyleSheet.create({
   description: { ...typography.body, color: colors.surface },
   hint: { ...typography.caption, color: colors.onPrimaryMuted },
   heroAction: {
-    marginTop: "auto",
+    marginTop: 4,
     paddingTop: 16,
     minHeight: 44,
     flexDirection: "row",
@@ -400,20 +403,6 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   action: { ...typography.body, fontFamily: fonts.bold, color: colors.surface },
-  dots: {
-    minHeight: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pageTarget: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.border },
-  activeDot: { width: 12, backgroundColor: colors.primary },
   records: { padding: 24, gap: 20 },
   sectionRow: {
     flexDirection: "row",
