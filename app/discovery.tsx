@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import {
+  Redirect,
+  useFocusEffect,
+  useLocalSearchParams,
+  useRouter,
+} from "expo-router";
 import { AppState, BackHandler, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../src/features/auth/AuthProvider";
@@ -27,7 +32,10 @@ function DiscoveryPanel({ owner }: { owner: string }) {
   const [result, setResult] = useState<DiscoveryResult | null>(null);
   const [wishlist, setWishlist] = useState<WishlistState[]>([]);
   const [mode, setMode] = useState<"discover" | "saved">("discover");
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const { productId } = useLocalSearchParams<{ productId?: string }>();
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(
+    typeof productId === "string" ? productId : null,
+  );
   const reason = result?.recommendations.find(
     (row) => row.product.id === selectedProduct,
   );
@@ -164,7 +172,7 @@ function DiscoveryPanel({ owner }: { owner: string }) {
       }
     }
   }
-  function home(tab: "cellar" | "taste") {
+  function home(tab: "home" | "cellar" | "taste") {
     router.replace({ pathname: "/", params: { tab } });
   }
   return (
@@ -231,6 +239,7 @@ function DiscoveryPanel({ owner }: { owner: string }) {
         <BottomTabBar
           selected="taste"
           onSelect={home}
+          onAccount={() => router.push("/account")}
           onRecord={() => router.push("/record")}
         />
       ) : null}
