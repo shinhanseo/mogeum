@@ -1,4 +1,10 @@
-import { useCallback, useRef, useState } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentRef,
+} from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -19,15 +25,9 @@ import {
   loadTasteContext,
   tastePhotoUrls,
   analyzeTaste,
-  type TasteContext,
 } from "../taste/repository";
 import { loadDiscovery } from "../discovery/repository";
-import type { DiscoveryResult } from "../discovery/contract";
-type Data = {
-  context: TasteContext;
-  photos: Record<string, string>;
-  discovery: DiscoveryResult | null;
-};
+import { createHomeLoader, type HomeLoadState } from "./latest";
 export function HomePanel({
   owner,
   onRecord,
@@ -39,63 +39,64 @@ export function HomePanel({
   onCellar: () => void;
   onTaste: () => void;
 }) {
-  const router = useRouter(),
-    epoch = useRef(0);
-  const [data, setData] = useState<Data | null>(null),
-    [failed, setFailed] = useState(false),
-    [slide, setSlide] = useState(0);
+  const router = useRouter();
+  const pager = useRef<ComponentRef<typeof ScrollView>>(null);
+  const [state, setState] = useState<HomeLoadState>({ status: "loading" });
+  const [position, setPosition] = useState({ key: "", index: 0 });
   const width = Math.min(useWindowDimensions().width, 600);
-  const refresh = useCallback(async () => {
-    const version = ++epoch.current;
-    setData(null);
-    setSlide(0);
-    setFailed(false);
-    if (!owner) return;
-    try {
-      const client = getSupabase();
-      if (!client) throw Error("NO_CLIENT");
-      const context = await loadTasteContext(client);
-      const [photos, discovery] = await Promise.all([
-        tastePhotoUrls(
-          client,
-          owner,
-          [...context.snapshot.records]
-            .sort(
-              (a, b) =>
-                b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
-            )
-            .slice(0, 2)
-            .map((r) => r.id),
-        ).catch(() => ({}) as Record<string, string>),
-        loadDiscovery(client, owner).catch(() => null),
-      ]);
-      const latest = await loadTasteContext(client);
-      if (
-        latest.snapshot.hash !== context.snapshot.hash ||
-        (discovery && discovery.tasteHash !== context.snapshot.hash)
-      )
-        throw Error("CHANGED");
-      if (version === epoch.current) setData({ context, photos, discovery });
-    } catch {
-      if (version === epoch.current) setFailed(true);
-    }
-  }, [owner]);
+  const loader = useMemo(
+    () =>
+      createHomeLoader({
+        async context() {
+          const client = getSupabase();
+          if (!client || !owner) throw Error("NO_CLIENT");
+          return loadTasteContext(client);
+        },
+        async photos(context) {
+          const client = getSupabase();
+          if (!client || !owner) return {};
+          return tastePhotoUrls(
+            client,
+            owner,
+            [...context.snapshot.records]
+              .sort(
+                (a, b) =>
+                  b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
+              )
+              .slice(0, 2)
+              .map((record) => record.id),
+          );
+        },
+        async discovery() {
+          const client = getSupabase();
+          if (!client || !owner) throw Error("NO_CLIENT");
+          return loadDiscovery(client, owner);
+        },
+        publish: setState,
+      }),
+    [owner],
+  );
+  const refresh = useCallback(() => {
+    if (owner) void loader.load();
+  }, [loader, owner]);
   useFocusEffect(
     useCallback(() => {
-      void refresh();
-      const sub = AppState.addEventListener("change", (state) => {
-        if (state === "active") void refresh();
+      refresh();
+      const sub = AppState.addEventListener("change", (next) => {
+        if (next === "active") refresh();
         else {
-          epoch.current++;
-          setData(null);
+          loader.cancel();
+          setState({ status: "loading" });
         }
       });
       return () => {
-        epoch.current++;
+        loader.cancel();
         sub.remove();
       };
-    }, [refresh]),
+    }, [loader, refresh]),
   );
+  const data = state.status === "ready" ? state.data : null;
+  const failed = state.status === "failed";
   const facts = data ? analyzeTaste(data.context.snapshot).facts : [];
   const recommendations = data?.discovery?.recommendations ?? [];
   const unique = recommendations
@@ -106,6 +107,8 @@ export function HomePanel({
         ) === i,
     )
     .slice(0, 4);
+  const pagerKey = `${data?.context.snapshot.hash ?? "empty"}:${unique.map((row) => row.product.id).join(":")}:${width}`;
+  const slide = position.key === pagerKey ? position.index : 0;
   const loading = Boolean(owner && !data && !failed);
   const hasPositive = facts.some((fact) => fact.positiveIds.length > 0);
   const pages = [
@@ -174,13 +177,30 @@ export function HomePanel({
             <Text style={s.white}>설정</Text>
           </Pressable>
         </View>
+        {data?.recommendationState === "loading" ? (
+          <Text style={s.recommendationStatus}>
+            다음 한 잔을 살펴보고 있어요.
+          </Text>
+        ) : data?.recommendationState === "unavailable" ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={refresh}
+            style={s.retryRecommendation}
+          >
+            <Text style={s.hint}>추천을 불러오지 못했어요. 다시 시도 ›</Text>
+          </Pressable>
+        ) : null}
         <ScrollView
-          key={data?.context.snapshot.hash ?? "empty"}
+          ref={pager}
+          key={pagerKey}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={(e) =>
-            setSlide(Math.round(e.nativeEvent.contentOffset.x / width))
+            setPosition({
+              key: pagerKey,
+              index: Math.round(e.nativeEvent.contentOffset.x / width),
+            })
           }
         >
           {pages.map((page) => (
@@ -206,13 +226,21 @@ export function HomePanel({
           ))}
         </ScrollView>
       </View>
-      <View
-        accessible
-        accessibilityLabel={`추천 정보 ${Math.min(slide + 1, pages.length)} / ${pages.length}`}
-        style={s.dots}
-      >
+      <View style={s.dots}>
         {pages.map((page, i) => (
-          <View key={page.id} style={[s.dot, slide === i && s.activeDot]} />
+          <Pressable
+            key={page.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${i + 1}/${pages.length} · ${page.title.replaceAll("\n", " ")}`}
+            accessibilityState={{ selected: slide === i }}
+            style={s.pageTarget}
+            onPress={() => {
+              pager.current?.scrollTo({ x: width * i, animated: true });
+              setPosition({ key: pagerKey, index: i });
+            }}
+          >
+            <View style={[s.dot, slide === i && s.activeDot]} />
+          </Pressable>
         ))}
       </View>
       <View style={s.records}>
@@ -311,6 +339,16 @@ function RecordThumbnail({
 const s = StyleSheet.create({
   content: { paddingBottom: 24 },
   hero: { backgroundColor: colors.primary },
+  recommendationStatus: {
+    ...typography.caption,
+    color: colors.onPrimaryMuted,
+    paddingHorizontal: 24,
+  },
+  retryRecommendation: {
+    paddingHorizontal: 24,
+    minHeight: 44,
+    justifyContent: "center",
+  },
   brandRow: {
     paddingHorizontal: 24,
     paddingTop: 12,
@@ -348,11 +386,16 @@ const s = StyleSheet.create({
   },
   action: { ...typography.body, fontFamily: fonts.bold, color: colors.surface },
   dots: {
-    height: 36,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+  },
+  pageTarget: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
   },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.border },
   activeDot: { width: 12, backgroundColor: colors.primary },
