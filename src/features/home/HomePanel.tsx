@@ -1,3 +1,4 @@
+import { generationCopy } from "../discovery/generation-copy";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -66,7 +67,7 @@ export function HomePanel({
         async discovery() {
           const client = getSupabase();
           if (!client || !owner) throw Error("NO_CLIENT");
-          return loadDiscovery(client, owner);
+          return loadDiscovery(client, owner, null, {weekly: true});
         },
         publish: setState,
       }),
@@ -95,6 +96,7 @@ export function HomePanel({
   const failed = state.status === "failed";
   const analysis = data ? analyzeTaste(data.context.snapshot) : null;
   const facts = analysis?.facts ?? [];
+  const recommendationCopy = generationCopy(data?.discovery?.generation);
   const recommendations = data?.discovery?.recommendations ?? [];
   const unique = recommendations
     .filter(
@@ -209,6 +211,8 @@ export function HomePanel({
           >
             <Text style={s.hint}>추천을 불러오지 못했어요. 다시 시도 ›</Text>
           </Pressable>
+        ) : recommendationCopy && !recommendations.length ? (
+          <Text style={s.recommendationStatus}>{recommendationCopy.body}</Text>
         ) : null}
         <HomeCarousel
           key={pagerKey}

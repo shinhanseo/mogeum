@@ -17,7 +17,7 @@ export function generationCopy(generation?: DiscoveryGeneration): {title: string
     case "backoff":
       return {title: "잠깐 쉬었다 다시 찾아볼게요", body: "추천을 마치지 못했어요. 잠시 후 다시 확인해주세요. 이번 주 추천은 아직 사용하지 않았어요."};
     case "daily-limit":
-      return {title: "오늘은 추천을 잠시 쉬어요", body: "추천을 여러 번 시도했어요. 내일 다시 확인해주세요. 기록은 계속 남길 수 있어요."};
+      return {title: "오늘은 추천을 잠시 쉬어요", body: "하루 추천 시도 한도에 도달했어요. 시간이 지난 뒤 다시 확인해주세요. 기록은 계속 남길 수 있어요."};
     case "insufficient":
       return null;
   }

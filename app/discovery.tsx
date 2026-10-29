@@ -75,7 +75,7 @@ function DiscoveryPanel({ owner }: { owner: string }) {
     setError("");
     try {
       await wishlistRepository(sdk).resume(owner);
-      const data = await loadDiscovery(sdk, owner);
+      const data = await loadDiscovery(sdk, owner, null, {weekly: true});
       if (!active()) return;
       setSelectedProduct((current) =>
         data.recommendations.some((row) => row.product.id === current)
