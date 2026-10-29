@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentRef,
+} from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -34,6 +40,7 @@ export function HomePanel({
   onTaste: () => void;
 }) {
   const router = useRouter();
+  const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const [state, setState] = useState<HomeLoadState>({ status: "loading" });
   const [position, setPosition] = useState({ key: "", index: 0 });
   const width = Math.min(useWindowDimensions().width, 600);
@@ -184,6 +191,7 @@ export function HomePanel({
           </Pressable>
         ) : null}
         <ScrollView
+          ref={pager}
           key={pagerKey}
           horizontal
           pagingEnabled
@@ -218,19 +226,21 @@ export function HomePanel({
           ))}
         </ScrollView>
       </View>
-      <View
-        accessible
-        accessibilityLabel={`추천 정보 ${Math.min(slide + 1, pages.length)} / ${pages.length}`}
-        style={s.dots}
-      >
+      <View style={s.dots}>
         {pages.map((page, i) => (
-          <View
+          <Pressable
             key={page.id}
-            style={[
-              s.dot,
-              Math.min(slide, pages.length - 1) === i && s.activeDot,
-            ]}
-          />
+            accessibilityRole="button"
+            accessibilityLabel={`${i + 1}/${pages.length} · ${page.title.replaceAll("\n", " ")}`}
+            accessibilityState={{ selected: slide === i }}
+            style={s.pageTarget}
+            onPress={() => {
+              pager.current?.scrollTo({ x: width * i, animated: true });
+              setPosition({ key: pagerKey, index: i });
+            }}
+          >
+            <View style={[s.dot, slide === i && s.activeDot]} />
+          </Pressable>
         ))}
       </View>
       <View style={s.records}>
@@ -376,11 +386,16 @@ const s = StyleSheet.create({
   },
   action: { ...typography.body, fontFamily: fonts.bold, color: colors.surface },
   dots: {
-    height: 36,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+  },
+  pageTarget: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
   },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.border },
   activeDot: { width: 12, backgroundColor: colors.primary },
