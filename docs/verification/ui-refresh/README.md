@@ -63,3 +63,5 @@ iOS 26.5 작은 화면 시뮬레이터에서 Text Size 7로 관찰 전용 상태
 추가 높이 조정(최종): 400pt 고정 높이와 action의 marginTop:auto를 제거했다. 가로 페이지를 alignItems:flex-start로 독립 측정한 뒤 현재 페이지의 onLayout 높이를 뷰포트에 적용한다. 짧은 페이지는 짧게, compact 취향 페이지는 지표 2개 높이만 사용한다. 합성 세 페이지 fixture에서 1→2→1 전환 시 높이 확장/축소와 이후 최근 노트 영역의 위치 변경 확인(`ios-carousel-content-height.png`). 이전 400pt 고정 설명보다 이 변경이 우선한다. 전체 check 444 pass / 14 skip / 0 fail.
 
 메뉴판 후속: 사용자의 추가 요청으로 홈 메뉴판 슬라이드도 개편했다(이전 '그대로 유지' 범위를 대체). 주종 사진 없이 겹친 메뉴 종이 SVG, 여러 장 업로드 안내, 사진 모으기→메뉴 확인→취향 비교 흐름, 기존 메뉴 업로드 진입을 표시한다. `HomeMenuSlide`는 실화면과 합성 높이 fixture가 공유한다. 작은 iOS 시뮬레이터에서 메뉴판 페이지 선택 후 문구/일러스트/내용 높이 확인(`ios-home-menu-editorial.png`). OCR 파이프라인이나 서버 추천은 변경하지 않았다.
+
+높이 전환 모션: 현재 페이지 자연 높이를 Animated.Value로 250ms ease-out 전환한다. 초기 측정은 즉시 적용하고, 전환 중 새 목표가 들어오면 기존 transition을 중단해 현재 값에서 이어간다. Reduce Motion은 진행 애니메이션을 중단하고 목표 높이를 즉시 적용한다. 점/가로 스크롤은 별도 native-driver offset을 유지하고 높이만 JS layout animation으로 처리한다. iOS 합성 페이지의 1→3→2 전환과 최종 높이/레이아웃 확인. 프레임별 성능 측정 및 Android 체감 QA는 별도이며, 전체 check 444 pass / 14 skip / 0 fail.

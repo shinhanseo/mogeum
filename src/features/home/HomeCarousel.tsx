@@ -9,6 +9,7 @@ import {
 import {
   AccessibilityInfo,
   Animated,
+  Easing,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -30,6 +31,8 @@ export function HomeCarousel({
   const [heights, setHeights] = useState<Record<number, number>>({});
   const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const [offset] = useState(() => new Animated.Value(0));
+  const [animatedHeight] = useState(() => new Animated.Value(0));
+  const heightSeeded = useRef(false);
   const [index, setIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   useEffect(() => {
@@ -46,12 +49,30 @@ export function HomeCarousel({
       sub.remove();
     };
   }, []);
+  const targetHeight = heights[index];
+  useEffect(() => {
+    if (!targetHeight) return;
+    if (reduceMotion) {
+      animatedHeight.stopAnimation();
+      animatedHeight.setValue(targetHeight);
+      return;
+    }
+    const transition = Animated.timing(animatedHeight, {
+      toValue: targetHeight,
+      duration: 250,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      useNativeDriver: false,
+    });
+    transition.start();
+    return () => transition.stop();
+  }, [targetHeight, animatedHeight, reduceMotion]);
+
   return (
     <>
       <Animated.ScrollView
         ref={pager}
         style={
-          heights[index] ? { height: heights[index], flexGrow: 0 } : undefined
+          targetHeight ? { height: animatedHeight, flexGrow: 0 } : undefined
         }
         contentContainerStyle={{ alignItems: "flex-start" }}
         horizontal
@@ -80,6 +101,10 @@ export function HomeCarousel({
             style={{ width, alignSelf: "flex-start" }}
             onLayout={(event) => {
               const height = Math.ceil(event.nativeEvent.layout.height);
+              if (height > 0 && i === index && !heightSeeded.current) {
+                animatedHeight.setValue(height);
+                heightSeeded.current = true;
+              }
               if (height > 0)
                 setHeights((previous) =>
                   previous[i] === height
