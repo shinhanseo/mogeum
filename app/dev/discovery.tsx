@@ -11,7 +11,7 @@ import {
   PRODUCT_CATALOG_VERSION,
   type Product,
 } from "../../supabase/functions/_shared/product-catalog";
-import type { DiscoveryResult } from "../../src/features/discovery/contract";
+import type { DiscoveryGeneration, DiscoveryResult } from "../../src/features/discovery/contract";
 import type { WishlistState } from "../../src/features/discovery/wishlist";
 import { colors, typography } from "../../src/theme/tokens";
 const preview: DiscoveryResult = {
@@ -88,7 +88,15 @@ export default function DiscoveryPreview() {
     scenario?: string;
     productId?: string;
   }>();
-  const data = scenario === "mixed" ? mixedPreview : preview;
+  const weeklyStates = ["generated", "cached", "running", "backoff", "daily-limit", "invalidated", "insufficient"];
+  const weekly = scenario && weeklyStates.includes(scenario) ? scenario as DiscoveryGeneration["state"] : null;
+  const data: DiscoveryResult = weekly ? {
+    ...mixedPreview,
+    method: "gemini-weekly-selection-v1",
+    modelUsed: weekly === "generated" || weekly === "cached",
+    recommendations: weekly === "generated" || weekly === "cached" ? mixedPreview.recommendations : [],
+    generation: {state: weekly, generatedAt: "2026-10-30T00:00:00Z", nextGenerationAt: "2026-11-06T00:00:00Z"},
+  } : scenario === "mixed" ? mixedPreview : preview;
   const [selectedProduct, setSelectedProduct] = useState<string | null>(
     productId ?? null,
   );
