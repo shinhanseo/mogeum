@@ -15,10 +15,11 @@ export async function loadDiscovery(
   client: SupabaseClient,
   owner: string,
   category: Product["category"] | null = null,
+  options: { weekly?: boolean } = {},
 ): Promise<DiscoveryResult> {
   const scoped = await menuClient(client, owner);
   const { data, error } = await scoped.functions.invoke("next-drinks", {
-    body: { category, catalogVersion: SHARED_CATALOG_VERSION },
+    body: { category, catalogVersion: SHARED_CATALOG_VERSION, ...(options.weekly ? { recommendationVersion: "weekly-selection-v1" } : {}) },
     timeout: 30000,
   });
   if (error) {

@@ -31,3 +31,9 @@ next-drinks에서 shared-catalog-v1과 recommendationVersion=weekly-selection-v1
 ## 실패 시도 비용 상한
 
 실패가 7일 성공 슬롯을 소모하지 않는 대신 반복 실패를 통해 무제한 호출하지 못하게 사용자별 UTC 하루 최대5회 acquired 예약을 허용한다. running/backoff/cache/invalidated 응답은 새 시도로 세지 않고, 성공 캐시는 상한과 관계없이 읽는다. 일자가 바뀌면 다음 acquired에서1회로 시작한다. 일반 사용자에게 횟수 테이블/RPC 권한을 추가하지 않는다. provider 호출 전 서버 예약에서 daily-limit으로 종료하며 앱 상태 표시는 후속 연결한다. PGlite 전체 migration 테스트31통과/독립 세션3제외, weekly orchestration 회귀3통과. 실제 Gemini 호출·관리형 DB 배포는 이 결과와 별도다.
+
+## 앱 계약과 대기 상태
+
+앱 파서는 기존 규칙 응답과 주간 Gemini 응답을 구분한다. generated/cached만 modelUsed=true이며 서버 생성·다음 생성 시각이 필요하다. running/backoff/daily-limit/invalidated/insufficient 응답에 추천을 섞거나 잘못된 시각을 보내면 거절한다. 카탈로그 제품 사실과 개인 근거 검사는 두 계약에서 유지한다. 저장된 술을 제외하는 기존 처리도 유지한다.
+
+다음 한 잔 화면에는 생성 중·실패 재시도 대기·하루 상한·기록 변경으로 숨긴 상태를 분리해서 안내한다. 갱신 시각은 서버 영수증을 기기 시간대로 표시한다. 앱 요청의 weekly 옵션은 서버 배포 검증 뒤 활성화하며 기본 요청은 기존 계약을 유지한다. UI 정합성/실기기 검증은 별도로 남는다.

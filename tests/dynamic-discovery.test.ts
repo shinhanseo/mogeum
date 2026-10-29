@@ -208,3 +208,17 @@ test("dynamic 160-character product identities remain valid draft contexts witho
  assert.throws(()=>composerContext(undefined,"a".repeat(161)));
  assert.throws(()=>composerStorageKey(owner,"product:../bad"));
 });
+
+test("weekly transport preserves server receipts and rejects recommendations while generation is blocked", () => {
+  const weekly = {...response(), method: "gemini-weekly-selection-v1", modelUsed: true,
+    generation: {state: "cached", generatedAt: "2026-10-29T00:00:00Z", nextGenerationAt: "2026-11-05T00:00:00Z"}};
+  assert.equal(parseDiscoveryResult(weekly).generation?.state, "cached");
+  assert.throws(() => parseDiscoveryResult({...weekly, modelUsed: false}));
+  assert.throws(() => parseDiscoveryResult({...weekly, generation: {...weekly.generation, nextGenerationAt: "invalid"}}));
+  for (const state of ["running", "backoff", "daily-limit", "insufficient", "invalidated"]) {
+    const blocked = {...weekly, modelUsed: false, generation: {state, nextGenerationAt: "2026-11-05T00:00:00Z"}};
+    assert.throws(() => parseDiscoveryResult(blocked));
+    assert.equal(parseDiscoveryResult({...blocked, recommendations: []}).modelUsed, false);
+  }
+  assert.throws(() => parseDiscoveryResult({...weekly, generation: {...weekly.generation, generatedAt: undefined}}));
+});

@@ -26,6 +26,11 @@ type EvidenceRecord = {
   revisit: "again" | "okay" | "not_for_me" | null;
   noteText: string | null;
 };
+export type DiscoveryGeneration = {
+  state: "generated" | "cached" | "insufficient" | "running" | "backoff" | "invalidated" | "daily-limit";
+  generatedAt?: string;
+  nextGenerationAt?: string;
+};
 export type DiscoveryResult = {
   catalog: Product[];
   recommendations: NextDrink[];
@@ -35,8 +40,9 @@ export type DiscoveryResult = {
   recordCount: number;
   sensoryRecordCount: number;
   omittedSensoryRecords: number;
-  method: "evidence-rules-v1";
-  modelUsed: false;
+  method: "evidence-rules-v1" | "gemini-weekly-selection-v1";
+  modelUsed: boolean;
+  generation?: DiscoveryGeneration;
   catalogVersion: string;
   catalogSize: number;
   limitedCatalog: true;
@@ -92,11 +98,26 @@ const categories = new Set(products.map((p) => p.category));
 /** Validate the transport boundary; sensory truth remains the authenticated server's responsibility. */
 export function parseDiscoveryResult(value: unknown): DiscoveryResult {
   const v = object(value);
-  if (
-    v.method !== "evidence-rules-v1" ||
-    v.modelUsed !== false ||
-    v.limitedCatalog !== true
-  ) {
+  const weekly = v.method === "gemini-weekly-selection-v1";
+  let generation: DiscoveryGeneration | undefined;
+  if (v.limitedCatalog !== true) return fail();
+  if (weekly) {
+    const g = object(v.generation);
+    const states = ["generated", "cached", "insufficient", "running", "backoff", "invalidated", "daily-limit"];
+    if (!states.includes(g.state as string) || v.catalogVersion !== SHARED_CATALOG_VERSION) return fail();
+    const selected = g.state === "generated" || g.state === "cached";
+    if (v.modelUsed !== selected) return fail();
+    const timestamp = (value: unknown): string | undefined => {
+      if (value === undefined) return undefined;
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(value) || !Number.isFinite(Date.parse(value))) return fail();
+      return value;
+    };
+    const generatedAt = timestamp(g.generatedAt), nextGenerationAt = timestamp(g.nextGenerationAt);
+    if (selected && (!generatedAt || !nextGenerationAt || Date.parse(nextGenerationAt) <= Date.parse(generatedAt))) return fail();
+    if (g.state === "invalidated" && !nextGenerationAt) return fail();
+    if (!selected && list(v.recommendations, 24).length) return fail();
+    generation = {state: g.state as DiscoveryGeneration["state"], ...(generatedAt ? {generatedAt} : {}), ...(nextGenerationAt ? {nextGenerationAt} : {})};
+  } else if (v.method !== "evidence-rules-v1" || v.modelUsed !== false || v.generation !== undefined) {
     return fail();
   }
   const legacy = v.catalogVersion === PRODUCT_CATALOG_VERSION;
@@ -276,8 +297,9 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
     sensoryRecordCount,
     omittedSensoryRecords,
     tasteHash: text(v.tasteHash, 200),
-    method: "evidence-rules-v1",
-    modelUsed: false,
+    method: weekly ? "gemini-weekly-selection-v1" : "evidence-rules-v1",
+    modelUsed: weekly && v.modelUsed === true,
+    ...(generation ? {generation} : {}),
     catalogVersion: v.catalogVersion as string,
     catalogSize: catalog.length,
     limitedCatalog: true,
