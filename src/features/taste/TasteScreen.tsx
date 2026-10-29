@@ -5,11 +5,13 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { Button } from "../../components/Button";
 import { CellarArt } from "../../components/CellarArt";
 import { colors, fonts, typography } from "../../theme/tokens";
 import { analyzeTaste, selectedFacts, type TasteContext } from "./repository";
+import { tasteOverview } from "./overview";
 type Props = {
   context: TasteContext | null;
   photos?: Record<string, string>;
@@ -34,9 +36,11 @@ export function TasteScreen({
   onNext,
   onMenu,
 }: Props) {
-  const analysis = context ? analyzeTaste(context.snapshot) : null;
-  const facts =
-    analysis?.facts.filter((f) => f.positiveIds.length > 0).slice(0, 3) ?? [];
+  const largeText = useWindowDimensions().fontScale > 1.3;
+  const overview = context ? tasteOverview(context.snapshot) : null;
+  const analysis = overview?.analysis ?? null;
+  const facts = overview?.facts ?? [];
+  const observationsOnly = overview?.observationsOnly ?? true;
   const selected =
     analysis && context?.cached && !context.stale
       ? selectedFacts(analysis, context.cached)
@@ -62,7 +66,7 @@ export function TasteScreen({
       showsVerticalScrollIndicator={false}
     >
       <Text style={s.title}>내 취향</Text>
-      <View style={s.stats}>
+      <View style={[s.stats, largeText && s.stack]}>
         <Text style={s.caption}>
           느낌 기록 <Text style={s.count}>{analysis?.recordCount ?? 0}</Text>잔
         </Text>
@@ -71,11 +75,26 @@ export function TasteScreen({
           종
         </Text>
       </View>
-      <View style={s.heading}>
-        <Text style={s.caption}>좋게 남긴 잔에서</Text>
-        <Text style={s.subtitle}>자주 만난 느낌</Text>
+      {context && context.snapshot.omittedCount > 0 ? (
         <Text style={s.caption}>
-          느낀 특징을 모았어요. 선호의 확정은 아니에요.
+          분석은 최근 {context.snapshot.records.length}개 기록 기준이에요.
+        </Text>
+      ) : null}
+      <View style={s.heading}>
+        <Text style={s.caption}>
+          {observationsOnly ? "내가 남긴 감각" : "좋게 남긴 잔에서"}
+        </Text>
+        <Text
+          style={s.subtitle}
+          lineBreakStrategyIOS="hangul-word"
+          textBreakStrategy="balanced"
+        >
+          {observationsOnly ? "기록에서 만난 느낌" : "자주 만난 느낌"}
+        </Text>
+        <Text style={s.caption}>
+          {observationsOnly && facts.length
+            ? "느꼈다고 남긴 특징이에요. 좋아한다는 뜻은 아니에요."
+            : "느낀 특징을 모았어요. 선호의 확정은 아니에요."}
         </Text>
       </View>
       {context?.stale ? (
@@ -106,15 +125,25 @@ export function TasteScreen({
             onPress={() => onEvidence(fact.id)}
             style={s.fact}
           >
-            <View style={s.factTitle}>
-              <Text style={s.factName}>{fact.label}</Text>
+            <View style={[s.factTitle, largeText && s.stack]}>
+              <Text
+                style={s.factName}
+                lineBreakStrategyIOS="hangul-word"
+                textBreakStrategy="balanced"
+              >
+                {fact.label}
+              </Text>
               <Text style={s.number}>
-                {positive}
-                <Text style={s.caption}> 잔 ›</Text>
+                {observationsOnly ? positive + other : positive}
+                <Text style={s.caption}>
+                  {observationsOnly ? "잔에서 느낌 ›" : " 잔 ›"}
+                </Text>
               </Text>
             </View>
             <View style={s.track}>
-              <View style={[s.good, { flex: positive / total }]} />
+              {positive > 0 ? (
+                <View style={[s.good, { flex: positive / total }]} />
+              ) : null}
               {other > 0 ? (
                 <View style={[s.other, { flex: other / total }]} />
               ) : null}
@@ -122,8 +151,10 @@ export function TasteScreen({
                 <View style={{ flex: (total - positive - other) / total }} />
               ) : null}
             </View>
-            <View style={s.legend}>
-              <Text style={s.goodLabel}>좋게 남긴 {positive}잔</Text>
+            <View style={[s.legend, largeText && s.stack]}>
+              {positive > 0 ? (
+                <Text style={s.goodLabel}>좋게 남긴 {positive}잔</Text>
+              ) : null}
               {other > 0 ? (
                 <Text style={s.caption}>다른 평가 {other}잔</Text>
               ) : null}
@@ -143,9 +174,9 @@ export function TasteScreen({
           onPress={onRecord}
         />
       ) : null}
-      {facts.length ? (
+      {facts.length && !observationsOnly ? (
         <View style={s.section}>
-          <View style={s.factTitle}>
+          <View style={[s.factTitle, largeText && s.stack]}>
             <Text style={s.sectionTitle}>AI가 골라본 공통점</Text>
             <Button
               label={selected.length ? "다시 살펴보기" : "요약하기"}
@@ -175,7 +206,11 @@ export function TasteScreen({
             >
               <CellarArt id={category} category={category} size={48} />
               <View style={s.copy}>
-                <Text style={s.factName}>
+                <Text
+                  style={s.factName}
+                  lineBreakStrategyIOS="hangul-word"
+                  textBreakStrategy="balanced"
+                >
                   {(
                     {
                       whisky: "위스키",
@@ -198,7 +233,7 @@ export function TasteScreen({
         <View style={s.section}>
           <Text style={s.sectionTitle}>이 느낌의 출발점</Text>
           {context!.snapshot.records
-            .filter((r) => facts[0].positiveIds.includes(r.id))
+            .filter((r) => overview!.originIds.includes(r.id))
             .slice(0, 2)
             .map((r) => (
               <Pressable
@@ -209,7 +244,13 @@ export function TasteScreen({
               >
                 <CellarArt id={r.entryId} category={r.category} size={48} />
                 <View style={s.copy}>
-                  <Text style={s.factName}>{r.name ?? "이름 없는 술"}</Text>
+                  <Text
+                    style={s.factName}
+                    lineBreakStrategyIOS="hangul-word"
+                    textBreakStrategy="balanced"
+                  >
+                    {r.name ?? "이름 없는 술"}
+                  </Text>
                   <Text style={s.caption}>{r.date.slice(0, 10)}</Text>
                 </View>
                 <Text style={s.caption}>›</Text>
@@ -238,7 +279,8 @@ export function TasteScreen({
 const s = StyleSheet.create({
   content: { padding: 24, gap: 20, paddingBottom: 32 },
   title: { ...typography.heading, color: colors.text },
-  stats: { flexDirection: "row", gap: 24 },
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
+  stack: { flexDirection: "column", alignItems: "flex-start", gap: 8 },
   caption: { ...typography.caption, color: colors.muted },
   count: { fontSize: 20, fontFamily: fonts.bold, color: colors.text },
   heading: {
@@ -256,7 +298,12 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  factName: { ...typography.body, fontFamily: fonts.bold, color: colors.text },
+  factName: {
+    ...typography.body,
+    fontFamily: fonts.bold,
+    color: colors.text,
+    flexShrink: 1,
+  },
   number: {
     fontSize: 28,
     lineHeight: 38,
@@ -281,7 +328,7 @@ const s = StyleSheet.create({
     paddingTop: 24,
     gap: 16,
   },
-  sectionTitle: { ...typography.nav, color: colors.text },
+  sectionTitle: { ...typography.nav, color: colors.text, flexShrink: 1 },
   category: {
     flexDirection: "row",
     alignItems: "center",

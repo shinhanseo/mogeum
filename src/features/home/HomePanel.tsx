@@ -136,11 +136,15 @@ export function HomePanel({
       title: loading
         ? "내 기록을\n살펴보고 있어요"
         : (facts.find((f) => f.positiveIds.length > 0)?.label ??
-          "한 잔의 느낌부터\n모아볼까요?"),
+          (facts.length
+            ? "기록에 남긴 감각을\n다시 살펴볼까요?"
+            : "한 잔의 느낌부터\n모아볼까요?")),
       eyebrow: "내 기록에서 발견한 느낌",
       description: hasPositive
         ? "좋게 남긴 특징과 다른 평가를 함께 살펴봐요."
-        : "사진에 느낌을 더하면 취향을 살펴볼 수 있어요.",
+        : facts.length
+          ? "남긴 감각과 평가를 함께 확인해요."
+          : "사진에 느낌을 더하면 취향을 살펴볼 수 있어요.",
       hint: "내가 남긴 기록이 다음 선택의 출발점이에요.",
       category: null,
       id: "taste",
