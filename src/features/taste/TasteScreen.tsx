@@ -1,118 +1,335 @@
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button } from '../../components/Button';
-import { Mogu } from '../../components/Mogu';
-import { Icon } from '../../components/Icon';
-import { colors, fonts, layout, radius, space, typography } from '../../theme/tokens';
-import { analyzeTaste, selectedFacts, type TasteContext } from './repository';
-
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { SensoryGauge } from "../../components/SensoryGauge";
+import { Button } from "../../components/Button";
+import { CellarArt } from "../../components/CellarArt";
+import { colors, fonts, typography } from "../../theme/tokens";
+import { analyzeTaste, selectedFacts, type TasteContext } from "./repository";
+import { tasteOverview } from "./overview";
 type Props = {
   context: TasteContext | null;
   photos?: Record<string, string>;
   busy?: boolean;
   error?: string;
   onGenerate: () => void;
-  onEvidence: (factId?: string) => void;
+  onEvidence: (factId?: string, category?: string) => void;
   onRecord: () => void;
   onOpen: (id: string) => void;
   onMenu?: () => void;
   onNext?: () => void;
   onAccount?: () => void;
 };
-export function TasteScreen({ context, photos = {}, busy = false, error = '', onGenerate, onEvidence, onRecord, onOpen, onMenu, onNext, onAccount }: Props) {
-  const analysis = context ? analyzeTaste(context.snapshot) : null;
-  const facts = analysis && !context?.stale ? selectedFacts(analysis, context?.cached ?? null) : [];
-  const ready = facts.length > 0;
-  const first = analysis?.stage === 'early';
-  const ids = [...new Set(facts.flatMap(f => f.positiveIds))];
-  const records = context?.snapshot.records.filter(record => ids.includes(record.id)) ?? [];
-  const candidates = analysis?.facts.some(fact => fact.positiveIds.length > 0) ?? false;
-  const status = context?.stale ? '업데이트 필요' : ready ? (first ? '첫 발견' : '취향 요약') : '시작하기';
-  const headline = ready ? facts[0].label : analysis?.recordCount ? '기록 속 취향을\n찾아볼까요?' : '한 잔의 느낌부터\n모아볼까요?';
-  return <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
-    <View style={s.header}>
-      <Text style={s.heading}>내 취향</Text>
-      {onAccount ? <Pressable accessibilityRole="button" accessibilityLabel="계정 관리" onPress={onAccount} style={s.account}><Text style={s.link}>계정 관리</Text></Pressable> : null}
-    </View>
-    <View style={s.summary}>
-      <View style={s.heroTop}><Text style={s.eyebrow}>모구의 취향 노트</Text><View style={s.badge}><Text style={s.badgeText}>{status}</Text></View></View>
-      <View style={s.heroBody}>
-        <View style={s.copy}>{ready ? <Pressable accessibilityRole="button" accessibilityLabel={`${facts[0].label} 근거 보기`} onPress={() => onEvidence(facts[0].id)}><Text style={s.statement}>{headline}</Text><Text style={s.heroHint}>좋게 남긴 기록에서 찾았어요. ›</Text></Pressable> : <><Text style={s.statement}>{headline}</Text><Text style={s.heroHint}>{analysis?.recordCount ? '느낀 특징과 좋아한 느낌을 함께 살펴봐요.' : '사진에 느낌을 더하면 취향이 보여요.'}</Text></>}</View>
-        <View style={s.character}><View style={s.scaled}><Mogu /></View></View>
+export function TasteScreen({
+  context,
+  busy = false,
+  error = "",
+  onGenerate,
+  onEvidence,
+  onRecord,
+  onOpen,
+  onNext,
+  onMenu,
+}: Props) {
+  const largeText = useWindowDimensions().fontScale > 1.3;
+  const overview = context ? tasteOverview(context.snapshot) : null;
+  const analysis = overview?.analysis ?? null;
+  const facts = overview?.facts ?? [];
+  const observationsOnly = overview?.observationsOnly ?? true;
+  const selected =
+    analysis && context?.cached && !context.stale
+      ? selectedFacts(analysis, context.cached)
+      : [];
+  const categories = [
+    ...new Set(
+      context?.snapshot.records
+        .map((r) => r.category)
+        .filter((c): c is string => !!c) ?? [],
+    ),
+  ];
+  const byCategory = categories.flatMap((category) => {
+    const records = context!.snapshot.records.filter(
+      (r) => r.category === category,
+    );
+    const a = analyzeTaste({ ...context!.snapshot, records });
+    const f = a.facts.filter((f) => f.positiveIds.length > 0).slice(0, 2);
+    return f.length ? [{ category, f }] : [];
+  });
+  return (
+    <ScrollView
+      contentContainerStyle={s.content}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text style={s.title}>내 취향</Text>
+      <View style={[s.stats, largeText && s.stack]}>
+        <Text style={s.caption}>
+          느낌 기록 <Text style={s.count}>{analysis?.recordCount ?? 0}</Text>잔
+        </Text>
+        <Text style={s.caption}>
+          서로 다른 술 <Text style={s.count}>{analysis?.drinkCount ?? 0}</Text>
+          종
+        </Text>
       </View>
-      <View style={s.heroMeta}>
-        <Text style={s.meta}>{analysis ? `느낌을 남긴 ${analysis.recordCount}잔` : '기록을 불러오는 중'}</Text>
-        {analysis ? <Text style={s.meta}>서로 다른 술 {analysis.drinkCount}종</Text> : <ActivityIndicator color={colors.primary} />}
+      {context && context.snapshot.omittedCount > 0 ? (
+        <Text style={s.caption}>
+          분석은 최근 {context.snapshot.records.length}개 기록 기준이에요.
+        </Text>
+      ) : null}
+      <View style={s.heading}>
+        <Text style={s.caption}>
+          {observationsOnly ? "내가 남긴 감각" : "좋게 남긴 잔에서"}
+        </Text>
+        <Text
+          style={s.subtitle}
+          lineBreakStrategyIOS="hangul-word"
+          textBreakStrategy="balanced"
+        >
+          {observationsOnly ? "기록에서 만난 느낌" : "자주 만난 느낌"}
+        </Text>
+        <Text style={s.caption}>
+          {observationsOnly && facts.length
+            ? "느꼈다고 남긴 특징이에요. 좋아한다는 뜻은 아니에요."
+            : "느낀 특징을 모았어요. 선호의 확정은 아니에요."}
+        </Text>
       </View>
-    </View>
-    {context?.stale ? <Text style={s.notice}>새 기록이 생겼어요. 최신 느낌으로 다시 살펴봐요.</Text> : null}
-    {error ? <Text accessibilityRole="alert" style={s.notice}>{error}</Text> : null}
-    {busy ? <View accessibilityRole="progressbar" style={s.loading}><ActivityIndicator color={colors.primary} /><Text style={s.caption}>기록 속 공통점을 찾고 있어요.</Text></View> : null}
-    {!context && error ? <Button label="기록 다시 불러오기" onPress={onGenerate} /> : !ready && candidates ? <Button label={context?.stale ? '최신 기록으로 다시 요약하기' : '내 기록으로 AI 취향 요약'} loading={busy} onPress={onGenerate} /> : !ready && context ? <Button label={context.snapshot.totalRecords ? '내 기록에 느낌 남기기' : '첫 한 잔 남기기'} onPress={onRecord} /> : null}
-    {ready ? <View style={s.section}>
-      {facts.length > 1 ? <View style={s.chips}>{facts.slice(1).map(fact => <Pressable accessibilityRole="button" accessibilityLabel={`${fact.label} 근거 보기`} key={fact.id} style={s.chip} onPress={() => onEvidence(fact.id)}><Text style={s.chipText}>{fact.label}</Text></Pressable>)}</View> : null}
-      <View style={s.sectionHeading}><Text style={s.label}>취향의 근거가 된 한 잔</Text><Pressable accessibilityRole="button" onPress={() => onEvidence()} style={s.evidenceLink}><Text style={s.link}>기록 {ids.length}개 ›</Text></Pressable></View>
-      {records.slice(0, 3).map(record => <Pressable accessibilityRole="button" accessibilityLabel={`${record.name || '이름 없는 술'} 기록 열기`} key={record.id} style={s.record} onPress={() => onOpen(record.id)}>
-        {photos[record.id] ? <Image source={{ uri: photos[record.id] }} style={s.photo} resizeMode="contain" /> : <View style={[s.photo, s.placeholder]}><Icon name="photo" /></View>}
-        <View style={s.recordCopy}><Text numberOfLines={2} style={s.recordName}>{record.name || '이름 없는 술'}</Text><Text style={s.caption}>{record.date.slice(0, 10).replace(/-/g, '.')} · 좋게 남긴 기록</Text><Text style={s.recordHint}>내가 남긴 느낌 다시 보기</Text></View><Text style={s.chevron}>›</Text>
-      </Pressable>)}
-      {analysis!.stage !== 'established' ? <Text style={s.caption}>아직 작은 발견이에요. 기록이 쌓이면 달라질 수 있어요.</Text> : null}
-      {analysis!.facts.some(fact => fact.positiveIds.length && fact.negativeIds.length) ? <Button variant="text" label="다르게 남긴 느낌도 있어요 ›" onPress={() => onEvidence()} /> : null}
-      {first ? <Button variant="text" label="내 기록에 느낌 더 남기기 ›" onPress={onRecord} /> : null}
-    </View> : null}
-    {context?.snapshot.omittedCount ? <Text style={s.caption}>감각 비교에는 최근 200개 기록을 사용했어요.</Text> : null}
-    <View style={s.section}>
-      <Text style={s.label}>취향으로 고르는 다음 한 잔</Text>
-      <View style={s.destinations}>
-        <TasteDestination icon="heart" title="다음 한 잔" description="내 기록과 닮은 술 둘러보기" disabled={!onNext} onPress={() => onNext?.()} />
-        <View style={s.divider} />
-        <TasteDestination icon="photo" title="메뉴판에서 찾기" description="지금 고를 수 있는 술과 비교하기" disabled={!onMenu} onPress={() => onMenu?.()} />
-      </View>
-      <Text style={s.caption}>추천은 출처를 확인한 술 정보와 내 기록을 비교해요.</Text>
-    </View>
-  </ScrollView>;
-}
-function TasteDestination({ icon, title, description, disabled, onPress }: { icon: 'heart' | 'photo'; title: string; description: string; disabled: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} accessibilityLabel={`${title}, ${description}`} disabled={disabled} onPress={onPress} style={({ pressed }) => [s.destination, pressed && s.pressed, disabled && s.disabled]}><View style={s.destinationIcon}><Icon name={icon} color={colors.primary} /></View><View style={s.recordCopy}><Text style={s.recordName}>{title}</Text><Text style={s.caption}>{description}</Text></View><Text style={s.chevron}>›</Text></Pressable>;
+      {context?.stale ? (
+        <Text style={s.caption}>
+          집계는 최신 기록이에요. AI 공통점은 다시 요약해주세요.
+        </Text>
+      ) : null}
+      {error ? (
+        <Text accessibilityRole="alert" style={s.caption}>
+          {error}
+        </Text>
+      ) : null}
+      {busy ? (
+        <ActivityIndicator
+          accessibilityLabel="취향 요약 중"
+          color={colors.primary}
+        />
+      ) : null}
+      {facts.map((fact) => {
+        const positive = fact.positiveIds.length,
+          other = fact.negativeIds.length + fact.neutralIds.length,
+          total = Math.max(analysis!.recordCount, positive + other, 1);
+        return (
+          <Pressable
+            key={fact.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${fact.label}, 좋게 남긴 ${positive}잔, 다른 평가 ${other}잔. 근거 보기`}
+            onPress={() => onEvidence(fact.id)}
+            style={s.fact}
+          >
+            <View style={[s.factTitle, largeText && s.stack]}>
+              <Text
+                style={s.factName}
+                lineBreakStrategyIOS="hangul-word"
+                textBreakStrategy="balanced"
+              >
+                {fact.label}
+              </Text>
+              <Text style={s.number}>
+                {observationsOnly ? positive + other : positive}
+                <Text style={s.caption}>
+                  {observationsOnly ? "잔에서 느낌 ›" : " 잔 ›"}
+                </Text>
+              </Text>
+            </View>
+            <SensoryGauge
+              positive={positive}
+              other={other}
+              total={total}
+              observed={observationsOnly}
+            />
+            <View style={[s.legend, largeText && s.stack]}>
+              {positive > 0 ? (
+                <Text style={s.goodLabel}>좋게 남긴 {positive}잔</Text>
+              ) : null}
+              {other > 0 ? (
+                <Text style={s.caption}>다른 평가 {other}잔</Text>
+              ) : null}
+            </View>
+          </Pressable>
+        );
+      })}
+      {!context ? (
+        <Button label="기록 다시 불러오기" onPress={onGenerate} />
+      ) : !facts.length ? (
+        <Button
+          label={
+            context.snapshot.totalRecords
+              ? "기록에 느낌 더하기"
+              : "첫 한 잔 남기기"
+          }
+          onPress={onRecord}
+        />
+      ) : null}
+      {facts.length && !observationsOnly ? (
+        <View style={s.section}>
+          <View style={[s.factTitle, largeText && s.stack]}>
+            <Text style={s.sectionTitle}>AI가 골라본 공통점</Text>
+            <Button
+              label={selected.length ? "다시 살펴보기" : "요약하기"}
+              variant="secondary"
+              loading={busy}
+              onPress={onGenerate}
+            />
+          </View>
+          {selected.length ? (
+            <Text style={s.goodLabel}>
+              {selected.map((f) => f.label).join(" · ")}
+            </Text>
+          ) : (
+            <Text style={s.caption}>내 기록에서 근거 있는 특징만 골라요.</Text>
+          )}
+        </View>
+      ) : null}
+      {byCategory.length ? (
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>주종마다, 조금씩 다르게</Text>
+          {byCategory.map(({ category, f }) => (
+            <Pressable
+              key={category}
+              accessibilityRole="button"
+              onPress={() => onEvidence(f[0].id, category)}
+              style={s.category}
+            >
+              <CellarArt id={category} category={category} size={48} />
+              <View style={s.copy}>
+                <Text
+                  style={s.factName}
+                  lineBreakStrategyIOS="hangul-word"
+                  textBreakStrategy="balanced"
+                >
+                  {(
+                    {
+                      whisky: "위스키",
+                      wine: "와인",
+                      beer: "맥주",
+                      traditional: "전통주",
+                    } as Record<string, string>
+                  )[category] ?? category}
+                </Text>
+                <Text style={s.goodLabel}>
+                  {f.map((v) => "#" + v.label.replaceAll(" ", "")).join(" ")}
+                </Text>
+              </View>
+              <Text style={s.caption}>›</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+      {facts[0] ? (
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>이 느낌의 출발점</Text>
+          {context!.snapshot.records
+            .filter((r) => overview!.originIds.includes(r.id))
+            .slice(0, 2)
+            .map((r) => (
+              <Pressable
+                key={r.id}
+                accessibilityRole="button"
+                onPress={() => onOpen(r.id)}
+                style={s.category}
+              >
+                <CellarArt id={r.entryId} category={r.category} size={48} />
+                <View style={s.copy}>
+                  <Text
+                    style={s.factName}
+                    lineBreakStrategyIOS="hangul-word"
+                    textBreakStrategy="balanced"
+                  >
+                    {r.name ?? "이름 없는 술"}
+                  </Text>
+                  <Text style={s.caption}>{r.date.slice(0, 10)}</Text>
+                </View>
+                <Text style={s.caption}>›</Text>
+              </Pressable>
+            ))}
+        </View>
+      ) : null}
+      <Button
+        label="느낌의 근거 기록 전체 보기"
+        variant="secondary"
+        onPress={() => onEvidence()}
+      />
+      {onNext ? (
+        <Button label="내 취향으로 다음 한 잔 찾기" onPress={onNext} />
+      ) : null}
+      {onMenu ? (
+        <Button
+          label="메뉴판에서 내 취향 찾기"
+          variant="secondary"
+          onPress={onMenu}
+        />
+      ) : null}
+    </ScrollView>
+  );
 }
 const s = StyleSheet.create({
-  content: { padding: layout.screenPadding, gap: space.xl, width: '100%', maxWidth: 600, alignSelf: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
-  heading: { ...typography.heading, color: colors.text },
-  account: { minHeight: 44, justifyContent: 'center', paddingLeft: space.md },
-  link: { ...typography.caption, color: colors.primary, fontFamily: fonts.bold },
-  summary: { padding: space.xl, gap: space.lg, borderRadius: radius.lg, backgroundColor: colors.selected },
-  heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
-  eyebrow: { ...typography.caption, fontFamily: fonts.bold, color: colors.primary },
-  badge: { paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radius.pill, backgroundColor: colors.surface },
-  badgeText: { ...typography.caption, color: colors.primary },
-  heroBody: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  copy: { flex: 1, gap: space.sm },
-  statement: { ...typography.question, color: colors.primary },
-  heroHint: { ...typography.caption, color: colors.muted },
-  character: { width: 88, height: 88 },
-  scaled: { position: 'absolute', width: 170, height: 153, left: -41, top: -32, transform: [{ scale: .5 }] },
-  heroMeta: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.sm, paddingTop: space.md, borderTopWidth: 1, borderTopColor: colors.border },
-  meta: { ...typography.caption, color: colors.primary },
-  section: { gap: space.md },
-  sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
-  label: { ...typography.fieldLabel, fontFamily: fonts.bold, color: colors.text },
-  evidenceLink: { minHeight: 44, justifyContent: 'center', paddingLeft: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm, backgroundColor: colors.surface, minHeight: 44, justifyContent: 'center' },
-  chipText: { ...typography.caption, color: colors.text },
-  record: { flexDirection: 'row', alignItems: 'center', gap: space.lg, borderRadius: radius.md, backgroundColor: colors.surface, padding: space.md },
-  photo: { width: 64, aspectRatio: 3 / 4, borderRadius: radius.sm, backgroundColor: colors.illustration },
-  placeholder: { alignItems: 'center', justifyContent: 'center' },
-  recordCopy: { flex: 1, gap: space.xs },
-  recordName: { ...typography.fieldLabel, fontFamily: fonts.bold, color: colors.text },
-  recordHint: { ...typography.caption, color: colors.primary },
+  content: { padding: 24, gap: 20, paddingBottom: 32 },
+  title: { ...typography.heading, color: colors.text },
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
+  stack: { flexDirection: "column", alignItems: "flex-start", gap: 8 },
   caption: { ...typography.caption, color: colors.muted },
-  chevron: { ...typography.title, color: colors.primary },
-  notice: { ...typography.body, color: colors.primary },
-  loading: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  destinations: { borderRadius: radius.md, backgroundColor: colors.surface, overflow: 'hidden' },
-  destination: { minHeight: 76, flexDirection: 'row', alignItems: 'center', padding: space.lg, gap: space.md },
-  destinationIcon: { width: 40, height: 40, borderRadius: radius.sm, backgroundColor: colors.selected, alignItems: 'center', justifyContent: 'center' },
-  divider: { height: 1, backgroundColor: colors.border, marginHorizontal: space.lg },
-  pressed: { opacity: .75 }, disabled: { opacity: .45 },
+  count: { fontSize: 20, fontFamily: fonts.bold, color: colors.text },
+  heading: {
+    marginTop: 20,
+    gap: 10,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    paddingTop: 24,
+  },
+  subtitle: { ...typography.question, color: colors.text },
+  fact: { gap: 12, paddingVertical: 8 },
+  factTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  factName: {
+    ...typography.body,
+    fontFamily: fonts.bold,
+    color: colors.text,
+    flexShrink: 1,
+  },
+  number: {
+    fontSize: 28,
+    lineHeight: 38,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+  },
+  track: {
+    height: 7,
+    borderRadius: 3,
+    overflow: "hidden",
+    backgroundColor: colors.border,
+    flexDirection: "row",
+    gap: 3,
+  },
+  good: { backgroundColor: colors.primary, borderRadius: 3 },
+  other: { backgroundColor: colors.chartOther, borderRadius: 3 },
+  legend: { flexDirection: "row", gap: 24 },
+  goodLabel: { ...typography.caption, color: colors.primary },
+  section: {
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    paddingTop: 24,
+    gap: 16,
+  },
+  sectionTitle: { ...typography.nav, color: colors.text, flexShrink: 1 },
+  category: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    paddingVertical: 8,
+  },
+  copy: { flex: 1, gap: 8 },
 });

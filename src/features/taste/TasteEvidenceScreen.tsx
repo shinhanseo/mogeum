@@ -1,20 +1,194 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScreenHeader } from '../../components/ScreenHeader';
-import { ChoiceChip } from '../../components/ChoiceChip';
-import { Icon } from '../../components/Icon';
-import { colors, typography } from '../../theme/tokens';
-import { analyzeTaste, factSentence, selectedFacts, type TasteContext } from './repository';
-const kinds:Record<string,string>={whisky:'위스키',wine:'와인',beer:'맥주',traditional:'전통주',other:'기타'};
-export function TasteEvidenceScreen({context,factId,photos,onClose,onOpen}:{context:TasteContext;factId?:string;photos:Record<string,string>;onClose:()=>void;onOpen:(id:string)=>void}){
- const [category,setCategory]=useState<string|null>(null);const analysis=analyzeTaste(context.snapshot);
- const facts=factId?analysis.facts.filter(f=>f.id===factId):selectedFacts(analysis,context.cached);
- const ids=[...new Set(facts.flatMap(f=>[...f.positiveIds,...f.negativeIds]))];const records=context.snapshot.records.filter(r=>ids.includes(r.id));
- const categories=[...new Set(records.map(r=>r.category).filter((c):c is string=>c!==null))];
- return <SafeAreaView style={s.page}><ScreenHeader title="취향의 근거" onBack={onClose}/><ScrollView contentContainerStyle={s.content}>
- <Text style={s.title}>{'이 취향은\n여기서 찾았어요.'}</Text>
- {facts.length?<>{facts.map(f=><View key={f.id} style={s.discovery}><Text style={s.label}>이번에 발견한 느낌 · {f.label}</Text><Text style={s.caption}>{factSentence(f)}</Text></View>)}<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filters}><ChoiceChip compact label={`전체 ${records.length}`} selected={category===null} onPress={()=>setCategory(null)}/>{categories.map(c=><ChoiceChip compact key={c} label={`${kinds[c]??c} ${records.filter(r=>r.category===c).length}`} selected={category===c} onPress={()=>setCategory(c)}/>)}</ScrollView>{records.filter(r=>!category||r.category===category).map(record=><Pressable accessibilityRole="button" accessibilityLabel={`${record.name||'이름 없는 술'} 근거 기록 열기`} key={record.id} style={s.record} onPress={()=>onOpen(record.id)}>{photos[record.id]?<Image source={{uri:photos[record.id]}} resizeMode="contain" style={s.photo}/>:<View style={[s.photo,s.placeholder]}><Icon name="photo"/></View>}<View style={s.copy}><Text style={s.name}>{record.name||'이름 없는 술'}</Text><Text style={s.caption}>{kinds[record.category??'']??'종류 미정'} · {record.date.slice(0,10)}</Text><Text numberOfLines={2} style={s.note}>{record.note?.text||facts.filter(f=>f.positiveIds.includes(record.id)||f.negativeIds.includes(record.id)).map(f=>f.label).join(' · ')}</Text><Text style={s.caption}>{record.revisit==='again'?'또 마시고 싶어요':record.revisit==='not_for_me'?'내 취향이 아니에요':record.revisit==='okay'?'괜찮아요':`별점 ${record.rating}점`}</Text></View><Text style={s.chevron}>›</Text></Pressable>)}<Text style={s.footer}>직접 남긴 느낌만 모았어요.{`\n`}기록을 수정하거나 삭제하면 요약에도 반영돼요.</Text></>:<Text style={s.footer}>기록이 바뀌었거나 아직 요약이 없어요.{`\n`}내 취향에서 최신 기록으로 다시 살펴봐요.</Text>}
- </ScrollView></SafeAreaView>;
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenHeader } from "../../components/ScreenHeader";
+import { ChoiceChip } from "../../components/ChoiceChip";
+import { Icon } from "../../components/Icon";
+import { colors, typography } from "../../theme/tokens";
+import { factSentence, type TasteContext } from "./repository";
+import { tasteEvidence } from "./evidence";
+const kinds: Record<string, string> = {
+  whisky: "위스키",
+  wine: "와인",
+  beer: "맥주",
+  traditional: "전통주",
+  other: "기타",
+};
+export function TasteEvidenceScreen({
+  context,
+  factId,
+  initialCategory,
+  photos,
+  onClose,
+  onOpen,
+}: {
+  context: TasteContext;
+  factId?: string;
+  initialCategory?: string;
+  photos: Record<string, string>;
+  onClose: () => void;
+  onOpen: (id: string) => void;
+}) {
+  const [category, setCategory] = useState<string | null>(
+    initialCategory && kinds[initialCategory] ? initialCategory : null,
+  );
+  const { facts, records } = tasteEvidence(context.snapshot, factId);
+  const categories = [
+    ...new Set(
+      records.map((r) => r.category).filter((c): c is string => c !== null),
+    ),
+  ];
+  return (
+    <SafeAreaView style={s.page}>
+      <ScreenHeader title="취향의 근거" onBack={onClose} />
+      <ScrollView contentContainerStyle={s.content}>
+        <Text style={s.title}>{"이 취향은\n여기서 찾았어요."}</Text>
+        {facts.length ? (
+          <>
+            {facts.map((f) => (
+              <View key={f.id} style={s.discovery}>
+                <Text style={s.label}>이번에 발견한 느낌 · {f.label}</Text>
+                <Text style={s.caption}>{factSentence(f)}</Text>
+              </View>
+            ))}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.filters}
+            >
+              <ChoiceChip
+                compact
+                label={`전체 ${records.length}`}
+                selected={category === null}
+                onPress={() => setCategory(null)}
+              />
+              {categories.map((c) => (
+                <ChoiceChip
+                  compact
+                  key={c}
+                  label={`${kinds[c] ?? c} ${records.filter((r) => r.category === c).length}`}
+                  selected={category === c}
+                  onPress={() => setCategory(c)}
+                />
+              ))}
+            </ScrollView>
+            {records
+              .filter((r) => !category || r.category === category)
+              .map((record) => (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${record.name || "이름 없는 술"} 근거 기록 열기`}
+                  key={record.id}
+                  style={s.record}
+                  onPress={() => onOpen(record.id)}
+                >
+                  {photos[record.id] ? (
+                    <Image
+                      source={{ uri: photos[record.id] }}
+                      resizeMode="contain"
+                      style={s.photo}
+                    />
+                  ) : (
+                    <View style={[s.photo, s.placeholder]}>
+                      <Icon name="photo" />
+                    </View>
+                  )}
+                  <View style={s.copy}>
+                    <Text style={s.name}>{record.name || "이름 없는 술"}</Text>
+                    <Text style={s.caption}>
+                      {kinds[record.category ?? ""] ?? "종류 미정"} ·{" "}
+                      {record.date.slice(0, 10)}
+                    </Text>
+                    <Text numberOfLines={2} style={s.note}>
+                      {record.note?.text ||
+                        facts
+                          .filter(
+                            (f) =>
+                              f.positiveIds.includes(record.id) ||
+                              f.negativeIds.includes(record.id) ||
+                              f.neutralIds.includes(record.id),
+                          )
+                          .map((f) => f.label)
+                          .join(" · ")}
+                    </Text>
+                    <Text style={s.caption}>
+                      {record.revisit === "again"
+                        ? "또 마시고 싶어요"
+                        : record.revisit === "not_for_me"
+                          ? "내 취향이 아니에요"
+                          : record.revisit === "okay"
+                            ? "괜찮아요"
+                            : `별점 ${record.rating}점`}
+                    </Text>
+                  </View>
+                  <Text style={s.chevron}>›</Text>
+                </Pressable>
+              ))}
+            <Text style={s.footer}>
+              직접 남긴 느낌만 모았어요.{`\n`}기록을 수정하거나 삭제하면
+              요약에도 반영돼요.
+            </Text>
+          </>
+        ) : (
+          <Text style={s.footer}>
+            기록이 바뀌었거나 아직 요약이 없어요.{`\n`}내 취향에서 최신 기록으로
+            다시 살펴봐요.
+          </Text>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
-const s=StyleSheet.create({page:{flex:1,backgroundColor:colors.background},content:{padding:24,paddingTop:16,gap:12,width:'100%',maxWidth:600,alignSelf:'center'},title:{...typography.question,color:colors.text,marginBottom:4},discovery:{padding:12,borderRadius:16,backgroundColor:colors.selected,gap:4},label:{...typography.fieldLabel,color:colors.primary},caption:{...typography.caption,color:colors.muted},filters:{gap:8,paddingVertical:4},record:{flexDirection:'row',gap:12,padding:12,borderRadius:16,backgroundColor:colors.surface,alignItems:'center'},photo:{width:72,height:96,borderRadius:8,backgroundColor:colors.illustration},placeholder:{alignItems:'center',justifyContent:'center'},copy:{flex:1,gap:4},name:{...typography.fieldLabel,color:colors.text},note:{...typography.body,color:colors.text},chevron:{...typography.title,color:colors.primary},footer:{...typography.caption,color:colors.muted,marginTop:12,lineHeight:20}});
+const s = StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
+  content: {
+    padding: 24,
+    paddingTop: 16,
+    gap: 12,
+    width: "100%",
+    maxWidth: 600,
+    alignSelf: "center",
+  },
+  title: { ...typography.question, color: colors.text, marginBottom: 4 },
+  discovery: {
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: colors.selected,
+    gap: 4,
+  },
+  label: { ...typography.fieldLabel, color: colors.primary },
+  caption: { ...typography.caption, color: colors.muted },
+  filters: { gap: 8, paddingVertical: 4 },
+  record: {
+    flexDirection: "row",
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+  },
+  photo: {
+    width: 72,
+    height: 96,
+    borderRadius: 8,
+    backgroundColor: colors.illustration,
+  },
+  placeholder: { alignItems: "center", justifyContent: "center" },
+  copy: { flex: 1, gap: 4 },
+  name: { ...typography.fieldLabel, color: colors.text },
+  note: { ...typography.body, color: colors.text },
+  chevron: { ...typography.title, color: colors.primary },
+  footer: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 12,
+    lineHeight: 20,
+  },
+});
