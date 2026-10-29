@@ -33,7 +33,10 @@ export default function EvidenceRoute() {
 }
 function ConnectedEvidence({ owner }: { owner: string }) {
   const router = useRouter();
-  const { factId } = useLocalSearchParams<{ factId?: string }>();
+  const { factId, category } = useLocalSearchParams<{
+    factId?: string;
+    category?: string;
+  }>();
   const [state, setState] = useState<TasteLoadState>({ status: "loading" });
   const focused = useRef(false);
   const loader = useMemo(
@@ -83,6 +86,8 @@ function ConnectedEvidence({ owner }: { owner: string }) {
   if (state.status === "ready")
     return (
       <TasteEvidenceScreen
+        key={`${factId ?? "all"}:${category ?? "all"}`}
+        initialCategory={category}
         context={state.context}
         photos={state.photos}
         factId={factId}
