@@ -26,7 +26,11 @@ const labels: Record<string, Category> = {
   traditional: "전통주",
   other: "기타",
 };
-export function createCellarRepository(client: SupabaseClient, owner: string) {
+export function createCellarRepository(
+  client: SupabaseClient,
+  owner: string,
+  options: { includeMedia?: boolean } = {},
+) {
   if (!uuid.test(owner)) throw new Error("INVALID_OWNER");
   return {
     async refreshPhoto(
@@ -132,12 +136,27 @@ export function createCellarRepository(client: SupabaseClient, owner: string) {
       ];
       let urls = new Map<string, string>();
       try {
-        urls = await signPhotoBatch(client, paths);
+        if (options.includeMedia !== false)
+          urls = await signPhotoBatch(client, paths);
       } catch {
         /* Preserve records if photo links fail. */
       }
       if (!active()) throw new Error("CELLAR_CANCELED");
-      const cutouts = new Map(await Promise.all(rows.map(async row => [row.id, typeof row.photo_path === "string" ? await import("../cutout/storage").then(m=>m.readLocalCutout(owner,row.photo_path)).catch(()=>null) : null] as const)));
+      const cutouts = new Map(
+        await Promise.all(
+          (options.includeMedia === false ? [] : rows).map(
+            async (row) =>
+              [
+                row.id,
+                typeof row.photo_path === "string"
+                  ? await import("../cutout/storage")
+                      .then((m) => m.readLocalCutout(owner, row.photo_path))
+                      .catch(() => null)
+                  : null,
+              ] as const,
+          ),
+        ),
+      );
       if (!active()) throw new Error("CELLAR_CANCELED");
       const last = rows.at(-1);
       const next =

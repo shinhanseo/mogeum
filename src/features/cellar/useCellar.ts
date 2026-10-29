@@ -8,7 +8,11 @@ import {
   emptyCellarState,
   type CellarPageState,
 } from "./pager";
-export function useCellar(owner: string | null, filter: CellarFilter) {
+export function useCellar(
+  owner: string | null,
+  filter: CellarFilter,
+  enabled = true,
+) {
   const [snapshot, setSnapshot] = useState<{
     owner: string;
     state: CellarPageState;
@@ -18,13 +22,15 @@ export function useCellar(owner: string | null, filter: CellarFilter) {
   useFocusEffect(
     useCallback(() => {
       const client = getSupabase();
-      if (!owner || !client) {
+      if (!enabled || !owner || !client) {
         setSnapshot(null);
         pager.current = null;
         return;
       }
       let active = true;
-      const repository = createCellarRepository(client, owner);
+      const repository = createCellarRepository(client, owner, {
+        includeMedia: false,
+      });
       const total =
         knownTotal.current?.owner === owner ? knownTotal.current.total : 0;
       const current = createCellarPager(
@@ -60,7 +66,7 @@ export function useCellar(owner: string | null, filter: CellarFilter) {
         current.cancel();
         if (pager.current === current) pager.current = null;
       };
-    }, [owner, filter.query, filter.category]),
+    }, [owner, filter.query, filter.category, enabled]),
   );
   const next = useCallback(() => {
     void pager.current?.next();
