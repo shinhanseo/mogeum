@@ -63,7 +63,11 @@ const context: TasteContext = {
 };
 /** Explicit synthetic native visual fixture. No account, API call or saved record. */
 export default function RedesignPreview() {
-  const params = useLocalSearchParams<{ screen?: string; count?: string }>();
+  const params = useLocalSearchParams<{
+    screen?: string;
+    count?: string;
+    evaluation?: string;
+  }>();
   const [tab, setTab] = useState<MainTab>(
     params.screen === "taste" ? "taste" : "cellar",
   );
@@ -91,7 +95,20 @@ export default function RedesignPreview() {
       <View style={{ flex: 1 }}>
         {tab === "taste" ? (
           <TasteScreen
-            context={context}
+            context={
+              params.evaluation === "observed"
+                ? {
+                    ...context,
+                    snapshot: {
+                      ...context.snapshot,
+                      records: context.snapshot.records.map((record, i) => ({
+                        ...record,
+                        revisit: i % 2 ? "okay" : "not_for_me",
+                      })),
+                    },
+                  }
+                : context
+            }
             onGenerate={() => {}}
             onEvidence={() => {}}
             onRecord={() => {}}
