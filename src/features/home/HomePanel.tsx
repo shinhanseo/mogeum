@@ -23,6 +23,7 @@ import {
 import { loadDiscovery } from "../discovery/repository";
 import { createHomeLoader, type HomeLoadState } from "./latest";
 import { HomeCarousel } from "./HomeCarousel";
+import { HomeTasteMetrics } from "./HomeTasteMetrics";
 export function HomePanel({
   owner,
   onRecord,
@@ -230,14 +231,28 @@ export function HomePanel({
                 ) : null}
               </View>
               <View style={s.rule} />
-              <Text
-                lineBreakStrategyIOS="hangul-word"
-                textBreakStrategy="balanced"
-                style={s.description}
-              >
-                {page.description}
-              </Text>
-              <Text style={s.hint}>{page.hint}</Text>
+              {page.id === "taste" && data && facts.length ? (
+                <HomeTasteMetrics
+                  snapshot={data.context.snapshot}
+                  onEvidence={(factId) =>
+                    router.push({
+                      pathname: "/taste-evidence",
+                      params: { factId },
+                    })
+                  }
+                />
+              ) : (
+                <>
+                  <Text
+                    lineBreakStrategyIOS="hangul-word"
+                    textBreakStrategy="balanced"
+                    style={s.description}
+                  >
+                    {page.description}
+                  </Text>
+                  <Text style={s.hint}>{page.hint}</Text>
+                </>
+              )}
               <Pressable
                 accessibilityRole="button"
                 onPress={page.action}
