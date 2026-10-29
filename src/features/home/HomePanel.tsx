@@ -43,7 +43,8 @@ export function HomePanel({
   const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const [state, setState] = useState<HomeLoadState>({ status: "loading" });
   const [position, setPosition] = useState({ key: "", index: 0 });
-  const width = Math.min(useWindowDimensions().width, 600);
+  const { width: windowWidth, fontScale } = useWindowDimensions();
+  const width = Math.min(windowWidth, 600);
   const loader = useMemo(
     () =>
       createHomeLoader({
@@ -207,7 +208,13 @@ export function HomePanel({
             <View key={page.id} style={[s.slide, { width }]}>
               <Text style={s.eyebrow}>{page.eyebrow}</Text>
               <View style={s.lead}>
-                <Text style={s.title}>{page.title}</Text>
+                <Text
+                  lineBreakStrategyIOS="hangul-word"
+                  textBreakStrategy="balanced"
+                  style={s.title}
+                >
+                  {page.title}
+                </Text>
                 {page.category ? (
                   <CellarArt id={page.id} category={page.category} size={82} />
                 ) : null}
@@ -244,9 +251,13 @@ export function HomePanel({
         ))}
       </View>
       <View style={s.records}>
-        <View style={s.sectionRow}>
+        <View style={[s.sectionRow, fontScale > 1.3 && s.sectionStack]}>
           <Text style={s.sectionTitle}>최근 테이스팅 노트</Text>
-          <Pressable onPress={onCellar} accessibilityRole="button">
+          <Pressable
+            onPress={onCellar}
+            accessibilityRole="button"
+            style={s.sectionLink}
+          >
             <Text style={s.caption}>전체 보기 ›</Text>
           </Pressable>
         </View>
@@ -406,7 +417,9 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  sectionTitle: { ...typography.nav, color: colors.text },
+  sectionStack: { flexDirection: "column", alignItems: "flex-start", gap: 4 },
+  sectionLink: { minHeight: 44, justifyContent: "center" },
+  sectionTitle: { ...typography.nav, color: colors.text, flexShrink: 1 },
   caption: { ...typography.caption, color: colors.muted },
   record: {
     flexDirection: "row",
