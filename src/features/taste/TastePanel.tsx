@@ -1,4 +1,4 @@
-import {tasteSummaryFailureMessage} from "./failure-message";
+import { tasteSummaryFailureMessage } from "./failure-message";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -8,7 +8,6 @@ import { createLatestTasteLoader, type TasteLoadState } from "./latest";
 import {
   loadTasteContext,
   generateTasteSummary,
-  tastePhotoUrls,
   type TasteContext,
 } from "./repository";
 const browseContext: TasteContext = {
@@ -39,14 +38,9 @@ export function TastePanel({
           if (!client || !owner) throw new Error("UNAUTHENTICATED");
           return loadTasteContext(client);
         },
-        async photos(context) {
-          const client = getSupabase();
-          if (!client || !owner) throw new Error("UNAUTHENTICATED");
-          return tastePhotoUrls(
-            client,
-            owner,
-            context.snapshot.records.map((r) => r.id),
-          );
+        // This overview now uses illustrations. Evidence/detail fetch photos on demand.
+        async photos() {
+          return {};
         },
         publish: setState,
       }),
