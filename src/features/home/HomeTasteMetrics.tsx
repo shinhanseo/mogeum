@@ -50,14 +50,32 @@ export function HomeTasteMetrics({
                 <Text style={s.caption}>잔 ›</Text>
               </Text>
             </View>
-            <View style={s.track}>
-              {positive > 0 ? (
-                <View style={[s.positive, { flex: positive }]} />
-              ) : null}
-              {other > 0 ? <View style={[s.other, { flex: other }]} /> : null}
-              {total > positive + other ? (
-                <View style={{ flex: total - positive - other }} />
-              ) : null}
+            <View style={s.gauge} accessible={false}>
+              <View style={s.railArea}>
+                <View style={s.track}>
+                  {positive > 0 ? (
+                    <View style={[s.positive, { flex: positive }]} />
+                  ) : null}
+                  {other > 0 ? (
+                    <View style={[s.other, { flex: other }]} />
+                  ) : null}
+                  {total > positive + other ? (
+                    <View style={{ flex: total - positive - other }} />
+                  ) : null}
+                </View>
+                <View
+                  style={[
+                    s.point,
+                    {
+                      left: `${((observationsOnly ? positive + other : positive) / total) * 100}%`,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={s.ends}>
+                <Text style={s.axis}>0잔</Text>
+                <Text style={s.axis}>{total}잔</Text>
+              </View>
             </View>
             <Text style={s.caption}>
               {positive > 0 ? `좋게 남긴 ${positive}잔` : ""}
@@ -93,9 +111,24 @@ const s = StyleSheet.create({
     color: colors.surface,
   },
   caption: { ...typography.caption, color: colors.onPrimaryMuted },
+  gauge: { paddingHorizontal: 6 },
+  railArea: { height: 22, justifyContent: "center" },
+  point: {
+    position: "absolute",
+    top: 5,
+    width: 12,
+    height: 12,
+    marginLeft: -6,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    backgroundColor: colors.primary,
+  },
+  ends: { flexDirection: "row", justifyContent: "space-between" },
+  axis: { ...typography.caption, fontSize: 10, color: colors.onPrimaryMuted },
   track: {
     flexDirection: "row",
-    height: 4,
+    height: 3,
     borderRadius: 2,
     overflow: "hidden",
     backgroundColor: "#FFFFFF18",
