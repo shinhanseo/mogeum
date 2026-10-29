@@ -2,6 +2,7 @@ import { Redirect } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HomeCarousel } from "../../src/features/home/HomeCarousel";
+import { HomeMenuSlide } from "../../src/features/home/HomeMenuSlide";
 import { HomeTasteMetrics } from "../../src/features/home/HomeTasteMetrics";
 import { colors, typography } from "../../src/theme/tokens";
 import { useWindowDimensions } from "react-native";
@@ -34,11 +35,7 @@ export default function CarouselHeightPreview() {
                 onEvidence={() => {}}
               />
             </View>
-            <View style={{ padding: 24, gap: 12 }}>
-              <Text style={title}>메뉴판에서 내 취향 찾기</Text>
-              <Text style={body}>사진 여러 장을 모아 내 기록과 비교해요.</Text>
-              <Text style={body}>읽은 메뉴를 확인한 뒤 선택해요.</Text>
-            </View>
+            <HomeMenuSlide onOpen={() => {}} />
           </HomeCarousel>
         </View>
         <Text style={{ ...typography.title, padding: 24 }}>

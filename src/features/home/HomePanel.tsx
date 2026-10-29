@@ -23,6 +23,7 @@ import {
 import { loadDiscovery } from "../discovery/repository";
 import { createHomeLoader, type HomeLoadState } from "./latest";
 import { HomeCarousel } from "./HomeCarousel";
+import { HomeMenuSlide } from "./HomeMenuSlide";
 import { HomeTasteMetrics } from "./HomeTasteMetrics";
 export function HomePanel({
   owner,
@@ -214,65 +215,73 @@ export function HomePanel({
           width={width}
           labels={pages.map((page) => page.title)}
         >
-          {pages.map((page) => (
-            <View key={page.id} style={s.slide}>
-              <Text style={s.eyebrow}>{page.eyebrow}</Text>
-              {page.id !== "taste" ? (
-                <Text style={s.meta}>{page.meta}</Text>
-              ) : null}
-              <View style={s.lead}>
-                <Text
-                  lineBreakStrategyIOS="hangul-word"
-                  textBreakStrategy="balanced"
-                  style={s.title}
-                  numberOfLines={fontScale <= 1.3 ? 2 : undefined}
-                >
-                  {page.title}
-                </Text>
-                {page.category ? (
-                  <CellarArt id={page.id} category={page.category} size={82} />
+          {pages.map((page) =>
+            page.id === "menu" ? (
+              <HomeMenuSlide key={page.id} onOpen={page.action} />
+            ) : (
+              <View key={page.id} style={s.slide}>
+                <Text style={s.eyebrow}>{page.eyebrow}</Text>
+                {page.id !== "taste" ? (
+                  <Text style={s.meta}>{page.meta}</Text>
                 ) : null}
-              </View>
-              <View style={s.rule} />
-              {page.id === "taste" && data && facts.length ? (
-                <HomeTasteMetrics
-                  compact
-                  snapshot={data.context.snapshot}
-                  onEvidence={(factId) =>
-                    router.push({
-                      pathname: "/taste-evidence",
-                      params: { factId },
-                    })
-                  }
-                />
-              ) : (
-                <>
+                <View style={s.lead}>
                   <Text
                     lineBreakStrategyIOS="hangul-word"
                     textBreakStrategy="balanced"
-                    style={s.description}
+                    style={s.title}
                     numberOfLines={fontScale <= 1.3 ? 2 : undefined}
                   >
-                    {page.description}
+                    {page.title}
                   </Text>
-                  <Text
-                    style={s.hint}
-                    numberOfLines={fontScale <= 1.3 ? 2 : undefined}
-                  >
-                    {page.hint}
-                  </Text>
-                </>
-              )}
-              <Pressable
-                accessibilityRole="button"
-                onPress={page.action}
-                style={s.heroAction}
-              >
-                <Text style={s.action}>{page.link}</Text>
-                <Text style={s.white}>›</Text>
-              </Pressable>
-            </View>
-          ))}
+                  {page.category ? (
+                    <CellarArt
+                      id={page.id}
+                      category={page.category}
+                      size={82}
+                    />
+                  ) : null}
+                </View>
+                <View style={s.rule} />
+                {page.id === "taste" && data && facts.length ? (
+                  <HomeTasteMetrics
+                    compact
+                    snapshot={data.context.snapshot}
+                    onEvidence={(factId) =>
+                      router.push({
+                        pathname: "/taste-evidence",
+                        params: { factId },
+                      })
+                    }
+                  />
+                ) : (
+                  <>
+                    <Text
+                      lineBreakStrategyIOS="hangul-word"
+                      textBreakStrategy="balanced"
+                      style={s.description}
+                      numberOfLines={fontScale <= 1.3 ? 2 : undefined}
+                    >
+                      {page.description}
+                    </Text>
+                    <Text
+                      style={s.hint}
+                      numberOfLines={fontScale <= 1.3 ? 2 : undefined}
+                    >
+                      {page.hint}
+                    </Text>
+                  </>
+                )}
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={page.action}
+                  style={s.heroAction}
+                >
+                  <Text style={s.action}>{page.link}</Text>
+                  <Text style={s.white}>›</Text>
+                </Pressable>
+              </View>
+            ),
+          )}
         </HomeCarousel>
       </View>
       <View style={s.records}>
