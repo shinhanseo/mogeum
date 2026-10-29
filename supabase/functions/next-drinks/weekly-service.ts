@@ -9,7 +9,7 @@ export async function generateWeeklySelection(database:Database,input:{owner:str
  if(!config.apiKey||!config.model.trim())throw Error('WEEKLY_AI_NOT_CONFIGURED');
  const version=`${WEEKLY_DISCOVERY_VERSION}:${config.model}`;
  if(version.length>100)throw Error('INVALID_WEEKLY_MODEL');
- return runWeeklyGeneration(input.eligible,{
+ const result=await runWeeklyGeneration(input.eligible,{
   async begin(lease){
    const {data,error}=await database.rpc('begin_discovery_generation',{p_user:input.owner,p_hash:input.hash,p_version:version,p_lease:lease});
    if(error||!data||typeof data!=='object'||typeof (data as {state?:unknown}).state!=='string')throw Error('WEEKLY_RESERVATION_FAILED');
@@ -22,4 +22,10 @@ export async function generateWeeklySelection(database:Database,input:{owner:str
   select:(eligible,signal)=>selectWeeklyDrinks(eligible,{...config,signal}),
   unchanged:input.unchanged,
  });
+ if(result.state!=='generated')return result;
+ // Read the committed server timestamps; never calculate a deadline from a client clock.
+ const receipt=await database.rpc('begin_discovery_generation',{p_user:input.owner,p_hash:input.hash,p_version:version,p_lease:crypto.randomUUID()});
+ const cached=receipt.data as {state?:string;generatedAt?:string;nextGenerationAt?:string}|null;
+ if(receipt.error||cached?.state!=='cached'||!cached.generatedAt||!cached.nextGenerationAt)throw Error('WEEKLY_RECEIPT_UNAVAILABLE');
+ return {...result,generatedAt:cached.generatedAt,nextGenerationAt:cached.nextGenerationAt};
 }
