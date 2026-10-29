@@ -14,6 +14,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { colors, typography } from "../../theme/tokens";
 
@@ -27,6 +28,8 @@ export function HomeCarousel({
   labels: string[];
   children: ReactNode;
 }) {
+  const { fontScale } = useWindowDimensions();
+  const normalHeight = fontScale <= 1.3 ? 400 : undefined;
   const pager = useRef<ComponentRef<typeof ScrollView>>(null);
   const [offset] = useState(() => new Animated.Value(0));
   const [index, setIndex] = useState(0);
@@ -49,6 +52,7 @@ export function HomeCarousel({
     <>
       <Animated.ScrollView
         ref={pager}
+        style={normalHeight ? { height: normalHeight, flexGrow: 0 } : undefined}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -70,7 +74,7 @@ export function HomeCarousel({
         }
       >
         {Children.map(children, (child, i) => (
-          <View key={labels[i]} style={{ width }}>
+          <View key={labels[i]} style={{ width, height: normalHeight }}>
             {child}
           </View>
         ))}

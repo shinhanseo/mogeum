@@ -141,9 +141,9 @@ export function HomePanel({
       title: loading
         ? "내 기록을\n살펴보고 있어요"
         : hasPositive
-          ? "좋게 남긴 잔의\n공통점을 찾았어요."
+          ? "내가 자주 남긴 감각"
           : facts.length
-            ? "기록에 남긴 감각을\n다시 살펴볼까요?"
+            ? "기록에서 만난 감각"
             : "한 잔의 느낌부터\n모아볼까요?",
       eyebrow: "내 기록에서 발견한 느낌",
       meta: "내가 직접 남긴 감각",
@@ -215,14 +215,20 @@ export function HomePanel({
           labels={pages.map((page) => page.title)}
         >
           {pages.map((page) => (
-            <View key={page.id} style={s.slide}>
+            <View
+              key={page.id}
+              style={[s.slide, fontScale <= 1.3 && { height: 400 }]}
+            >
               <Text style={s.eyebrow}>{page.eyebrow}</Text>
-              <Text style={s.meta}>{page.meta}</Text>
+              {page.id !== "taste" ? (
+                <Text style={s.meta}>{page.meta}</Text>
+              ) : null}
               <View style={s.lead}>
                 <Text
                   lineBreakStrategyIOS="hangul-word"
                   textBreakStrategy="balanced"
                   style={s.title}
+                  numberOfLines={fontScale <= 1.3 ? 2 : undefined}
                 >
                   {page.title}
                 </Text>
@@ -233,6 +239,7 @@ export function HomePanel({
               <View style={s.rule} />
               {page.id === "taste" && data && facts.length ? (
                 <HomeTasteMetrics
+                  compact
                   snapshot={data.context.snapshot}
                   onEvidence={(factId) =>
                     router.push({
@@ -247,10 +254,16 @@ export function HomePanel({
                     lineBreakStrategyIOS="hangul-word"
                     textBreakStrategy="balanced"
                     style={s.description}
+                    numberOfLines={fontScale <= 1.3 ? 2 : undefined}
                   >
                     {page.description}
                   </Text>
-                  <Text style={s.hint}>{page.hint}</Text>
+                  <Text
+                    style={s.hint}
+                    numberOfLines={fontScale <= 1.3 ? 2 : undefined}
+                  >
+                    {page.hint}
+                  </Text>
                 </>
               )}
               <Pressable
@@ -390,7 +403,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   white: { ...typography.body, color: colors.surface },
-  slide: { padding: 24, paddingTop: 20, gap: 12 },
+  slide: { paddingHorizontal: 24, paddingVertical: 12, gap: 6 },
   meta: { ...typography.caption, color: colors.onPrimaryMuted },
   rule: {
     height: 1,
@@ -402,16 +415,16 @@ const s = StyleSheet.create({
   lead: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: {
     flex: 1,
-    fontSize: 25,
-    lineHeight: 36,
+    fontSize: 24,
+    lineHeight: 32,
     fontFamily: fonts.bold,
     color: colors.surface,
   },
   description: { ...typography.body, color: colors.surface },
   hint: { ...typography.caption, color: colors.onPrimaryMuted },
   heroAction: {
-    marginTop: 4,
-    paddingTop: 16,
+    marginTop: "auto",
+    paddingTop: 0,
     minHeight: 44,
     flexDirection: "row",
     justifyContent: "space-between",

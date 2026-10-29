@@ -36,7 +36,10 @@ const snapshot: TasteSnapshot = {
   })),
 };
 export default function HomeMetricsPreview() {
-  const { observed } = useLocalSearchParams<{ observed?: string }>();
+  const { observed, compact } = useLocalSearchParams<{
+    observed?: string;
+    compact?: string;
+  }>();
   const [selected, setSelected] = useState("");
   if (!__DEV__) return <Redirect href="/" />;
   const value = observed
@@ -57,7 +60,11 @@ export default function HomeMetricsPreview() {
         <Text style={{ ...typography.question, color: colors.surface }}>
           내 기록에서 발견한 느낌
         </Text>
-        <HomeTasteMetrics snapshot={value} onEvidence={setSelected} />
+        <HomeTasteMetrics
+          compact={!!compact}
+          snapshot={value}
+          onEvidence={setSelected}
+        />
         <Text style={{ ...typography.caption, color: colors.onPrimaryMuted }}>
           {selected
             ? `선택한 근거: ${selected}`

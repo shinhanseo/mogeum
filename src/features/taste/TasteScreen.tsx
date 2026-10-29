@@ -7,6 +7,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { SensoryGauge } from "../../components/SensoryGauge";
 import { Button } from "../../components/Button";
 import { CellarArt } from "../../components/CellarArt";
 import { colors, fonts, typography } from "../../theme/tokens";
@@ -140,17 +141,12 @@ export function TasteScreen({
                 </Text>
               </Text>
             </View>
-            <View style={s.track}>
-              {positive > 0 ? (
-                <View style={[s.good, { flex: positive / total }]} />
-              ) : null}
-              {other > 0 ? (
-                <View style={[s.other, { flex: other / total }]} />
-              ) : null}
-              {total > positive + other ? (
-                <View style={{ flex: (total - positive - other) / total }} />
-              ) : null}
-            </View>
+            <SensoryGauge
+              positive={positive}
+              other={other}
+              total={total}
+              observed={observationsOnly}
+            />
             <View style={[s.legend, largeText && s.stack]}>
               {positive > 0 ? (
                 <Text style={s.goodLabel}>좋게 남긴 {positive}잔</Text>

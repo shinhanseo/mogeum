@@ -6,6 +6,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { colors, fonts, typography } from "../../theme/tokens";
+import { SensoryGauge } from "../../components/SensoryGauge";
 import { tasteOverview } from "../taste/overview";
 import type { TasteSnapshot } from "../../../supabase/functions/_shared/taste-domain";
 
@@ -13,19 +14,22 @@ import type { TasteSnapshot } from "../../../supabase/functions/_shared/taste-do
 export function HomeTasteMetrics({
   snapshot,
   onEvidence,
+  compact = false,
 }: {
   snapshot: TasteSnapshot;
+  compact?: boolean;
   onEvidence: (factId: string) => void;
 }) {
   const { analysis, facts, observationsOnly } = tasteOverview(snapshot);
   const largeText = useWindowDimensions().fontScale > 1.3;
   if (!facts.length) return null;
   return (
-    <View style={s.metrics}>
+    <View style={[s.metrics, compact && { gap: 10 }]}>
       <Text style={s.caption}>
-        느낌을 남긴 {analysis.recordCount}잔에서 살펴봤어요.
+        {observationsOnly ? "관찰한 감각" : "좋게 남긴 잔의 감각"} · 느낌 기록{" "}
+        {analysis.recordCount}잔 기준
       </Text>
-      {facts.map((fact) => {
+      {facts.slice(0, compact ? 2 : 3).map((fact) => {
         const positive = fact.positiveIds.length;
         const other = fact.negativeIds.length + fact.neutralIds.length;
         const total = Math.max(analysis.recordCount, positive + other, 1);
@@ -45,51 +49,38 @@ export function HomeTasteMetrics({
               >
                 {fact.label}
               </Text>
-              <Text style={s.number}>
+              <Text
+                style={[s.number, compact && { fontSize: 18, lineHeight: 26 }]}
+              >
                 {observationsOnly ? positive + other : positive}
-                <Text style={s.caption}>잔 ›</Text>
+                <Text style={s.caption}>/{total}잔 ›</Text>
               </Text>
             </View>
-            <View style={s.gauge} accessible={false}>
-              <View style={s.railArea}>
-                <View style={s.track}>
-                  {positive > 0 ? (
-                    <View style={[s.positive, { flex: positive }]} />
-                  ) : null}
-                  {other > 0 ? (
-                    <View style={[s.other, { flex: other }]} />
-                  ) : null}
-                  {total > positive + other ? (
-                    <View style={{ flex: total - positive - other }} />
-                  ) : null}
-                </View>
-                <View
-                  style={[
-                    s.point,
-                    {
-                      left: `${((observationsOnly ? positive + other : positive) / total) * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={s.ends}>
-                <Text style={s.axis}>0잔</Text>
-                <Text style={s.axis}>{total}잔</Text>
-              </View>
-            </View>
-            <Text style={s.caption}>
-              {positive > 0 ? `좋게 남긴 ${positive}잔` : ""}
-              {positive > 0 && other > 0 ? " · " : ""}
-              {other > 0 ? `다른 평가 ${other}잔` : ""}
-            </Text>
+            <SensoryGauge
+              positive={positive}
+              other={other}
+              total={total}
+              observed={observationsOnly}
+              dark
+              compact={compact}
+            />
+            {!compact ? (
+              <Text style={s.caption}>
+                {positive > 0 ? `좋게 남긴 ${positive}잔` : ""}
+                {positive > 0 && other > 0 ? " · " : ""}
+                {other > 0 ? `다른 평가 ${other}잔` : ""}
+              </Text>
+            ) : null}
           </Pressable>
         );
       })}
-      <Text style={s.caption}>
-        {observationsOnly
-          ? "느꼈다고 남긴 감각이에요. 좋아한다는 뜻은 아니에요."
-          : "좋게 남긴 잔의 감각이에요. 좋아한 이유로 단정하지 않아요."}
-      </Text>
+      {!compact ? (
+        <Text style={s.caption}>
+          {observationsOnly
+            ? "느꼈다고 남긴 감각이에요. 좋아한다는 뜻은 아니에요."
+            : "좋게 남긴 잔의 감각이에요. 좋아한 이유로 단정하지 않아요."}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -111,28 +102,4 @@ const s = StyleSheet.create({
     color: colors.surface,
   },
   caption: { ...typography.caption, color: colors.onPrimaryMuted },
-  gauge: { paddingHorizontal: 6 },
-  railArea: { height: 22, justifyContent: "center" },
-  point: {
-    position: "absolute",
-    top: 5,
-    width: 12,
-    height: 12,
-    marginLeft: -6,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.surface,
-    backgroundColor: colors.primary,
-  },
-  ends: { flexDirection: "row", justifyContent: "space-between" },
-  axis: { ...typography.caption, fontSize: 10, color: colors.onPrimaryMuted },
-  track: {
-    flexDirection: "row",
-    height: 3,
-    borderRadius: 2,
-    overflow: "hidden",
-    backgroundColor: "#FFFFFF18",
-  },
-  positive: { backgroundColor: colors.surface },
-  other: { backgroundColor: colors.chartOther },
 });
