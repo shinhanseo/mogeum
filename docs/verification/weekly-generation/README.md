@@ -17,3 +17,17 @@ weekly-selection-v1은 최대24개 제품 ID만 보관한다. 임의 제품·중
 SDK 구조화 출력으로 근거가 있는 후보 최대80개 중 최대24개 ID를 선택한다. 모델에는 제품 ID/주종/근거 집계만 전송하며 개인 기록 ID·술 이름·노트 원문·사진 URL을 보내지 않는다. 추가 검색은 하지 않는다. 존재하지 않는 제품/중복/문구 추가는 거부한다. SDK transport/서버 예약 연결 테스트4/4로 요청 본문과 임의 제품 거부를 확인했으며 실제 Gemini 호출 및 함수 연결은 아직 하지 않았다. 이는 검증 카탈로그 내 우선순위 선택 adapter이고 신규 제품 발굴은 별도 검색·원문 검증 파이프라인이다.
 
 weekly-service는 검증된 owner와 서버 계산 후보만 받는 내부 adapter다. 키 누락은 예약 전에 종료하고 진행 중 예약은 모델 호출 없이 합류한다. 공개 endpoint 연결은 다음 단계다.
+
+## 별도 버전 API 연결
+
+next-drinks에서 shared-catalog-v1과 recommendationVersion=weekly-selection-v1을 함께 보낸 경우만 새 생성 경로를 선택한다. 기존 앱/구버전은 evidence-rules-v1을 유지한다. 사용자 ID는 검증한 JWT에서 가져오고 서버 생성 예약은 service-role 내부 호출로만 수행한다. 필터 전 전체 주종 후보로 한 번 생성하고 결과에만 주종 필터를 적용한다. 기록 부족은 모델 없이 insufficient, 공급자 키 누락은 예약 전에503 AI_NOT_CONFIGURED다.
+
+생성/캐시 복원 전후 개인 snapshot을 확인하고 추가로 카탈로그/저장 목록을 다시 페이지 조회한다. 중간 변경은409로 이전 결과를 숨긴다. 이는 응답 이후 실시간 구독을 보장하지 않는다. 현재 앱은 새 버전을 아직 요청하지 않는다. 실제 Gemini 생성·저장·다른 기기 캐시 재사용은 추가 검증해야 하며 완료로 처리하지 않았다.
+
+로컬 실제 Auth/Data API/RPC와 Gemini SDK의 합성 transport를 연결해 generated → cached → 입력 변경 invalidated를 확인했다. 모델 요청은 최초1회였고 임시 사용자는 테스트 후 삭제해 개인 캐시 cascade도 적용했다. 실제 Gemini 호출은 아니다. 성공 직후 서버의 완료 영수증을 다시 읽어 생성 시각/다음 갱신 시각을 반환하며 기기 시계로 기한을 계산하지 않는다. 관리형 개발 DB에는 CI 통과한20261028030000 migration만 적용했다. 앱 새 버전 전환·실제 제공자 E2E 전에는 새 endpoint를 관리형 서버에 배포하지 않았다.
+
+생성된 next-drinks 배포 번들을 실제 로컬 Edge Runtime에 로드한 뒤 Auth/Storage/메뉴/다음 한 잔/노트 저장 통합9/9를 통과했다. 새 버전의 기록 부족·키 누락503도 포함한다. 검증 후 원본 entry 파일 복원을 확인했다. 이 번들은 아직 관리형 서버에 배포하지 않았다.
+
+## 실패 시도 비용 상한
+
+실패가 7일 성공 슬롯을 소모하지 않는 대신 반복 실패를 통해 무제한 호출하지 못하게 사용자별 UTC 하루 최대5회 acquired 예약을 허용한다. running/backoff/cache/invalidated 응답은 새 시도로 세지 않고, 성공 캐시는 상한과 관계없이 읽는다. 일자가 바뀌면 다음 acquired에서1회로 시작한다. 일반 사용자에게 횟수 테이블/RPC 권한을 추가하지 않는다. provider 호출 전 서버 예약에서 daily-limit으로 종료하며 앱 상태 표시는 후속 연결한다. PGlite 전체 migration 테스트31통과/독립 세션3제외, weekly orchestration 회귀3통과. 실제 Gemini 호출·관리형 DB 배포는 이 결과와 별도다.

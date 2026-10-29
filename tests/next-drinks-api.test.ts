@@ -84,6 +84,10 @@ test(
       const empty = await initial.json();
       parseDiscoveryResult(empty);
       assert.deepEqual(empty.recommendations, []);
+      assert.equal((await request({recommendationVersion:'invented'},token)).status,400);
+      const weeklyEmpty=await request({recommendationVersion:'weekly-selection-v1'},token);
+      assert.equal(weeklyEmpty.status,200);const weeklyEmptyResult=await weeklyEmpty.json();
+      assert.deepEqual(weeklyEmptyResult.recommendations,[]);assert.equal(weeklyEmptyResult.modelUsed,false);assert.equal(weeklyEmptyResult.generation.state,'insufficient');
       const operation = randomUUID();
       const bookmark = () =>
         a.rpc("set_drink_wishlist", {
@@ -199,6 +203,10 @@ test(
         composeNote(draft),
         false,
       );
+      if(process.env.MOGEUM_TEST_WEEKLY_NO_KEY==='1'){
+        const missingKey=await request({recommendationVersion:'weekly-selection-v1'},token);
+        assert.equal(missingKey.status,503);assert.equal((await missingKey.json()).code,'AI_NOT_CONFIGURED');
+      }
       const response = await request({}, token);
       assert.equal(response.status, 200);
       const value = await response.json();

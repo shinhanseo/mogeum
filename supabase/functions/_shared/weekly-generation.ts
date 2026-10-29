@@ -1,6 +1,6 @@
 import {WEEKLY_DISCOVERY_VERSION,validateWeeklySelection,type WeeklySelection} from './weekly-discovery.ts';
 import type {NextDrink} from './next-drinks-domain.ts';
-export type WeeklyState='running'|'backoff'|'invalidated';
+export type WeeklyState='running'|'backoff'|'invalidated'|'daily-limit';
 export type WeeklyPorts={
  begin:(lease:string)=>Promise<{state:string;result?:unknown;generatedAt?:string;nextGenerationAt?:string}>;
  finish:(lease:string,result:WeeklySelection|null)=>Promise<boolean>;
@@ -15,7 +15,7 @@ export async function runWeeklyGeneration(eligible:readonly NextDrink[],ports:We
   // Cached IDs may have become unavailable; restoration filters them against current facts.
   return {...job,state:'cached' as const};
  }
- if(['running','backoff','invalidated'].includes(job.state))return {...job,state:job.state as WeeklyState};
+ if(['running','backoff','invalidated','daily-limit'].includes(job.state))return {...job,state:job.state as WeeklyState};
  if(job.state!=='acquired')throw Error('INVALID_WEEKLY_RESERVATION');
  try{
   const selection=validateWeeklySelection(await ports.select(eligible,AbortSignal.timeout(20000)),eligible);

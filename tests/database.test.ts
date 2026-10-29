@@ -76,6 +76,11 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await begin(a,hash,808)).state,'acquired');
       await db.query("update private.discovery_generations set started_at=clock_timestamp()-interval '91 seconds' where user_id=$1",[a]);
       assert.equal(await finish(808,batch),false);assert.equal((await begin(a,hash,809)).state,'acquired');
+      await db.query("update private.discovery_generations set running=false,result=null,generated_at=null,next_generation_at=null,started_at=clock_timestamp()-interval '61 seconds',attempt_count=5,attempt_day=(clock_timestamp() at time zone 'UTC')::date where user_id=$1",[a]);
+      assert.equal((await begin(a,hash,814)).state,'daily-limit');
+      await db.query("update private.discovery_generations set attempt_day=(clock_timestamp() at time zone 'UTC')::date-1 where user_id=$1",[a]);
+      assert.equal((await begin(a,hash,815)).state,'acquired');
+      assert.equal((await db.query('select attempt_count from private.discovery_generations where user_id=$1',[a])).rows[0].attempt_count,1);
       await as(a);await assert.rejects(db.query('select public.begin_discovery_generation($1,$2,$3,$4)',[a,hash,version,operation(810)]),{code:'42501'});
       await assert.rejects(db.query('select * from private.discovery_generations'),{code:'42501'});
       await db.exec('reset role');await db.query('delete from private.discovery_generations where user_id in ($1,$2)',[a,b]);

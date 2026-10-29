@@ -1,3 +1,5 @@
+import {generateWeeklySelection} from './weekly-service.ts';
+import {restoreWeeklyDrinks,WEEKLY_DISCOVERY_VERSION} from '../_shared/weekly-discovery.ts';
 import {
   DiscoverySnapshotChanged,
   withStableDiscoverySnapshot,
@@ -84,7 +86,7 @@ Deno.serve(async (request) => {
       !body ||
       typeof body !== "object" ||
       Array.isArray(body) ||
-      Object.keys(body).some((k) => k !== "category" && k !== "catalogVersion")
+      Object.keys(body).some((k) => k !== "category" && k !== "catalogVersion" && k !== "recommendationVersion")
     ) {
       return reply({ code: "INVALID_REQUEST" }, 400);
     }
@@ -106,6 +108,9 @@ Deno.serve(async (request) => {
       return reply({ code: "INVALID_CATALOG_VERSION" }, 400);
     }
     const dynamic = requestedCatalog === SHARED_CATALOG_VERSION;
+    const weeklyVersion=(body as {recommendationVersion?:unknown}).recommendationVersion;
+    if(weeklyVersion!==undefined&&(weeklyVersion!==WEEKLY_DISCOVERY_VERSION||!dynamic))return reply({code:'INVALID_RECOMMENDATION_VERSION'},400);
+    const weekly=weeklyVersion===WEEKLY_DISCOVERY_VERSION;
     const owner = auth.data.user.id;
     const result = await withStableDiscoverySnapshot(
       async () => {
@@ -181,13 +186,51 @@ Deno.serve(async (request) => {
           if (!page.data || page.data.length < 200) break;
           cursor = page.data.at(-1)!.id;
         }
-        const recommendations = discoverDrinks(
+        let recommendations = discoverDrinks(
           snapshot,
           history,
           category as Product["category"] | null,
           new Set(wishlist.filter((r) => r.saved).map((r) => r.product_id)),
           availableProducts,
         );
+        let generation:Record<string,unknown>|undefined;
+        if(weekly){
+          const eligible=discoverDrinks(snapshot,history,null,new Set(wishlist.filter(r=>r.saved).map(r=>r.product_id)),availableProducts);
+          if(!eligible.length){recommendations=[];generation={state:'insufficient'};}
+          else {
+            const key=Deno.env.get('GOOGLE_GENERATIVE_AI_API_KEY'),serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+            if(!key||!serviceKey)throw Error('WEEKLY_AI_NOT_CONFIGURED');
+            const admin=createClient(Deno.env.get('SUPABASE_URL')!,serviceKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(url,init)=>fetch(url,{...init,signal})}});
+            const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(snapshot.hash));
+            const generationHash=Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');
+            const generated=await generateWeeklySelection(admin,{owner,hash:generationHash,eligible,unchanged:async()=>{
+              const current=await client.rpc('taste_summary_context');
+              if(current.error||!current.data?.snapshot)throw Error('CONTEXT_FAILED');
+              return current.data.snapshot.hash===snapshot.hash;
+            }},{apiKey:key,model:Deno.env.get('GEMINI_MODEL')??'gemini-3.5-flash-lite'});
+            generation={state:generated.state,...('generatedAt' in generated?{generatedAt:generated.generatedAt}:{}),...('nextGenerationAt' in generated?{nextGenerationAt:generated.nextGenerationAt}:{})};
+            recommendations='result' in generated?restoreWeeklyDrinks(generated.result,snapshot,history,new Set(wishlist.filter(r=>r.saved).map(r=>r.product_id)),availableProducts,category as Product['category']|null):[];
+          }
+        }
+        if(weekly){
+          const currentCatalog:CatalogDocument[]=[];let after:string|null=null;
+          for(;;){
+            let query=client.from('product_catalog').select('id,family_id,category,status,revision,document').eq('status','verified').order('id').limit(200);
+            if(after)query=query.gt('id',after);const page=await query;
+            if(page.error)throw Error('CATALOG_FAILED');currentCatalog.push(...(page.data??[]).map(verifiedCatalogRow));
+            if(currentCatalog.length>MAX_CATALOG_PRODUCTS)throw Error('CATALOG_TOO_LARGE');
+            if(!page.data||page.data.length<200)break;after=page.data.at(-1)!.id;
+          }
+          const currentWishlist:typeof wishlist=[];after=null;
+          for(;;){
+            let query=client.from('drink_wishlist').select('product_id,saved,revision').eq('user_id',owner).order('product_id').limit(200);
+            if(after)query=query.gt('product_id',after);const page=await query;
+            if(page.error)throw Error('WISHLIST_FAILED');currentWishlist.push(...(page.data??[]));
+            if(currentWishlist.length>MAX_WISHLIST_ROWS)throw Error('WISHLIST_TOO_LARGE');
+            if(!page.data||page.data.length<200)break;after=page.data.at(-1)!.product_id;
+          }
+          if(JSON.stringify(currentCatalog)!==JSON.stringify(catalog)||JSON.stringify(currentWishlist)!==JSON.stringify(wishlist))throw new DiscoverySnapshotChanged();
+        }
         const evidenceIds = new Set(
           recommendations.flatMap((r) =>
             [...r.similar, ...r.cautions].flatMap((f) => [
@@ -219,8 +262,9 @@ Deno.serve(async (request) => {
           recordCount: snapshot.totalRecords,
           sensoryRecordCount: analyzeTaste(snapshot).recordCount,
           omittedSensoryRecords: snapshot.omittedCount,
-          method: "evidence-rules-v1",
-          modelUsed: false,
+          method: weekly?'gemini-weekly-selection-v1':"evidence-rules-v1",
+          modelUsed: weekly&&!!generation&&['cached','generated'].includes(String(generation.state)),
+          ...(weekly?{generation}:{}),
           catalogVersion: dynamic
             ? SHARED_CATALOG_VERSION
             : PRODUCT_CATALOG_VERSION,
@@ -234,6 +278,9 @@ Deno.serve(async (request) => {
     if (error instanceof DiscoverySnapshotChanged) {
       return reply({ code: "TASTE_CONTEXT_CHANGED" }, 409);
     }
+    const code=error instanceof Error?error.message:'';
+    if(code==='TASTE_CONTEXT_CHANGED')return reply({code},409);
+    if(code==='WEEKLY_AI_NOT_CONFIGURED')return reply({code:'AI_NOT_CONFIGURED'},503);
     return reply({ code: "NEXT_DRINKS_UNAVAILABLE" }, 503);
   }
 });
