@@ -54,6 +54,37 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
     await db.exec('reset role');
     await db.query('insert into auth.users(id,email) values ($1,$2),($3,$4)', [a, 'mogeum-a@example.test', b, 'mogeum-b@example.test']);
 
+    await t.test('menu AI reservations isolate owners, count failed attempts and replay cached IDs', async()=>{
+      await db.exec('reset role');
+      const hash='c'.repeat(64), version='menu-selection-test';
+      const begin=async(owner:string,h:string,n:number)=>(await db.query<{result:JsonObject}>('select public.begin_menu_selection($1,$2,$3,$4) result',[owner,h,version,operation(n)])).rows[0].result;
+      const finish=async(n:number,result:JsonObject|null)=>(await db.query('select public.finish_menu_selection($1,$2,$3,$4,$5) ok',[a,hash,version,operation(n),result])).rows[0].ok;
+      assert.equal((await begin(a,hash,900)).state,'acquired');
+      assert.equal((await begin(a,'d'.repeat(64),901)).state,'running');
+      assert.equal((await begin(b,hash,902)).state,'acquired');
+      assert.equal(await finish(901,{itemIds:['one']}),false);
+      const result={version:'menu-selection-v1',itemIds:['one']};
+      assert.equal(await finish(900,result),true);assert.equal(await finish(900,result),true);
+      assert.equal(await finish(900,{itemIds:['other']}),false);
+      assert.deepEqual((await begin(a,hash,903)).result,result);
+      await db.query("update private.menu_selection_jobs set generated_at=clock_timestamp()-interval '25 hours' where user_id=$1",[a]);
+      assert.equal((await begin(a,hash,904)).state,'acquired');assert.equal(await finish(904,null),true);
+      assert.equal((await begin(a,hash,905)).state,'backoff');
+      await db.query("update private.menu_selection_jobs set started_at=clock_timestamp()-interval '91 seconds',attempt_count=10 where user_id=$1",[a]);
+      assert.equal((await begin(a,hash,906)).state,'daily-limit');
+      await db.query("update private.menu_selection_jobs set attempt_day=(clock_timestamp() at time zone 'UTC')::date-1 where user_id=$1",[a]);
+      assert.equal((await begin(a,hash,907)).state,'acquired');
+      assert.equal((await db.query('select attempt_count from private.menu_selection_jobs where user_id=$1',[a])).rows[0].attempt_count,1);
+      await db.query("update private.menu_selection_jobs set started_at=clock_timestamp()-interval '91 seconds' where user_id=$1",[a]);
+      assert.equal(await finish(907,result),false);
+      await as(a);await assert.rejects(db.query('select public.begin_menu_selection($1,$2,$3,$4)',[a,hash,version,operation(908)]),{code:'42501'});
+      await assert.rejects(db.query('select public.finish_menu_selection($1,$2,$3,$4,$5)',[a,hash,version,operation(908),result]),{code:'42501'});
+      await assert.rejects(db.query('select * from private.menu_selection_jobs'),{code:'42501'});
+      await db.exec('reset role');await db.query('delete from private.menu_selection_jobs where user_id in ($1,$2)',[a,b]);
+      const disposable=operation(909);await db.query('insert into auth.users(id,email) values($1,$2)',[disposable,'menu-cascade@example.test']);
+      assert.equal((await begin(disposable,hash,910)).state,'acquired');await db.query('delete from auth.users where id=$1',[disposable]);
+      assert.equal((await db.query('select * from private.menu_selection_jobs where user_id=$1',[disposable])).rows.length,0);
+    });
     await t.test('weekly generation is per user, durable, idempotent and hides changed evidence', async()=>{
       await db.exec('reset role');
       const hash='a'.repeat(64),changed='b'.repeat(64),version='weekly-v1';

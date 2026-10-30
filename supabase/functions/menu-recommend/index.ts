@@ -1,3 +1,5 @@
+import {selectMenu} from "./selection-service.ts";
+import {menuSelectionCandidates} from "../_shared/menu-selection.ts";
 import { type CatalogDocument, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION, verifiedCatalogRow, catalogProduct } from "../_shared/catalog-contract.ts";
 import { stableMenuRecommendation } from "../_shared/menu-recommendation.ts";
 import { DiscoverySnapshotChanged } from "../_shared/discovery-snapshot.ts";
@@ -42,7 +44,7 @@ Deno.serve(async (request) => {
     .get("Authorization")
     ?.match(/^Bearer (.+)$/)?.[1];
   if (!token) return reply({ code: "UNAUTHENTICATED" }, 401);
-  const signal = AbortSignal.timeout(25000);
+  const signal = AbortSignal.timeout(45000);
   const client = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${token}` }, fetch: (input, init) => fetch(input, {...init, signal}) },
@@ -54,6 +56,8 @@ Deno.serve(async (request) => {
     const body = JSON.parse(raw);
     if (body.catalogVersion !== undefined && body.catalogVersion !== SHARED_CATALOG_VERSION)
       return reply({code:"INVALID_CATALOG_VERSION"},400);
+    if (body.recommendationVersion !== undefined && (body.recommendationVersion !== "menu-selection-v1" || body.catalogVersion !== SHARED_CATALOG_VERSION))
+      return reply({code:"INVALID_RECOMMENDATION_VERSION"},400);
     let catalog: CatalogDocument[] | undefined;
     if(body.catalogVersion === SHARED_CATALOG_VERSION){
       catalog=[]; let cursor: string | null=null;
@@ -87,7 +91,18 @@ Deno.serve(async (request) => {
       const { data, error } = await client.rpc("taste_summary_context");
       if (error) throw error;
       return data.snapshot as TasteSnapshot;
-    }, catalog);
+    }, catalog, body.recommendationVersion === "menu-selection-v1" ? async (rows, snapshot) => {
+      if (!menuSelectionCandidates(rows).length) return {recommendations: rows, modelUsed: false, state: "insufficient"};
+      const apiKey = Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY"), serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"), model = Deno.env.get("GEMINI_MODEL");
+      if (!apiKey || !serviceKey || !model) return {recommendations: rows, modelUsed: false, state: "unavailable"};
+      // Hash every menu/edition/fact/evidence change; cache stores selected IDs only.
+      const bytes = new TextEncoder().encode(JSON.stringify({tasteHash:snapshot.hash,items,catalog,rows}));
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      const hash = Array.from(new Uint8Array(digest), n=>n.toString(16).padStart(2,"0")).join("");
+      const admin = createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init)=>fetch(input,{...init,signal})}});
+      try {return await selectMenu(admin,{owner:auth.user.id,hash,rows},{apiKey,model});}
+      catch {return {recommendations:rows,modelUsed:false,state:"unavailable"};}
+    } : undefined);
     return reply(result);
   } catch (error) {
     if (error instanceof DiscoverySnapshotChanged)
