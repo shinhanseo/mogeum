@@ -25,3 +25,5 @@ private.menu_selection_jobs에 계정별 lease/입력 hash/모델 버전/선택 
 승인된 개발 프로젝트에20261030010000 migration과 menu-recommend를 CLI 배포했다. `MOGEUM_VERIFY_MANAGED_DEV=1 npx tsx scripts/verify-managed-menu-selection.ts`로 임시 인증 계정·합성3개 메뉴를 사용했다. 빈 기록 insufficient/modelUsed=false, 긍정 향 노트 이후 generated/modelUsed=true, 미등록 메뉴 unverified 유지, 재조회 cached/동일 선택, 구버전 규칙 응답 호환을 확인했다. 임시 계정을 삭제했으며 사람 계정·기록은 변경하지 않았다. 보고서에는 토큰·원문·사용자 ID를 쓰지 않았다.
 
 이 결과를 확인한 후 실제 MenuFlow 요청에 gemini 옵션을 활성화했다. 로컬 생성 배포 번들의 실제HTTP9개도 통과했다. SDK 합성 테스트·관리형 실제 모델 검증과 기기 전체 QA는 서로 구분한다. 현재 기기 USB 미연결이므로 실제 폰 설치·메뉴 전체 흐름은 후속 확인한다.
+
+iOS SE/iOS26.5의 개발 전용 합성 fixture에서 generated/daily-limit 안내와 기존 가격·근거 카드가 함께 표시되는 것을 확인했다. 최신 개발 번들로 reload 후 `/dev/menu-selection`에서 확인했으며 실제 카메라→OCR→관리형 추천 전체 네이티브 검증을 뜻하지 않는다. Android는 USB 미연결이다. 이전 주간 추천 Android code16 APK는 beta:scan safe=true 및 APK 서명 검사를 통과했다. 이번 메뉴 변경은 별도 다음 빌드에 포함한다.
