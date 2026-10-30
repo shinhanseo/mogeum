@@ -1,6 +1,8 @@
 # 기술 구조
 
-현재 Expo 58 / RN 0.88 / Router 58 앱, 관리형 개발 DB의 11개 마이그레이션과 기록 RPC·메뉴/취향·계정 삭제 Edge 함수를 구현했다. 외부 제공자 credential 기반과 복구인 12·13번째도 개발 서버에 적용했다. iOS·Android native + 로컬 Auth/Storage/DB의 저장·재시도·권한·삭제 통합 경로를 검증했다. 관리형 Apple·카카오·Gemini 설정과 iOS Apple/카카오 실제 로그인, 관리형 임시 계정의 실제 Gemini 요약·삭제 API를 확인했다. 외부 제공자 연결 해제와 출시 검증은 남아 있다. 메뉴 geometry-v4([배포 근거](verification/menu-skew/README.md))와 next-drinks 번들을 개발 프로젝트에 배포했으며, 관리형 synthetic 계정의 인증 후 메뉴 추천·타인 보호·저장 재시도를 확인했다. Gemini 생성 시간 초과를 재현한 뒤 근거 ID 선택에 맞는 Flash-Lite로 변경해 실제 생성·DB 저장·동일 입력 cache 재사용을 다시 확인했다. 검증 범위와 표본 한계는 summary-model 문서에 남겼다. 아래의 권장/목표 구조는 현재 코드와 구분한다.
+현재 Expo58/RN0.88 앱과 Supabase 관리형 개발 DB/Edge 함수를 사용한다. 기록·사진·노트 CRUD, Apple/카카오 로그인, Gemini 취향 요약, 기기 OCR과 메뉴 확인/수정, 근거 비교를 연결했다. 주간 다음 한 잔과 메뉴판은 검증된 후보 중 Gemini가 선택하는 경로를 배포하고 합성 인증 계정의 실제 생성/캐시/권한 경계를 검증했다. [주간 선택](verification/weekly-generation/README.md), [메뉴판 선택](verification/menu-selection/README.md).
+
+관리형 카탈로그는 검증된32개(주종별8개)이며120제품군 목표·미등록 제품 웹 탐색/자동 검증은 아직 미완료다. 계정 삭제의 서버/제공자 해제 코드와 임시 계정 정리는 구현했으나 실제 외부 OAuth 계정의 최종 해제와 양 플랫폼 전체 기기 검증·스토어 제출은 별도로 남는다. 아래 권장/목표 구조는 현재 구현과 구분한다.
 
 ## 구성
 
