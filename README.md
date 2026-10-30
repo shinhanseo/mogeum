@@ -48,7 +48,7 @@ Galaxy QA로 술장 카드 간격·내 취향 초기/요약/갱신 레이아웃�
 
 ## 추천 개편 · 개발 시작
 
-[Gemini·공통 카탈로그·주간 추천 개편](docs/recommendation-revamp.md)을 #174에서 추적합니다. 첫 변경 #177은 저장한 술을 다음 한 잔의 새 추천에서 제외하고 저장 목록을 유지합니다. 공통 제품 DB·후보 격리 기반은 #175에서 추가 중입니다. 다음 한 잔은 [동적 카탈로그·저장 목록·기록 prefill](docs/verification/dynamic-discovery/README.md) 연결을 추가했습니다. 다음 한 잔은 검증된 카탈로그 후보 중 Gemini가 주간 선택하는 경로를 개발 서버에 배포하고, 임시 인증 계정의 실제 생성·캐시 재사용·기록 변경 후 결과 숨김을 확인했습니다. 앱의 홈/다음 한 잔 요청도 주간 계약으로 전환합니다. 메뉴판의 동적 카탈로그 연결·120제품군·Gemini 신규 제품 탐색은 별도 후속 구현입니다. [주간 추천 검증](docs/verification/weekly-generation/README.md).
+[Gemini·공통 카탈로그·주간 추천 개편](docs/recommendation-revamp.md)을 #174에서 추적합니다. 첫 변경 #177은 저장한 술을 다음 한 잔의 새 추천에서 제외하고 저장 목록을 유지합니다. 공통 제품 DB·후보 격리 기반은 #175에서 추가 중입니다. 다음 한 잔은 [동적 카탈로그·저장 목록·기록 prefill](docs/verification/dynamic-discovery/README.md) 연결을 추가했습니다. 다음 한 잔은 검증된 카탈로그 후보 중 Gemini가 주간 선택하는 경로를 개발 서버에 배포하고, 임시 인증 계정의 실제 생성·캐시 재사용·기록 변경 후 결과 숨김을 확인했습니다. 앱의 홈/다음 한 잔 요청도 주간 계약으로 전환합니다. 메뉴판도 동적 카탈로그의 근거 후보에서 Gemini가 순서를 고르는 경로를 개발 서버에 배포·실제 검증하고 앱에 연결했습니다. [메뉴판 Gemini 선택](docs/verification/menu-selection/README.md). 120제품군·Gemini 신규 제품 탐색은 별도 후속 구현입니다. [주간 추천 검증](docs/verification/weekly-generation/README.md).
 
 ## 출시 범위
 

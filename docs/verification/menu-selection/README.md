@@ -18,3 +18,10 @@ private.menu_selection_jobs에 계정별 lease/입력 hash/모델 버전/선택 
 - 실제 SDK + 가짜 transport2통과: 집계만 전달, 임의 메뉴 ID 차단. 실제 Gemini 호출 검증과 다르다.
 - DB: lease 소유권, 캐시/멱등 완료, 실패 backoff, UTC 일일 상한/초기화,90초 늦은 완료 거절, 사용자 권한 차단, Auth 삭제 cascade.
 - 관리형 서버 배포·실제 Gemini·양 플랫폼 UI 검증은 후속 단계. 앱의 gemini 옵션은 배포 검증 뒤 활성화한다.
+
+
+## 관리형 연결·실제 호출
+
+승인된 개발 프로젝트에20261030010000 migration과 menu-recommend를 CLI 배포했다. `MOGEUM_VERIFY_MANAGED_DEV=1 npx tsx scripts/verify-managed-menu-selection.ts`로 임시 인증 계정·합성3개 메뉴를 사용했다. 빈 기록 insufficient/modelUsed=false, 긍정 향 노트 이후 generated/modelUsed=true, 미등록 메뉴 unverified 유지, 재조회 cached/동일 선택, 구버전 규칙 응답 호환을 확인했다. 임시 계정을 삭제했으며 사람 계정·기록은 변경하지 않았다. 보고서에는 토큰·원문·사용자 ID를 쓰지 않았다.
+
+이 결과를 확인한 후 실제 MenuFlow 요청에 gemini 옵션을 활성화했다. 로컬 생성 배포 번들의 실제HTTP9개도 통과했다. SDK 합성 테스트·관리형 실제 모델 검증과 기기 전체 QA는 서로 구분한다. 현재 기기 USB 미연결이므로 실제 폰 설치·메뉴 전체 흐름은 후속 확인한다.
