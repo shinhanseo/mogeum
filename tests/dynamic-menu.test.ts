@@ -36,3 +36,18 @@ test('ambiguous editions remain candidates, explicit unsupported vintage never f
  assert.equal(productCandidates('합성 와인',[wine,older]).length,2);
  assert.deepEqual(productCandidates('합성 와인 2022',[wine,older]),[]);
 });
+test('Gemini menu contract changes only selection, never product facts or OCR prices',async()=>{
+ const items=[{...parseMenu([photo],[product])[0],confirmed:true,productId:product.id}];
+ const liked={...snapshot,totalRecords:1,records:[{id:'positive',entryId:'entry',revision:1,name:product.name,category:product.category,date:'2026-10-30',revisit:'again' as const,rating:null,note:null}]};
+ const base=await stableMenuRecommendation(items,async()=>liked,[product]);
+ const selected={...base,method:'gemini-menu-selection-v1',modelUsed:true,selectionState:'generated'};
+ assert.equal(validateMenuResult(selected,items).modelUsed,true);
+ assert.equal(items[0].price,15000);
+ for(const bad of [
+  {...selected,modelUsed:false}, {...selected,selectionState:'daily-limit'},
+  {...selected,recommendations:[{...selected.recommendations[0],productId:'invented'}]},
+  {...selected,recommendations:[{...selected.recommendations[0],status:'similar',score:50}]},
+ ])assert.throws(()=>validateMenuResult(bad,items));
+ assert.equal(validateMenuResult({...base,modelUsed:false,selectionState:'daily-limit'},items).modelUsed,false);
+ assert.throws(()=>validateMenuResult({...base,modelUsed:true,selectionState:'generated'},items));
+});

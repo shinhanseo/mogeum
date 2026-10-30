@@ -357,7 +357,7 @@ export function MenuFlow({
     async recommend(photos, items) {
       const client = getSupabase();
       if (!client) throw new Error("NO_BACKEND");
-      return (await menuRequest(client, owner, photos, items)) as MenuResult;
+      return (await menuRequest(client, owner, photos, items, {gemini: true})) as MenuResult;
     },
     async save(d, photos) {
       const client = getSupabase();

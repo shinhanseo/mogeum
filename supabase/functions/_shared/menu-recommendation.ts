@@ -5,6 +5,7 @@ import {
   products,
   PRODUCT_CATALOG_VERSION,
   type MenuItem,
+  type MenuRecommendation,
 } from "./menu-domain.ts";
 import type { TasteSnapshot } from "./taste-domain.ts";
 /** Recheck the taste version after building; never return an outdated personal result as current. */
@@ -12,9 +13,12 @@ export function stableMenuRecommendation(
   items: MenuItem[],
   load: () => Promise<TasteSnapshot>,
   catalog?: CatalogDocument[],
+  select?: (rows: MenuRecommendation[], snapshot: TasteSnapshot) => Promise<{recommendations: MenuRecommendation[]; modelUsed: boolean; state: string}>,
 ) {
   return withStableDiscoverySnapshot(load, async (snapshot) => {
-    const recommendations = recommendMenu(items, snapshot, catalog?.map(catalogProduct));
+    const baseline = recommendMenu(items, snapshot, catalog?.map(catalogProduct));
+    const selection = select ? await select(baseline, snapshot) : null;
+    const recommendations = selection?.recommendations ?? baseline;
     const evidenceIds = new Set(
       recommendations.flatMap((r) => [
         ...r.similar.flatMap((f) => [...f.recordIds, ...f.negativeIds]),
@@ -37,7 +41,8 @@ export function stableMenuRecommendation(
       evidenceRecords,
       tasteHash: snapshot.hash,
       recordCount: snapshot.totalRecords,
-      method: "evidence-rules-v1",
+      method: selection?.modelUsed ? "gemini-menu-selection-v1" : "evidence-rules-v1",
+      ...(selection ? {modelUsed: selection.modelUsed, selectionState: selection.state} : {}),
       limitedCatalog: true,
       ...(catalog ? {catalog} : {}),
       catalogVersion: catalog ? SHARED_CATALOG_VERSION : PRODUCT_CATALOG_VERSION,

@@ -420,6 +420,11 @@ export function MenuScreen(p: Props) {
               메뉴판 {p.draft.photos.length}장 · 내 기록{" "}
               {p.result?.recordCount ?? 0}개로 고른 술
             </Text>
+            {p.result?.selectionState ? <Text style={s.caption}>
+              {p.result.modelUsed ? "내 기록과 비교한 메뉴에서 Gemini가 순서를 골랐어요."
+                : p.result.selectionState === "insufficient" ? "아직 비교할 취향 근거가 부족해요. 확인된 제품 정보부터 살펴봐요."
+                : "AI 선택은 잠시 이용할 수 없어 기록과 제품 정보의 기본 비교 결과를 보여드려요."}
+            </Text> : null}
             {p.result?.recommendations.map((r) => {
               const item = p.draft.items.find((i) => i.id === r.itemId)!;
               return (

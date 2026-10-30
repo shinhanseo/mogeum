@@ -24,6 +24,8 @@ export type MenuResult = {
   tasteHash: string;
   recordCount: number;
   method: string;
+  modelUsed?: boolean;
+  selectionState?: "generated" | "cached" | "insufficient" | "running" | "backoff" | "daily-limit" | "unavailable";
   limitedCatalog: boolean;
   catalogVersion?: string;
   catalogSize?: number;
@@ -63,13 +65,19 @@ export function validateMenuResult(
   requireCatalogVersion(value);
   const data = obj(value);
   if (
-    data.method !== "evidence-rules-v1" ||
+    !["evidence-rules-v1", "gemini-menu-selection-v1"].includes(data.method as string) ||
     data.limitedCatalog !== true ||
     !str(data.tasteHash, 128) ||
     !Number.isSafeInteger(data.recordCount) ||
     (data.recordCount as number) < 0
   )
     fail();
+  const modelSelected = data.method === "gemini-menu-selection-v1";
+  const states = ["generated", "cached", "insufficient", "running", "backoff", "daily-limit", "unavailable"];
+  if (modelSelected ? data.modelUsed !== true || !["generated", "cached"].includes(data.selectionState as string) :
+      (data.modelUsed !== undefined && data.modelUsed !== false) || ["generated", "cached"].includes(data.selectionState as string)) fail();
+  if (data.selectionState !== undefined && !states.includes(data.selectionState as string)) fail();
+  if (modelSelected && data.catalogVersion !== SHARED_CATALOG_VERSION) fail();
   const catalog = menuCatalog(value);
   if (data.catalogSize !== catalog.length) fail();
   const records = array(data.evidenceRecords, 1000);
@@ -184,6 +192,10 @@ export function validateMenuResult(
       fail();
   }
   if (used.size !== allowed.size) fail();
+  if (modelSelected) {
+    const first = obj(array(data.recommendations, 100)[0]);
+    if (!["similar", "known"].includes(first.status as string) || typeof first.score !== "number" || first.score <= 0) fail();
+  }
   return data.catalogVersion === SHARED_CATALOG_VERSION ? {...data, catalog} as MenuResult : value as MenuResult;
 }
 export function menuFailureMessage(

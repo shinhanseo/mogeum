@@ -33,6 +33,9 @@ test('dynamic menu HTTP uses verified new products, hides candidates and preserv
   assert.ok(validateMenuResult(result,items).catalog?.some(p=>p.id===id));
   assert.equal(result.recommendations[0].productId,id);
   assert.deepEqual(result.recommendations[0].similar,[]);
+  const insufficient=await request({action:'recommend',photos,items,catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:'menu-selection-v1'});
+  assert.equal(insufficient.selectionState,'insufficient');assert.equal(insufficient.modelUsed,false);
+  assert.equal(validateMenuResult(insufficient,items).method,'evidence-rules-v1');
   const invalid=await client.functions.invoke('menu-recommend',{body:{action:'recommend',photos,items:[{...items[0],name:'다른 제품'}],catalogVersion:SHARED_CATALOG_VERSION}});
   assert.ok(invalid.error);
   const legacy=await request({action:'parse',photos});assert.equal(legacy.catalog,undefined);
