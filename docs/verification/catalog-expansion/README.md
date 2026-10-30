@@ -16,4 +16,8 @@
 - `supabase/catalog/2026-10-30-reviewed.json`은 검토된 문서다. `scripts/build-reviewed-catalog.ts`는 오프라인 검증/SQL 생성만 한다. --check로 JSON과 migration 정합성을 확인한다.
 - migration은 기존 ID와 충돌하면 아무것도 덮어쓰지 않는다. 이미 보류한 제품을 다시 verified로 바꾸지 않는다.
 - 식별 별칭/제품 ID 충돌, 다른 연산/도수/레시피 거절, 기존 질문 특징 ID, 빈 기록에 선호를 만들지 않는 비교, DB 제약/RLS를 검사한다.
-- 관리형 반영/새 문서 조회 결과는 배포 후 별도 기록한다.
+- 전체 check454통과/환경14제외. 로컬 메뉴판 HTTP9개 통과. 다음 한 잔은 오래 실행 중인 로컬 Edge에서 번들 갱신을 못 읽었으나 Edge 런타임만 재시작한 뒤 실제HTTP9개가 통과했고 소스 복구도 확인했다. DB 초기화는 하지 않았다.
+
+## 관리형 실제 반영
+
+승인된 개발 DB에20261030020000만 적용했다. `MOGEUM_VERIFY_MANAGED_DEV=1 npx tsx scripts/verify-managed-catalog.ts`로 임시 인증 계정에서36개(whisky10/beer10/wine8/traditional8), 추가4개 문서와 원본 JSON 일치, 메뉴 이름/가격에서4개 제품 식별, 빈 기록에는 unmatched/0점/모델 미호출을 확인했다. 임시 계정을 삭제했고 사람 기록은 변경하지 않았다. 기존32개 bundled 계약을 변경하지 않아 이미 만든 최신 Android code18/iOS Release도 공통DB의 추가 제품을 조회한다.
