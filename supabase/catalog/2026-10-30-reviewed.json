@@ -1,0 +1,158 @@
+[
+  {
+    "id": "talisker-10",
+    "familyId": "talisker",
+    "name": "탈리스커 10년",
+    "category": "whisky",
+    "edition": "10년",
+    "aliases": [
+      "탈리스커 10년",
+      "탈리스커10",
+      "Talisker 10",
+      "Talisker 10 Year Old"
+    ],
+    "baseAliases": [],
+    "features": [
+      {
+        "id": "향:연기 향",
+        "label": "연기 향",
+        "dimension": "향",
+        "evidence": "제조사 시향 설명의 강한 피트 연기를 반영해요."
+      },
+      {
+        "id": "향:피트·스모크 향",
+        "label": "피트·스모크 향",
+        "dimension": "향",
+        "evidence": "제조사 시향 설명의 강한 피트 연기를 반영해요."
+      },
+      {
+        "id": "여운:여운 · 오래 남았어요",
+        "label": "여운 · 오래 남았어요",
+        "dimension": "여운",
+        "evidence": "제조사는 길고 따뜻하며 후추를 떠올리는 마무리로 설명해요."
+      },
+      {
+        "id": "여운:여운의 길이 · 길어요",
+        "label": "여운의 길이 · 길어요",
+        "dimension": "여운",
+        "evidence": "제조사는 길고 따뜻하며 후추를 떠올리는 마무리로 설명해요."
+      }
+    ],
+    "source": {
+      "url": "https://www.malts.com/en/products/talisker-10-year-old",
+      "title": "Malts · Talisker 10 Year Old",
+      "checkedAt": "2026-10-30",
+      "kind": "producer"
+    },
+    "description": "제조사는 피트 연기와 감귤 계열의 향, 말린 과일의 단맛과 후추를 떠올리는 긴 여운을 설명해요."
+  },
+  {
+    "id": "oban-14",
+    "familyId": "oban",
+    "name": "오반 14년",
+    "category": "whisky",
+    "edition": "14년",
+    "aliases": [
+      "오반 14년",
+      "오반14",
+      "Oban 14",
+      "Oban 14 Year Old"
+    ],
+    "baseAliases": [],
+    "features": [
+      {
+        "id": "향:과일 향",
+        "label": "과일 향",
+        "dimension": "향",
+        "evidence": "제조사 시향 설명의 익은 과일과 오렌지를 넓은 과일 향으로 연결해요."
+      },
+      {
+        "id": "여운:여운 · 오래 남았어요",
+        "label": "여운 · 오래 남았어요",
+        "dimension": "여운",
+        "evidence": "제조사 마무리 설명은 길게 이어지는 여운을 명시해요."
+      },
+      {
+        "id": "여운:여운의 길이 · 길어요",
+        "label": "여운의 길이 · 길어요",
+        "dimension": "여운",
+        "evidence": "제조사 마무리 설명은 길게 이어지는 여운을 명시해요."
+      }
+    ],
+    "source": {
+      "url": "https://www.malts.com/en-us/products/oban-14-year-old-single-malt-scotch-whisky-750ml",
+      "title": "Malts · Oban 14 Year Old",
+      "checkedAt": "2026-10-30",
+      "kind": "producer"
+    },
+    "description": "제조사는 익은 과일과 오렌지를 떠올리는 향, 입안을 감싸는 질감과 긴 여운을 설명해요. 늦게 느껴지는 약한 연기도 언급해요."
+  },
+  {
+    "id": "duvel-original-85",
+    "familyId": "duvel",
+    "name": "듀벨 오리지널 8.5%",
+    "category": "beer",
+    "edition": "Original · 병내 재발효 · 8.5%",
+    "aliases": [
+      "듀벨 오리지널 8.5%",
+      "듀벨",
+      "듀벨 오리지널",
+      "듀벨 8.5",
+      "Duvel",
+      "Duvel Original",
+      "Duvel 8.5"
+    ],
+    "baseAliases": [],
+    "features": [
+      {
+        "id": "향:과일 향",
+        "label": "과일 향",
+        "dimension": "향",
+        "evidence": "제조사 프로필에 과일을 떠올리는 향이 명시되어 있어요."
+      },
+      {
+        "id": "맛:쌉쌀한 맛",
+        "label": "쌉쌀한 맛",
+        "dimension": "맛",
+        "evidence": "제조사 프로필에 살짝 쌉쌀한 뒷맛이 명시되어 있어요."
+      }
+    ],
+    "source": {
+      "url": "https://www.duvel.com/en/the-beer/duvel",
+      "title": "Duvel · Original",
+      "checkedAt": "2026-10-30",
+      "kind": "producer"
+    },
+    "description": "제조사는 은근한 과일 향과 쌉쌀한 뒷맛, 미세한 탄산과 매끈한 입안 느낌을 설명해요. 6.66%나 Single Fermented 판본과 구분해요."
+  },
+  {
+    "id": "blue-moon-belgian-white-54",
+    "familyId": "blue-moon-belgian-white",
+    "name": "블루문 벨지안 화이트 5.4%",
+    "category": "beer",
+    "edition": "Belgian White · 5.4%",
+    "aliases": [
+      "블루문 벨지안 화이트 5.4%",
+      "블루문 벨지안 화이트",
+      "블루문",
+      "Blue Moon Belgian White",
+      "Blue Moon"
+    ],
+    "baseAliases": [],
+    "features": [
+      {
+        "id": "향:과일 향",
+        "label": "과일 향",
+        "dimension": "향",
+        "evidence": "제조사의 감귤 계열 향 설명을 넓은 과일 향으로 연결해요. 레몬·자몽으로 구체화하지 않아요."
+      }
+    ],
+    "source": {
+      "url": "https://www.bluemoonbrewingcompany.com/en-GB/currently-available/blue-moon-belgian-white",
+      "title": "Blue Moon · Belgian White",
+      "checkedAt": "2026-10-30",
+      "kind": "producer"
+    },
+    "description": "제조사는 오렌지 껍질로 빚은 밀맥주의 은은한 단맛과 밝은 감귤 계열 향을 설명해요. Light·Non-Alcoholic 판본에는 적용하지 않아요."
+  }
+]
