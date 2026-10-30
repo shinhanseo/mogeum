@@ -261,6 +261,13 @@ test(
     assert.deepEqual(result.recommendations[0].similar[0].recordIds, [
       recordId,
     ]);
+    if (process.env.MOGEUM_TEST_MENU_NO_KEY === "1") {
+      const fallbackResponse=await request(endpoint,a.access_token,{action:"recommend",photos,items:[item],catalogVersion:"shared-catalog-v1",recommendationVersion:"menu-selection-v1"});
+      assert.equal(fallbackResponse.status,200);const fallback=await fallbackResponse.json();
+      validateMenuResult(fallback,[item]);assert.equal(fallback.method,"evidence-rules-v1");
+      assert.equal(fallback.modelUsed,false);assert.equal(fallback.selectionState,"unavailable");
+      assert.deepEqual(fallback.recommendations,result.recommendations);
+    }
     const refreshed = await refreshMenuEvidence(result.tasteHash, {
       active: () => true,
       async hash() {
