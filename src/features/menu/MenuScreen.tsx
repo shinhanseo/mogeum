@@ -31,6 +31,7 @@ import {
 import type { MenuDraft, DevicePhoto } from "./device";
 import { drinkArt } from "./drink-art";
 import type { MenuResult } from "./repository";
+import {menuResearchMessage} from "./result-contract";
 export type MenuStep =
   | "start"
   | "photos"
@@ -74,6 +75,7 @@ export function MenuScreen(p: Props) {
   const selectedRec = p.result?.recommendations.find(
     (r) => r.itemId === selected,
   );
+  const selectedResearch=p.result?.research?.find(e=>e.itemId===selected);
   const selectedPhoto = p.draft.photos.find(
     (f) => f.id === (originalPhotoId ?? selectedItem?.photoId),
   );
@@ -401,7 +403,7 @@ export function MenuScreen(p: Props) {
             />
             <Text style={s.caption}>
               이름·가격·용량을 확인한 뒤 추천받기를 눌러주세요. 제품 후보는
-              정확히 맞을 때만 선택해요. 모르면 미확인으로 남겨도 돼요.
+              정확히 맞을 때만 선택해요. 미확인 메뉴는 최대 2개까지 출처를 찾아 비교해요.
             </Text>
           </>
         ) : p.step === "results" ? (
@@ -427,6 +429,7 @@ export function MenuScreen(p: Props) {
             </Text> : null}
             {p.result?.recommendations.map((r) => {
               const item = p.draft.items.find((i) => i.id === r.itemId)!;
+              const researched=p.result?.research?.find(e=>e.itemId===r.itemId);
               return (
                 <Pressable
                   accessibilityRole="button"
@@ -435,7 +438,7 @@ export function MenuScreen(p: Props) {
                   style={[s.recommend, r.status === "similar" && s.highlight]}
                 >
                   <Text style={s.primary}>
-                    {r.status === "similar"
+                    {researched?.state==="compared" ? "검색으로 찾은 제품 후보" : r.status === "similar"
                       ? "좋게 남긴 기록과 닮았어요"
                       : r.status === "known"
                         ? "같은 이름으로 좋게 남겼어요"
@@ -470,12 +473,13 @@ export function MenuScreen(p: Props) {
                       ? `${r.similar.map((f) => f.label).join(" · ")}이 기록과 이어져요.`
                       : "확인되지 않은 맛은 추측하지 않았어요."}
                   </Text>
+                  {researched ? <Text style={s.caption}>{menuResearchMessage(researched)}{researched.state==="compared" ? ` · ${products.find(p=>p.id===researched.productId)?.name??""}` : ""}</Text> : null}
                   <Text style={s.primary}>내 기록과 어떤 점이 닮았나요? ›</Text>
                 </Pressable>
               );
             })}
             <Text style={s.caption}>
-              출처를 확인한 일부 술만 비교해요. 취향 일치율은 매기지 않아요.
+              출처에서 확인된 특징만 비교해요. 검색 후보는 실제 메뉴의 제품·연산·빈티지와 같은지 확인해 주세요.
             </Text>
             <Button
               label="메뉴판 추가하고 다시 추천받기"
@@ -486,6 +490,7 @@ export function MenuScreen(p: Props) {
         ) : p.step === "reason" && selectedItem && selectedRec ? (
           <>
             <Text style={s.title}>좋아했던 느낌을,{"\n"}새로운 술에서도.</Text>
+            {selectedResearch ? <Text style={s.caption}>{menuResearchMessage(selectedResearch)}{selectedResearch.state==="compared" ? `\n검색한 제품: ${products.find(v=>v.id===selectedResearch.productId)?.name??""}` : ""}</Text> : null}
             <View style={s.menuRow}>
               {selectedRec.productId && (
                 <SvgXml
@@ -763,7 +768,7 @@ export function MenuScreen(p: Props) {
         {p.busy && (
           <View style={s.loading}>
             <ActivityIndicator color={colors.primary} />
-            <Text style={s.caption}>메뉴를 살펴보고 있어요.</Text>
+            <Text style={[s.caption,{flex:1}]}>{p.step==="review"&&p.draft.items.some(i=>i.productId===null) ? "미등록 술의 출처를 찾고 내 기록과 비교하고 있어요. 잠시 걸릴 수 있어요." : "메뉴를 살펴보고 있어요."}</Text>
           </View>
         )}
         {!!p.error && (

@@ -1,3 +1,4 @@
+import {MENU_RESEARCH_VERSION,validateMenuResearchBatch,type MenuResearchEntry} from "../../../supabase/functions/_shared/menu-research";
 import { parseCatalogDocument, catalogProduct, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION } from "../../../supabase/functions/_shared/catalog-contract";
 import {
   productCandidates,
@@ -29,6 +30,8 @@ export type MenuResult = {
   limitedCatalog: boolean;
   catalogVersion?: string;
   catalogSize?: number;
+  researchVersion?: typeof MENU_RESEARCH_VERSION;
+  research?: MenuResearchEntry[];
 };
 function fail(): never {
   throw new Error("INVALID_MENU_RESULT");
@@ -80,6 +83,11 @@ export function validateMenuResult(
   if (modelSelected && data.catalogVersion !== SHARED_CATALOG_VERSION) fail();
   const catalog = menuCatalog(value);
   if (data.catalogSize !== catalog.length) fail();
+  let research:MenuResearchEntry[]=[];
+  if(data.researchVersion!==undefined){
+    if(data.researchVersion!==MENU_RESEARCH_VERSION||data.catalogVersion!==SHARED_CATALOG_VERSION)fail();
+    try{research=validateMenuResearchBatch({entries:data.research,documents:array(data.catalog,MAX_CATALOG_PRODUCTS).map(parseCatalogDocument).filter(p=>p.id.startsWith('menu-research-'))},items).entries;}catch{return fail();}
+  }else if(data.research!==undefined||catalog.some(p=>p.id.startsWith('menu-research-')))fail();
   const records = array(data.evidenceRecords, 1000);
   if (records.length > (data.recordCount as number)) fail();
   const recordById = new Map<string, Record<string, unknown>>();
@@ -117,8 +125,9 @@ export function validateMenuResult(
     const item = typeof r.itemId === "string" ? byId.get(r.itemId) : undefined;
     if (!item || seen.has(item.id)) fail();
     seen.add(item.id);
+    const researched=research.find(e=>e.itemId===item.id&&e.state==='compared');
     const product = productCandidates(item.name, catalog).find(
-      (p) => p.id === item.productId,
+      (p) => p.id === (item.productId??researched?.productId),
     );
     if (r.productId !== (product?.id ?? null)) fail();
     const support = new Set<string>(),
@@ -225,4 +234,15 @@ export function menuCatalog(value: unknown) {
   if(new Set(catalog.map(p=>p.id)).size!==catalog.length||catalog.some(p=>!p.features.length))fail();
   return catalog;
  } catch { return fail(); }
+}
+
+export function menuResearchMessage(entry:MenuResearchEntry){
+ switch(entry.state){
+  case 'compared':return '제조사 원문을 확인한 후보예요. 메뉴의 제품과 같은지 확인해 주세요.';
+  case 'limit':return '이번에는 미등록 메뉴 2개까지 검색했어요. 이 메뉴는 아직 조사하지 않았어요.';
+  case 'daily-limit':case 'monthly-limit':return '검색 횟수를 모두 사용했어요. 확인된 기존 제품의 비교 결과는 볼 수 있어요.';
+  case 'running':case 'backoff':return '검색이 진행 중이거나 잠시 대기 중이에요. 맛을 추측해 채우지 않았어요.';
+  case 'unresolved':return '제품이나 원문 근거를 확정하지 못했어요. 이름·연산·빈티지를 확인해 주세요.';
+  default:return '검색을 완료하지 못했어요. 기존에 확인된 제품 정보로 비교했어요.';
+ }
 }

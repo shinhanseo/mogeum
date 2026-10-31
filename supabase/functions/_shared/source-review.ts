@@ -84,7 +84,9 @@ export async function originalSourceEvidence(input:ReviewResearch,config:{signal
      source.url=url;
      result.text+='\n\nOriginal producer excerpt:\n'+excerpt;
      for(const sentence of excerpt.match(/[^.!?]+[.!?]?/gu)??[]){
-      if(sentence.trim()&&result.supports.length<100)result.supports.push({text:sentence.trim(),sourceIndices:[source.index]});
+      const heading=sentence.search(/\b(?:NOSE|PALATE|FINISH|AROMA|TASTE|APPEARANCE)\b/u);
+      const evidence=(heading>=0?sentence.slice(heading):sentence).trim();
+      if(evidence&&result.supports.length<100)result.supports.push({text:evidence,sourceIndices:[source.index]});
      }
     }
     break;

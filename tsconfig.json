@@ -35,6 +35,8 @@
     "supabase/functions/next-drinks/select.ts",
     "supabase/functions/next-drinks/weekly-service.ts",
     "supabase/functions/menu-recommend/select.ts",
-    "supabase/functions/menu-recommend/selection-service.ts"
+    "supabase/functions/menu-recommend/selection-service.ts",
+    "supabase/functions/menu-recommend/research-service.ts",
+    "supabase/functions/menu-recommend/research-identify.ts"
   ]
 }
