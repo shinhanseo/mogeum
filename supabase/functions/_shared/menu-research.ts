@@ -15,10 +15,10 @@ export function researchedMenuDocument(item:MenuItem,input:ReviewResearch,checks
  if(!check||!producerOrigins.includes(new URL(check.finalUrl!).origin))return null;
  const allowed=allowedResearchFeatures(r.query.category);
  const features=(r.claims?.features??[]).filter(f=>f.sourceIndex===identity.sourceIndex&&check.matchedFactIds.includes(f.factId)).slice(0,3).flatMap(f=>{
-  const fact=allowed.find(v=>v.id===f.factId);return fact?[{...fact,evidence:f.quote.slice(0,600)}]:[];
+  const fact=allowed.find(v=>v.id===f.factId);return fact?[{...fact,evidence:f.quote.slice(0,160)}]:[];
  });
  if(!features.length)return null;
- return parseCatalogDocument({id,familyId:id,name:r.query.name,category:r.query.category,edition:r.query.edition??'검색으로 찾은 제품 후보',aliases:[...new Set([item.name,r.query.name])],baseAliases:[],features,source:{url:check.finalUrl,title:r.sources.find(s=>s.index===identity.sourceIndex)?.title??r.query.name,checkedAt:check.checkedAt.slice(0,10),kind:'producer'},description:'제조사 원문의 특징을 내 기록과 비교했어요. 메뉴판의 제품·연산·빈티지와 같은지 확인해 주세요.'});
+ return parseCatalogDocument({id,familyId:id,name:r.query.name,category:r.query.category,edition:r.query.edition??'검색으로 찾은 제품 후보',aliases:[...new Set([item.name,r.query.name])],baseAliases:[],features,source:{url:check.finalUrl,title:(r.sources.find(s=>s.index===identity.sourceIndex)?.title??r.query.name).slice(0,150),checkedAt:check.checkedAt.slice(0,10),kind:'producer'},description:'제조사 원문의 특징을 내 기록과 비교했어요. 메뉴판의 제품·연산·빈티지와 같은지 확인해 주세요.'});
 }
 export function validateMenuResearchBatch(value:unknown,items:MenuItem[]):MenuResearchBatch{
  const v=value as MenuResearchBatch;
