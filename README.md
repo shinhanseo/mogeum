@@ -132,7 +132,7 @@ Development Build는 `npm run ios` / `npm run android`로 만듭니다. Xcode �
 
 AI 취향 요약: 내 취향 → 확정 답변·평가 기반 요약 요청 → 근거 기록 확인. 0/초기/축적 상태, 동일 술 반복 구분과 수정·삭제 후 stale 차단을 구현했습니다. [구현·키 설정·검증](docs/verification/taste-summary.md).
 
-메뉴판 추천: 내 취향 → 메뉴판 최대 5장 → 기기 OCR → 확인/수정·제품 판본 확인 → 기록 기반 비교·근거·원본 위치. 현재 출처 카탈로그는 주종별 8개씩 32제품(빈티지·판본 포함)이며 미확인 제품은 맛을 생성하지 않습니다. [구현·네이티브 검증·제약](docs/verification/menu-ocr.md).
+메뉴판 추천: 내 취향 → 메뉴판 최대 5장 → 기기 OCR → 확인/수정·제품 판본 확인 → 기록 기반 비교·근거·원본 위치. 현재 공통 출처 카탈로그는 37제품(위스키11·맥주10·와인8·전통주8, 빈티지·판본 포함)이며 미확인 제품은 맛을 생성하지 않습니다. [구현·네이티브 검증·제약](docs/verification/menu-ocr.md).
 
 네이티브 OCR 검증: [14종 합성 메뉴와 양 플랫폼 한계](docs/verification/native-ocr-benchmark.md). iOS Vision 경계 좌표 수정 후 14종 계약 통과를 확인했으며 다단·기울임 가격 연결의 한계는 남아 있습니다. 최신 메뉴 함수는 개발 프로젝트에 배포했습니다. [배포 빌드·검증 범위](docs/verification/menu-deployment.md).
 

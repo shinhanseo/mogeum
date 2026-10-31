@@ -139,7 +139,7 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       await db.query("insert into public.product_catalog(id,family_id,category,normalized_name,document) values('synthetic-candidate','synthetic-family','whisky','synthetic',$1::jsonb)",[candidate]);
       await as(a);
       await assert.rejects(db.query('select public.stage_catalog_candidate($1::jsonb,$2)',[candidate,'synthetic']),{code:'42501'});
-      assert.equal((await db.query('select count(*)::integer n from public.product_catalog')).rows[0].n,36);
+      assert.equal((await db.query('select count(*)::integer n from public.product_catalog')).rows[0].n,37);
       assert.equal((await db.query("select * from public.product_catalog where id='synthetic-candidate'")).rows.length,0);
       await assert.rejects(db.query("update public.product_catalog set status='verified' where id='synthetic-candidate'"),{code:'42501'});
       const write=(op:number,saved:boolean,revision:number)=>db.query('select public.set_drink_wishlist($1,$2,$3,$4)',[operation(op),'synthetic-candidate',saved,revision]);

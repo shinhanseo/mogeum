@@ -1,3 +1,4 @@
+import {originalSourceEvidence} from '../_shared/source-review.ts';
 import {extractProductClaims} from "./extract.ts";
 import { runProductResearch } from '../_shared/research-runner.ts';
 import { researchProduct } from './provider.ts';
@@ -7,7 +8,7 @@ export function budgetedProductResearch(database:RpcPort,config:{apiKey:string;m
  return async(input:unknown)=>{
   if(!config.apiKey||!config.model)throw new Error('PRODUCT_RESEARCH_NOT_CONFIGURED');
   try { return await runProductResearch(input,{
-   version:`grounded-research-claims-v2:${config.model}`,
+   version:`grounded-research-claims-v3:${config.model}`,
    async begin(hash,lease){
     const {data,error}=await database.rpc('begin_product_research',{p_hash:hash,p_lease:lease});
     if(error||!data||typeof data!=='object'||typeof (data as {state?:unknown}).state!=='string')throw new Error('RESEARCH_BUDGET_UNAVAILABLE');
@@ -18,7 +19,7 @@ export function budgetedProductResearch(database:RpcPort,config:{apiKey:string;m
     if(error||typeof data!=='boolean')throw new Error('RESEARCH_COMPLETION_FAILED');
     return data;
    },
-   research:(query,signal)=>researchProduct(query,{...config,signal}),
+   research:async(query,signal)=>{const result=await researchProduct(query,{...config,signal});return {...result,research:await originalSourceEvidence(result.research,{signal,fetcher:config.transport})};},
    extract:(research,signal)=>extractProductClaims(research,{...config,signal}),
   }); } catch(error) {
    if((error as {statusCode?:unknown})?.statusCode===404)throw new Error('RESEARCH_MODEL_UNAVAILABLE');

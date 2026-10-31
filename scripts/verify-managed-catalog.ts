@@ -30,7 +30,7 @@ async function main(){
   const login=await client.auth.signInWithPassword({email,password});ensure(!login.error&&login.data.session,"LOGIN_FAILED");
   const result=await client.from("product_catalog").select("id,family_id,category,status,revision,document").eq("status","verified");
   ensure(!result.error&&result.data,"READ_FAILED");const catalog=result.data!.map(verifiedCatalogRow);
-  ensure(catalog.length===36,"CATALOG_COUNT_MISMATCH");
+  ensure(catalog.length===37,"CATALOG_COUNT_MISMATCH");
   for(const expected of reviewed)ensure(JSON.stringify(catalog.find(p=>p.id===expected.id))===JSON.stringify(expected),"REVIEWED_DOCUMENT_MISMATCH");
   const call=async(name:string,body:unknown)=>{const r=await fetch(`${url}/functions/v1/${name}`,{method:"POST",headers:{apikey:key,Authorization:`Bearer ${login.data.session!.access_token}`,"Content-Type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(45000)});ensure(r.ok,"ENDPOINT_FAILED");return r.json();};
   const discovery=parseDiscoveryResult(await call("next-drinks",{catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:"weekly-selection-v1"}));
@@ -43,11 +43,11 @@ async function main(){
   const items=parsed.items.map((item:{name:string;price:number})=>{const candidates=productCandidates(item.name,products);ensure(candidates.length===1&&reviewed.some(p=>p.id===candidates[0].id)&&item.price===15000,"MENU_IDENTITY_MISMATCH");return {...item,confirmed:true,productId:candidates[0].id};});
   const compared=validateMenuResult(await call("menu-recommend",{action:"recommend",photos,items,catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:"menu-selection-v1"}),items);
   ensure(compared.recommendations.length===4&&compared.recommendations.every(r=>r.status==="unmatched"&&r.score===0)&&!compared.modelUsed,"INVENTED_PREFERENCE");
-  report.verified=36;report.categories=catalog.reduce((a,p)=>(a[p.category]=(a[p.category]??0)+1,a),{} as Record<string,number>);
+  report.verified=37;report.categories=catalog.reduce((a,p)=>(a[p.category]=(a[p.category]??0)+1,a),{} as Record<string,number>);
   report.reviewedDocumentsMatched=4;report.menuIdentitiesMatched=4;report.emptyEvidencePreserved=true;
  }finally{
   if(owner){const removed=await admin.auth.admin.deleteUser(owner);if(removed.error)throw Error("CLEANUP_FAILED_JOURNAL_RETAINED");await unlink(journal);report.syntheticAccountDeleted=true;}
-  await mkdir("artifacts/verification",{recursive:true});await writeFile("artifacts/verification/managed-catalog36.json",JSON.stringify(report,null,2)+"\n");
+  await mkdir("artifacts/verification",{recursive:true});await writeFile("artifacts/verification/managed-catalog37.json",JSON.stringify(report,null,2)+"\n");
  }
  console.log(JSON.stringify(report));
 }

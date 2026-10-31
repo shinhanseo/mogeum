@@ -34,3 +34,16 @@ test('admin research endpoint rejects user/publishable/unknown secrets and perso
  assert.equal(calls,0);
  assert.equal((await handler(request('synthetic-service-secret'))).status,200);assert.equal(calls,1);
 });
+
+test('Google grounding bridge resolves only to approved producer and retains original evidence',async()=>{
+ const {originalSourceEvidence}=await import('../supabase/functions/_shared/source-review');
+ const bridged={...research,sources:[{index:0,url:'https://vertexaisearch.cloud.google.com/grounding-api-redirect/synthetic',title:'Producer'}]};
+ const urls:string[]=[];
+ const result=await originalSourceEvidence(bridged,{signal:AbortSignal.timeout(1000),origins:['https://producer.example'],fetcher:async(url)=>{
+  urls.push(String(url));return urls.length===1?new Response(null,{status:302,headers:{location:'https://producer.example/product'}}):new Response('<p>Synthetic malt 12 years has fruit aroma.</p>',{headers:{'content-type':'text/html'}});
+ }});
+ assert.equal(result.sources[0].url,'https://producer.example/product');assert.equal(result.supports.length,2);assert.ok(result.text.includes('Original producer excerpt:'));
+ let calls=0;
+ const blocked=await originalSourceEvidence(bridged,{signal:AbortSignal.timeout(1000),origins:['https://producer.example'],fetcher:async()=>{calls++;return new Response(null,{status:302,headers:{location:'https://untrusted.example/private'}});}});
+ assert.equal(calls,1);assert.equal(blocked.supports.length,1);
+});
