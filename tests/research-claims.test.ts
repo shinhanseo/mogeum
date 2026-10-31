@@ -32,3 +32,25 @@ test('reserved research pipeline caches extraction once and validates persisted 
  await assert.rejects(runProductResearch(research.query,ports));
  assert.equal(searches,1);assert.equal(extracts,1);
 });
+
+test('extraction repairs unique citations but drops unsupported, ambiguous and negated traits',async()=>{
+ const {extractSupportedClaims}=await import('../supabase/functions/_shared/research-claims');
+ const input={...research,text:'**Synthetic malt** 12 years. Fruit aroma. No vanilla aroma.',supports:[{text:'**Synthetic malt** 12 years.',sourceIndices:[0]},{text:'Fruit aroma.',sourceIndices:[0]},{text:'No vanilla aroma.',sourceIndices:[0]}]};
+ const result=extractSupportedClaims({identity:{...claims.identity,quote:'Synthetic malt 12 years.'},features:[{...claims.features[0],supportIndex:0,quote:'Fruit aroma.'},{...claims.features[0],factId:'향:꿀·바닐라 향',quote:'vanilla aroma.'},{...claims.features[0],factId:'향:나무 향',quote:'wood aroma'}]},input);
+ assert.equal(result.features.length,1);assert.equal(result.features[0].supportIndex,1);assert.equal(result.identity?.quote,'**Synthetic malt** 12 years.');
+ assert.equal(extractSupportedClaims({...claims,identity:{...claims.identity,quote:'Invented malt'}},input).identity,null);
+ const ambiguous={...input,supports:[...input.supports,input.supports[1]]};
+ assert.equal(extractSupportedClaims({identity:{...claims.identity,quote:'Synthetic malt 12 years.'},features:[{...claims.features[0],quote:'Fruit aroma.'}]},ambiguous).features.length,0);
+});
+
+test('reviewed research product preserves standard edition and existing recommendation feature IDs',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {parseCatalogDocument,catalogProduct}=await import('../supabase/functions/_shared/catalog-contract');
+ const {productCandidates}=await import('../supabase/functions/_shared/product-catalog');
+ const p=parseCatalogDocument(JSON.parse(readFileSync('supabase/catalog/2026-10-31-research-reviewed.json','utf8'))[0]);
+ const products=[catalogProduct(p)];
+ assert.equal(productCandidates('Bunnahabhain 12 Year Old',products)[0]?.id,p.id);
+ assert.equal(productCandidates('Bunnahabhain 12 Year Old Cask Strength 2026',products).length,0);
+ const allowed=new Set(allowedResearchFeatures('whisky').map(f=>f.id));
+ assert.ok(p.features.every(f=>allowed.has(f.id)));
+});

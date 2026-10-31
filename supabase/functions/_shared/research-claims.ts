@@ -43,3 +43,27 @@ export function validateResearchClaims(input:unknown,research:GroundedResearch):
  if(new Set(features.map(f=>f.factId)).size!==features.length)return invalid();
  return {identity,features};
 }
+
+/** Repair provider citation indices only when the quoted content uniquely identifies a support.
+ * Returned quotes are original support text, never newly generated sensory evidence. */
+export function extractSupportedClaims(input:ResearchClaims,research:GroundedResearch):ResearchClaims{
+ const normalized=(s:string)=>s.normalize('NFKC').replace(/\*\*/g,'').replace(/\s+/g,' ').trim();
+ const repair=(ref:ClaimReference)=>{
+  const quote=normalized(ref.quote);
+  if(!quote)return null;
+  const matches=research.supports.flatMap((s,i)=>s.sourceIndices.includes(ref.sourceIndex)&&normalized(s.text).includes(quote)?[{supportIndex:i,sourceIndex:ref.sourceIndex,quote:s.text}]:[]);
+  return matches.length===1?matches[0]:null;
+ };
+ if(!input.identity)return {identity:null,features:[]};
+ const originalStart=research.text.indexOf('Original producer excerpt:');
+ const originalIdentity=originalStart<0?undefined:research.supports.flatMap((s,i)=>s.sourceIndices.includes(input.identity!.sourceIndex)&&research.text.indexOf(s.text,originalStart)>=0&&normalized(s.text).includes(normalized(research.query.name))&&(research.query.edition===null||normalized(s.text).includes(normalized(research.query.edition)))?[{supportIndex:i,sourceIndex:input.identity!.sourceIndex,quote:s.text}]:[])[0];
+ const identityRef=originalIdentity??repair(input.identity);if(!identityRef)return {identity:null,features:[]};
+ let identity:ResearchClaims['identity'];
+ try{identity=validateResearchClaims({identity:{...input.identity,...identityRef},features:[]},research).identity;}catch{return {identity:null,features:[]};}
+ const features:ResearchClaims['features']=[];
+ for(const f of input.features){
+  const ref=repair(f);if(!ref||features.some(v=>v.factId===f.factId))continue;
+  try{features.push(...validateResearchClaims({identity,features:[{...f,...ref}]},research).features);}catch{/* Unsupported claims are omitted individually. */}
+ }
+ return validateResearchClaims({identity,features},research);
+}

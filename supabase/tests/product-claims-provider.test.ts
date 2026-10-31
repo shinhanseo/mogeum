@@ -11,8 +11,7 @@ Deno.test('real extraction SDK uses structured schema without another search and
  }});
  if(calls!==1||result.features[0].factId!=='향:과일 향')throw Error('EXTRACTION_FAILED');
 });
-Deno.test('schema-valid provider output with invented quoted evidence is rejected',async()=>{
- let failed=false;
- try{await extractProductClaims(research,{apiKey:'synthetic',model:'gemini-3.5-flash-lite',signal:AbortSignal.timeout(5000),transport:async()=>Response.json({candidates:[{content:{role:'model',parts:[{text:JSON.stringify({...proposal,features:[{...proposal.features[0],quote:'invented vanilla'}]})}]},finishReason:'STOP'}]})});}catch{failed=true;}
- if(!failed)throw Error('UNSUPPORTED_CLAIM_ACCEPTED');
+Deno.test('invented quoted evidence is omitted while valid claims remain',async()=>{
+ const result=await extractProductClaims(research,{apiKey:'synthetic',model:'gemini-3.5-flash-lite',signal:AbortSignal.timeout(5000),transport:async()=>Response.json({candidates:[{content:{role:'model',parts:[{text:JSON.stringify({...proposal,features:[proposal.features[0],{...proposal.features[0],factId:'향:꿀·바닐라 향',quote:'invented vanilla'}]})}]},finishReason:'STOP'}]})});
+ if(result.features.length!==1||result.features[0].factId!=='향:과일 향'||!result.identity)throw Error('UNSUPPORTED_CLAIM_ACCEPTED');
 });
