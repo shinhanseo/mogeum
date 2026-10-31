@@ -33,8 +33,8 @@ test('dynamic menu HTTP uses verified new products, hides candidates and preserv
   assert.ok(validateMenuResult(result,items).catalog?.some(p=>p.id===id));
   assert.equal(result.recommendations[0].productId,id);
   assert.deepEqual(result.recommendations[0].similar,[]);
-  const insufficient=await request({action:'recommend',photos,items,catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:'menu-selection-v1'});
-  assert.equal(insufficient.selectionState,'insufficient');assert.equal(insufficient.modelUsed,false);
+  const insufficient=await request({action:'recommend',photos,items,catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:'menu-selection-v1',researchVersion:'menu-research-v1'});
+  assert.equal(insufficient.selectionState,'insufficient');assert.equal(insufficient.modelUsed,false);assert.equal(insufficient.research,undefined);
   assert.equal(validateMenuResult(insufficient,items).method,'evidence-rules-v1');
   if(process.env.MOGEUM_TEST_MENU_NO_KEY==='1'){
    const unknown={...items[0],id:`${photoId}:1:manual-research`,name:'합성 미등록 12년',productId:null,price:19000,serving:'45ml'};
