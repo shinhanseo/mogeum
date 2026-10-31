@@ -80,7 +80,7 @@ export async function originalSourceEvidence(input:ReviewResearch,config:{signal
     const needle=input.query.name.split(/\s+/)[0].toLowerCase();
     const position=text.toLowerCase().indexOf(needle);
     const excerpt=text.slice(Math.max(0,position-100),Math.max(0,position-100)+4000).split(/WHERE UNIQUE MEETS|REVIEWS Overall rating|AI Generated Review Summary/i)[0];
-    if(excerpt&&result.text.length+excerpt.length<24000&&result.supports.length<100){
+    if(excerpt&&result.text.length+excerpt.length+40<24000&&result.supports.length<100){
      source.url=url;
      result.text+='\n\nOriginal producer excerpt:\n'+excerpt;
      for(const sentence of excerpt.match(/[^.!?]+[.!?]?/gu)??[]){

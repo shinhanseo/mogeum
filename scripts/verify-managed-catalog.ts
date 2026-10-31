@@ -34,7 +34,7 @@ async function main(){
   for(const expected of reviewed)ensure(JSON.stringify(catalog.find(p=>p.id===expected.id))===JSON.stringify(expected),"REVIEWED_DOCUMENT_MISMATCH");
   const call=async(name:string,body:unknown)=>{const r=await fetch(`${url}/functions/v1/${name}`,{method:"POST",headers:{apikey:key,Authorization:`Bearer ${login.data.session!.access_token}`,"Content-Type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(45000)});ensure(r.ok,"ENDPOINT_FAILED");return r.json();};
   const discovery=parseDiscoveryResult(await call("next-drinks",{catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:"weekly-selection-v1"}));
-  ensure(discovery.catalogSize===36&&discovery.generation?.state==="insufficient"&&!discovery.modelUsed,"EMPTY_DISCOVERY_MISMATCH");
+  ensure(discovery.catalogSize===37&&discovery.generation?.state==="insufficient"&&!discovery.modelUsed,"EMPTY_DISCOVERY_MISMATCH");
   const photoId=randomUUID();
   const photos=[{id:photoId,imageRevision:1,width:1200,height:1800,engine:"apple-vision-v1",lines:reviewed.map((p,i)=>({id:`${photoId}:1:${i}`,text:`${p.name} 30ml 15,000원`,confidence:0.9,polygon:[{x:0.1,y:0.1+i*0.1},{x:0.9,y:0.1+i*0.1},{x:0.9,y:0.15+i*0.1},{x:0.1,y:0.15+i*0.1}]}))}];
   const parsed=await call("menu-recommend",{action:"parse",photos,catalogVersion:SHARED_CATALOG_VERSION});
