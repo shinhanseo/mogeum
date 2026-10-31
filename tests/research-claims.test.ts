@@ -42,3 +42,15 @@ test('extraction repairs unique citations but drops unsupported, ambiguous and n
  const ambiguous={...input,supports:[...input.supports,input.supports[1]]};
  assert.equal(extractSupportedClaims({identity:{...claims.identity,quote:'Synthetic malt 12 years.'},features:[{...claims.features[0],quote:'Fruit aroma.'}]},ambiguous).features.length,0);
 });
+
+test('reviewed research product preserves standard edition and existing recommendation feature IDs',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {parseCatalogDocument,catalogProduct}=await import('../supabase/functions/_shared/catalog-contract');
+ const {productCandidates}=await import('../supabase/functions/_shared/product-catalog');
+ const p=parseCatalogDocument(JSON.parse(readFileSync('supabase/catalog/2026-10-31-research-reviewed.json','utf8'))[0]);
+ const products=[catalogProduct(p)];
+ assert.equal(productCandidates('Bunnahabhain 12 Year Old',products)[0]?.id,p.id);
+ assert.equal(productCandidates('Bunnahabhain 12 Year Old Cask Strength 2026',products).length,0);
+ const allowed=new Set(allowedResearchFeatures('whisky').map(f=>f.id));
+ assert.ok(p.features.every(f=>allowed.has(f.id)));
+});
