@@ -36,14 +36,14 @@ export async function menuRequest(
   owner: string,
   photos: MenuPhoto[],
   items?: MenuItem[],
-  options: { gemini?: boolean } = {},
+  options: { gemini?: boolean; research?: boolean } = {},
 ): Promise<{ items: MenuItem[]; catalog: import("../../../supabase/functions/_shared/product-catalog").Product[] } | MenuResult> {
   validatePhotos(photos);
   if (items) validateItems(items, photos, "stored");
   const scoped = await menuClient(client, owner);
   const { data, error } = await scoped.functions.invoke("menu-recommend", {
-    body: { action: items ? "recommend" : "parse", photos, items, catalogVersion: SHARED_CATALOG_VERSION, ...(items && options.gemini ? {recommendationVersion: "menu-selection-v1"} : {}) },
-    timeout: 50000,
+    body: { action: items ? "recommend" : "parse", photos, items, catalogVersion: SHARED_CATALOG_VERSION, ...(items && options.gemini ? {recommendationVersion: "menu-selection-v1"} : {}), ...(items && options.research ? {researchVersion:"menu-research-v1"} : {}) },
+    timeout: options.research ? 85000 : 50000,
   });
   if (error) {
     let code: unknown;

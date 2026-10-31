@@ -1,0 +1,32 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {researchedMenuDocument,validateMenuResearchBatch,MENU_RESEARCH_VERSION} from '../supabase/functions/_shared/menu-research';
+import {stableMenuRecommendation} from '../supabase/functions/_shared/menu-recommendation';
+import {validateMenuResult} from '../src/features/menu/result-contract';
+import type {ReviewResearch} from '../supabase/functions/_shared/research-runner';
+import type {SourceCheck} from '../supabase/functions/_shared/source-review';
+import type {MenuItem} from '../supabase/functions/_shared/menu-domain';
+import type {TasteSnapshot} from '../supabase/functions/_shared/taste-domain';
+const item:MenuItem={id:'menu-one',photoId:'photo',imageRevision:1,lineIds:['line'],name:'합성 위스키 12년',price:15000,serving:'30ml',confirmed:true,productId:null};
+const text='Synthetic malt 12 years has fruit aroma.';
+const research:ReviewResearch={status:'candidate',query:{name:'Synthetic malt',category:'whisky',edition:'12 years'},text,sources:[{index:0,url:'https://bunnahabhain.com/products/synthetic',title:'Synthetic producer'}],supports:[{text,sourceIndices:[0]}],queries:['Synthetic malt'],searchEntryPointHtml:null,claims:{identity:{name:'Synthetic malt',edition:'12 years',supportIndex:0,sourceIndex:0,quote:'Synthetic malt 12 years'},features:[{factId:'향:과일 향',supportIndex:0,sourceIndex:0,quote:'fruit aroma'}]}};
+const checks:SourceCheck[]=[{sourceIndex:0,url:research.sources[0].url,finalUrl:research.sources[0].url,state:'quote-matched',identityMatched:true,matchedFactIds:['향:과일 향'],checkedAt:'2026-10-31T00:00:00Z'}];
+const doc=()=>researchedMenuDocument(item,research,checks,'menu-research-synthetic')!;
+test('only original-source matched claims become session candidates, never unapproved source or known replacement',()=>{
+ const d=doc();assert.equal(d.aliases[0],item.name);assert.equal(d.features.length,1);assert.equal(d.source.kind,'producer');
+ assert.equal(researchedMenuDocument(item,research,checks.map(c=>({...c,state:'unapproved-source'})),'menu-research-synthetic'),null);
+ assert.equal(researchedMenuDocument(item,research,checks.map(c=>({...c,matchedFactIds:[]})),'menu-research-synthetic'),null);
+ assert.equal(researchedMenuDocument({...item,productId:'known'},research,checks,'menu-research-synthetic'),null);
+ assert.equal(researchedMenuDocument(item,research,checks.map(c=>({...c,finalUrl:'https://unapproved.example/product'})),'menu-research-synthetic'),null);
+});
+test('a researched candidate compares only to real taste evidence and cannot hijack a confirmed product',async()=>{
+ const document=doc(),entries=[{itemId:item.id,state:'compared' as const,productId:document.id}];
+ const snapshot:TasteSnapshot={hash:'synthetic',totalRecords:1,omittedCount:0,records:[{id:'record',entryId:'entry',revision:1,category:'whisky',name:'내가 마신 술',date:'2026-10-31',revisit:'again',rating:null,note:{mode:'light',version:2,inputRevision:1,confirmedInputRevision:1,confirmed:true,answers:[{questionId:'nose',status:'answered',descriptorCodes:['fruit']}]}}]};
+ const build=async(s:TasteSnapshot)=>({...await stableMenuRecommendation([{...item,productId:document.id}],async()=>s,[document]),researchVersion:MENU_RESEARCH_VERSION,research:entries});
+ const value=await build(snapshot),result=validateMenuResult(value,[item]);assert.equal(result.recommendations[0].status,'similar');assert.ok(result.recommendations[0].score>0);assert.deepEqual(result.evidenceRecords.map(r=>r.id),['record']);assert.equal(item.productId,null);assert.equal(item.price,15000);
+ const empty=validateMenuResult(await build({...snapshot,records:[],totalRecords:0}),[item]);assert.equal(empty.recommendations[0].status,'unmatched');assert.equal(empty.recommendations[0].score,0);
+ assert.throws(()=>validateMenuResult({...value,researchVersion:undefined},[item]));
+ assert.throws(()=>validateMenuResult(value,[{...item,productId:'confirmed-other'}]));
+ assert.throws(()=>validateMenuResult({...value,research:entries.map(e=>({...e,itemId:'foreign'}))},[item]));
+ assert.throws(()=>validateMenuResult({...value,research:entries.map(e=>({...e,state:'unavailable',productId:null}))},[item]));
+ assert.throws(()=>validateMenuResearchBatch({entries,documents:[{...document,aliases:['other']}]},[item]));
+});

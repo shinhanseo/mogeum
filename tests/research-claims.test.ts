@@ -54,3 +54,19 @@ test('reviewed research product preserves standard edition and existing recommen
  const allowed=new Set(allowedResearchFeatures('whisky').map(f=>f.id));
  assert.ok(p.features.every(f=>allowed.has(f.id)));
 });
+
+test('identity recognizes equivalent age suffixes without accepting a different age or expression',async()=>{
+ const {identityMention}=await import('../supabase/functions/_shared/research-claims');
+ assert.equal(identityMention('Bunnahabhain 18 Year Whisky','Bunnahabhain 18 Year Old'),true);
+ assert.equal(identityMention('Bunnahabhain 12 Year Whisky','Bunnahabhain 18 Year Old'),false);
+ assert.equal(identityMention('Bunnahabhain 18 Year Whisky','Bunnahabhain 18 Year Old Cask Strength'),false);
+});
+
+test('original tasting headings can supply explicit vocabulary without turning palate or general copy into aroma',async()=>{
+ const {extractSupportedClaims}=await import('../supabase/functions/_shared/research-claims');
+ const sentences=['Synthetic malt 12 years.','NOSE Fruity with vanilla.','PALATE Nutty with sweet notes.','FINISH Long and lingering.','Our distillery offers floral tours.','PALATE No bitter flavour.'];
+ const original={...research,text:'Original producer excerpt:\n'+sentences.join(' '),supports:sentences.map(text=>({text,sourceIndices:[0]}))};
+ const result=extractSupportedClaims({identity:{...claims.identity,quote:sentences[0]},features:[]},original);
+ assert.deepEqual(result.features.map(f=>f.factId),['향:과일 향','향:꿀·바닐라 향','맛:달콤한 맛','맛:고소한 맛','여운:여운 · 오래 남았어요']);
+ assert.ok(!result.features.some(f=>f.factId==='향:꽃 향'||f.factId==='맛:쌉쌀한 맛'));
+});

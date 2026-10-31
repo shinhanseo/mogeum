@@ -1,3 +1,5 @@
+import {researchMenu} from "./research-service.ts";
+import {MENU_RESEARCH_VERSION,type MenuResearchBatch} from "../_shared/menu-research.ts";
 import {selectMenu} from "./selection-service.ts";
 import {menuSelectionCandidates} from "../_shared/menu-selection.ts";
 import { type CatalogDocument, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION, verifiedCatalogRow, catalogProduct } from "../_shared/catalog-contract.ts";
@@ -44,7 +46,7 @@ Deno.serve(async (request) => {
     .get("Authorization")
     ?.match(/^Bearer (.+)$/)?.[1];
   if (!token) return reply({ code: "UNAUTHENTICATED" }, 401);
-  const signal = AbortSignal.timeout(45000);
+  const signal = AbortSignal.timeout(75000);
   const client = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${token}` }, fetch: (input, init) => fetch(input, {...init, signal}) },
@@ -58,6 +60,7 @@ Deno.serve(async (request) => {
       return reply({code:"INVALID_CATALOG_VERSION"},400);
     if (body.recommendationVersion !== undefined && (body.recommendationVersion !== "menu-selection-v1" || body.catalogVersion !== SHARED_CATALOG_VERSION))
       return reply({code:"INVALID_RECOMMENDATION_VERSION"},400);
+    if(body.researchVersion!==undefined&&(body.researchVersion!==MENU_RESEARCH_VERSION||body.catalogVersion!==SHARED_CATALOG_VERSION))return reply({code:"INVALID_RESEARCH_VERSION"},400);
     let catalog: CatalogDocument[] | undefined;
     if(body.catalogVersion === SHARED_CATALOG_VERSION){
       catalog=[]; let cursor: string | null=null;
@@ -87,11 +90,22 @@ Deno.serve(async (request) => {
     const items = validateItems(body.items, photos, "catalog", false, catalog?.map(catalogProduct));
     if (!items.length || items.some((i) => !i.confirmed))
       return reply({ code: "CONFIRM_MENU" }, 400);
-    const result = await stableMenuRecommendation(items, async () => {
+    let research:MenuResearchBatch|undefined;
+    if(body.researchVersion===MENU_RESEARCH_VERSION&&catalog&&items.some(i=>i.productId===null)){
+      const apiKey=Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY"),serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),model=Deno.env.get("MOGEUM_RESEARCH_MODEL");
+      if(apiKey&&serviceKey&&model&&catalog.length<=MAX_CATALOG_PRODUCTS-2){
+        const admin=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init)=>fetch(input,{...init,signal})}});
+        try{research=await researchMenu(admin,auth.user.id,items,{apiKey,model});}catch{/* Preserve the existing comparison when research is unavailable. */}
+      }
+      research??={entries:items.filter(i=>i.productId===null).map(i=>({itemId:i.id,state:"unavailable",productId:null})),documents:[]};
+    }
+    const resolvedItems=items.map(item=>({...item,productId:item.productId??research?.entries.find(e=>e.itemId===item.id&&e.state==="compared")?.productId??null}));
+    const comparisonCatalog=catalog&&[...catalog,...(research?.documents??[])];
+    const result = await stableMenuRecommendation(resolvedItems, async () => {
       const { data, error } = await client.rpc("taste_summary_context");
       if (error) throw error;
       return data.snapshot as TasteSnapshot;
-    }, catalog, body.recommendationVersion === "menu-selection-v1" ? async (rows, snapshot) => {
+    }, comparisonCatalog, !research&&body.recommendationVersion === "menu-selection-v1" ? async (rows, snapshot) => {
       if (!menuSelectionCandidates(rows).length) return {recommendations: rows, modelUsed: false, state: "insufficient"};
       const apiKey = Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY"), serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"), model = Deno.env.get("GEMINI_MODEL");
       if (!apiKey || !serviceKey || !model) return {recommendations: rows, modelUsed: false, state: "unavailable"};
@@ -103,7 +117,7 @@ Deno.serve(async (request) => {
       try {return await selectMenu(admin,{owner:auth.user.id,hash,rows},{apiKey,model});}
       catch {return {recommendations:rows,modelUsed:false,state:"unavailable"};}
     } : undefined);
-    return reply(result);
+    return reply({...result,...(research?{researchVersion:MENU_RESEARCH_VERSION,research:research.entries}:{} )});
   } catch (error) {
     if (error instanceof DiscoverySnapshotChanged)
       return reply({ code: "MENU_EVIDENCE_STALE" }, 409);

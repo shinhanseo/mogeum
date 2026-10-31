@@ -36,6 +36,13 @@ test('dynamic menu HTTP uses verified new products, hides candidates and preserv
   const insufficient=await request({action:'recommend',photos,items,catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:'menu-selection-v1'});
   assert.equal(insufficient.selectionState,'insufficient');assert.equal(insufficient.modelUsed,false);
   assert.equal(validateMenuResult(insufficient,items).method,'evidence-rules-v1');
+  if(process.env.MOGEUM_TEST_MENU_NO_KEY==='1'){
+   const unknown={...items[0],id:`${photoId}:1:manual-research`,name:'합성 미등록 12년',productId:null,price:19000,serving:'45ml'};
+   const unavailable=validateMenuResult(await request({action:'recommend',photos,items:[...items,unknown],catalogVersion:SHARED_CATALOG_VERSION,researchVersion:'menu-research-v1'}),[...items,unknown]);
+   assert.equal(unavailable.recommendations.find(r=>r.itemId===unknown.id)?.status,'unverified');
+   assert.equal(unavailable.research?.find(r=>r.itemId===unknown.id)?.state,'unavailable');
+   assert.equal(unavailable.recommendations.length,2);
+  }
   const invalid=await client.functions.invoke('menu-recommend',{body:{action:'recommend',photos,items:[{...items[0],name:'다른 제품'}],catalogVersion:SHARED_CATALOG_VERSION}});
   assert.ok(invalid.error);
   const legacy=await request({action:'parse',photos});assert.equal(legacy.catalog,undefined);

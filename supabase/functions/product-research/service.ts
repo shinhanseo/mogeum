@@ -8,7 +8,7 @@ export function budgetedProductResearch(database:RpcPort,config:{apiKey:string;m
  return async(input:unknown)=>{
   if(!config.apiKey||!config.model)throw new Error('PRODUCT_RESEARCH_NOT_CONFIGURED');
   try { return await runProductResearch(input,{
-   version:`grounded-research-claims-v3:${config.model}`,
+   version:`grounded-research-claims-v5:${config.model}`,
    async begin(hash,lease){
     const {data,error}=await database.rpc('begin_product_research',{p_hash:hash,p_lease:lease});
     if(error||!data||typeof data!=='object'||typeof (data as {state?:unknown}).state!=='string')throw new Error('RESEARCH_BUDGET_UNAVAILABLE');

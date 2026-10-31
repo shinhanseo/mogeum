@@ -176,3 +176,14 @@ catalogVersion을 생략하는 기존 앱에는 고정32개 문서의 호환 응
 ### 메뉴판 동적 카탈로그 서버 선행 계약
 
 `menu-recommend`의 parse/recommend 요청은 선택적으로 `catalogVersion: "shared-catalog-v1"`을 받는다. 이 경우 verified-only RLS 제품을 사용하고 응답에 catalog 문서를 포함한다. 버전 없는 기존 앱 응답은 유지한다. 현재 앱은 아직 opt-in하지 않는다. [서버 구현과 남은 앱 전환](verification/dynamic-menu/README.md).
+
+
+### 메뉴판 미등록 제품 조사 · menu-research-v1
+
+기존 인증 menu-recommend recommend 요청에 `catalogVersion: shared-catalog-v1`, `researchVersion: menu-research-v1`을 함께 보낸다. 메뉴는 모두 사용자 확인 상태여야 한다. 임의 category·특징·출처·제품 캐시를 요청으로 받지 않는다. 서버가 productId=null인 첫2개 이름만 식별 모델에 전달하고, 제품 공개 검색·원문 대조 후 세션 전용 CatalogDocument를 응답 catalog에 추가한다. 원본 메뉴/가격/용량/위치는 변경하지 않는다.
+
+응답 researchVersion과 research 배열은 itemId/state/productId만 담는다. compared는 원문 특징 비교가 가능한 **제품 후보**이며 메뉴판과 동일한 제품인지 사용자가 확인해야 한다. 제품 ID는 menu-research- 접두사, 이 응답에만 유효하며 위시리스트/verified DB에 삽입하지 않는다. unresolved/limit/unavailable/running/backoff/daily-limit/monthly-limit는 productId=null이며 맛을 생성하지 않는다. 미등록3번째부터 limit. 클라이언트는 후보의 메뉴 이름 별칭·출처 origin·ontology·메뉴 행 대응과 근거 점수/기록 ID를 검증한다.
+
+검색과 순위 선택은 구분한다. 이 opt-in은 source-backed 후보에 기존 근거 비교·정렬을 적용하므로 method=evidence-rules-v1이며 researchVersion이 검색 사용 여부를 설명한다. modelUsed는 기존 순위 선택의 의미를 유지한다. 검색 실패는 기존 verified 제품 비교를 보존하고, 비교 시점의 최신 taste hash를 두 번 확인한다.
+
+계정별 하루10회 예산/동시 lease는 메뉴 순위 선택과 공유한다. 식별도 전체 조사 일20회/월200회 예산을 예약한다. 같은 공개 이름 식별/제품 조사는 공유 캐시를 쓰고 소유자 결과 캐시는24시간이다. 캐시에 개인 감각·메모·사진을 넣지 않는다. 요청 최대75초, 앱 대기85초. 일반 사용자에게 관리자 조사 secret/service key를 전달하지 않는다.
