@@ -23,3 +23,9 @@ Deno.test('classification failure closes both leases and never stores fabricated
  const result=await researchMenu({rpc:async(name,args)=>{calls.push(name);if(name.startsWith('begin_'))return {data:{state:'acquired'},error:null};ensure(args.p_result===null);return {data:true,error:null};}},'owner',[item],{apiKey:'synthetic',model:'gemini-3.5-flash-lite',transport:async()=>Response.json({error:{code:500,message:'synthetic'}},{status:500})});
  ensure(result.entries[0].state==='unavailable');ensure(calls.join(',')==='begin_menu_selection,begin_product_research,finish_product_research,finish_menu_selection');
 });
+
+Deno.test('cached bounded investigation restores limit states for large menus without provider work',async()=>{
+ const items=Array.from({length:100},(_,i)=>({...item,id:`menu-${i}`}));let calls=0;
+ const result=await researchMenu({rpc:async()=>({data:{state:'cached',result:{entries:items.slice(0,2).map(i=>({itemId:i.id,state:'unresolved',productId:null})),documents:[]}},error:null})},'owner',items,{apiKey:'synthetic',model:'gemini-3.5-flash-lite',transport:async()=>{calls++;throw Error('UNEXPECTED_PROVIDER');}});
+ ensure(result.entries.length===100&&result.entries.slice(2).every(e=>e.state==='limit')&&calls===0);
+});

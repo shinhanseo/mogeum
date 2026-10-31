@@ -12,12 +12,15 @@ export async function researchMenu(database:RpcPort,owner:string,items:MenuItem[
  const fallback=(s:MenuResearchState):MenuResearchBatch=>({entries:unknown.map((item,index)=>({itemId:item.id,state:index<2?s:'limit',productId:null})),documents:[]});
  if(!targets.length)return {entries:[],documents:[]};
  if(!config.apiKey||!config.model)return fallback('unavailable');
- const version=`${MENU_RESEARCH_VERSION}:original-v5:${config.model}`,hash=await researchHash({version,targets:unknown.map(i=>({id:i.id,name:i.name}))}),lease=crypto.randomUUID();
+ const version=`${MENU_RESEARCH_VERSION}:original-v5:bounded:${config.model}`,hash=await researchHash({version,targets:unknown.map(i=>({id:i.id,name:i.name}))}),lease=crypto.randomUUID();
  const call=async(name:string,args:Record<string,unknown>)=>{const r=await database.rpc(name,args);if(r.error)throw Error('MENU_RESEARCH_BUDGET_UNAVAILABLE');return r.data;};
  const job=await call('begin_menu_selection',{p_owner:owner,p_hash:hash,p_version:version,p_lease:lease}) as {state:string;result?:unknown};
- if(job.state==='cached')return validateMenuResearchBatch(job.result,items);
+ if(job.state==='cached'){
+  const cached=job.result as MenuResearchBatch;
+  return validateMenuResearchBatch({...cached,entries:[...cached.entries,...unknown.slice(2).map(i=>({itemId:i.id,state:'limit' as const,productId:null}))]},items);
+ }
  if(job.state!=='acquired')return fallback(state(job.state));
- const finish=(result:MenuResearchBatch|null)=>call('finish_menu_selection',{p_owner:owner,p_hash:hash,p_version:version,p_lease:lease,p_result:result});
+ const finish=(result:MenuResearchBatch|null)=>call('finish_menu_selection',{p_owner:owner,p_hash:hash,p_version:version,p_lease:lease,p_result:result?{entries:result.entries.slice(0,2),documents:result.documents}:null});
  try{
   const names=targets.map(i=>i.name),identityHash=await researchHash({version:'menu-identify-v1',model:config.model,names}),identityLease=crypto.randomUUID();
   const identityJob=await call('begin_product_research',{p_hash:identityHash,p_lease:identityLease}) as {state:string;result?:{identities:unknown}};
