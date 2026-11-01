@@ -1,4 +1,4 @@
-/** Package the existing Figma Mogu vector; no new illustration or generated photo. */
+/** Package the approved icon unchanged; retain the existing splash illustration. */
 const fs = require('node:fs');
 const path = require('node:path');
 const { Resvg } = require('@resvg/resvg-js');
@@ -9,7 +9,13 @@ async function main() {
  if(!match)throw Error('Existing Mogu SVG not found');
  const original=JSON.parse(match[1]);
  const directory=path.join(root,'assets/brand');fs.mkdirSync(directory,{recursive:true});
- for(const [name,width,background] of [['icon',700,true],['adaptive-foreground',600,false],['splash',820,false]]) {
+ const master=fs.readFileSync(path.join(directory,'icon-master-approved.png')).toString('base64');
+ for(const name of ['icon','adaptive-foreground']) {
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><image width="1024" height="1024" href="data:image/png;base64,${master}"/></svg>`;
+  fs.writeFileSync(path.join(directory,`${name}.svg`),svg);
+  fs.writeFileSync(path.join(directory,`${name}.png`),new Resvg(svg).render().asPng());
+ }
+ for(const [name,width,background] of [['splash',820,false]]) {
   const height=width*153/170;
   const inner=original.replace('<svg ',`<svg x="${(1024-width)/2}" y="${(1024-height)/2}" `).replace('width="170" height="153"',`width="${width}" height="${height}"`);
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">${background?'<rect width="1024" height="1024" fill="#FAF7F2"/>':''}${inner}</svg>`;
@@ -17,6 +23,6 @@ async function main() {
   const image=new Resvg(svg,{fitTo:{mode:'width',value:1024}}).render();
   fs.writeFileSync(path.join(directory,`${name}.png`),image.asPng());
  }
- console.log('Existing Mogu vector packaged as 1024px app assets.');
+ console.log('Approved icon packaged at 1024px; existing splash retained.');
 }
 main().catch(()=>{console.error('Brand asset export failed.');process.exitCode=1;});
