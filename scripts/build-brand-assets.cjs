@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Resvg } = require('@resvg/resvg-js');
+const { PNG } = require('pngjs');
 async function main() {
  const root=path.resolve(__dirname,'..');
  const source=fs.readFileSync(path.join(root,'src/components/Mogu.tsx'),'utf8');
@@ -13,7 +14,9 @@ async function main() {
  for(const name of ['icon','adaptive-foreground']) {
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><image width="1024" height="1024" href="data:image/png;base64,${master}"/></svg>`;
   fs.writeFileSync(path.join(directory,`${name}.svg`),svg);
-  fs.writeFileSync(path.join(directory,`${name}.png`),new Resvg(svg).render().asPng());
+  const raster=PNG.sync.read(new Resvg(svg).render().asPng());
+  // Store RGB without an alpha channel for App Store icon validation.
+  fs.writeFileSync(path.join(directory,`${name}.png`),PNG.sync.write(raster,{colorType:2}));
  }
  for(const [name,width,background] of [['splash',820,false]]) {
   const height=width*153/170;
