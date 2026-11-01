@@ -238,7 +238,7 @@ export function TasteScreen({
                 onPress={() => onOpen(r.id)}
                 style={s.category}
               >
-                <CellarArt id={r.entryId} category={r.category} size={48} />
+                <CellarArt id={r.entryId} category={r.category} variant={r.illustrationVariant} size={48} />
                 <View style={s.copy}>
                   <Text
                     style={s.factName}

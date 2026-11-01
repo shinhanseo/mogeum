@@ -4,7 +4,7 @@ import { generationCopy } from "../src/features/discovery/generation-copy";
 
 test("weekly explanation distinguishes incomplete evidence, waiting and actual model selection", () => {
   assert.equal(generationCopy(undefined), null);
-  assert.equal(generationCopy({state: "insufficient"}), null);
+  assert.match(generationCopy({state: "insufficient"})!.body, /추천 후보.*아직/);
   for (const state of ["running", "backoff", "daily-limit", "invalidated"] as const) {
     const copy = generationCopy({state, nextGenerationAt: "2026-11-05T00:00:00Z"});
     assert.ok(copy?.title);

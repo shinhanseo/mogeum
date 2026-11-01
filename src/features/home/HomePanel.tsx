@@ -334,6 +334,7 @@ export function HomePanel({
               uri={data?.photos[record.id]}
               id={record.entryId}
               category={record.category}
+              variant={record.illustrationVariant}
             />
             <View style={s.copy}>
               <Text style={s.caption}>
@@ -373,8 +374,10 @@ function RecordThumbnail({
   uri,
   id,
   category,
+  variant,
 }: {
   uri?: string;
+  variant?: number;
   id: string;
   category: string | null;
 }) {
@@ -382,7 +385,7 @@ function RecordThumbnail({
   return uri && failedUri !== uri ? (
     <Image source={{ uri }} style={s.photo} onError={() => setFailedUri(uri)} />
   ) : (
-    <CellarArt id={id} category={category} size={72} />
+    <CellarArt id={id} category={category} variant={variant} size={72} />
   );
 }
 const s = StyleSheet.create({

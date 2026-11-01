@@ -44,3 +44,19 @@ next-drinks에서 shared-catalog-v1과 recommendationVersion=weekly-selection-v1
 실패 예산 migration 20261028040000과 next-drinks를 승인된 개발 프로젝트에 CLI 배포했다. `MOGEUM_VERIFY_MANAGED_DEV=1 npx tsx scripts/verify-managed-weekly.ts`로 별도 합성 Auth 계정에서 빈 기록은 insufficient/modelUsed=false, 긍정 향 기록 이후 실제 Gemini generated/19개, 재조회 cached/동일 선택·동일 서버 영수증, 기록 변경 후 invalidated/0개/modelUsed=false, 구버전 규칙 계약 호환을 확인했다. 합성 계정을 정리했고 사람 계정/기록은 변경하지 않았다. 공급자 키·토큰·원문은 보고서에 남기지 않는다.
 
 홈과 다음 한 잔의 요청을 명시적 weekly 옵션으로 전환한다. 모델은 검증 카탈로그 안의 후보를 선택하며 신규 제품을 웹에서 발굴한 결과가 아니다. 직접 입력된 느낌과 제품 설명으로 재계산한 근거만 표시한다. 실제 양 플랫폼 화면 검증은 다음 단계다.
+
+## 2026-11-01 기록 변경 후 추천 유지
+
+기록을 수정한 뒤에도 주간 후보 제품 ID는 재사용한다. 같은 계약의 성공 캐시는 입력 hash가 바뀌어도 cached로 읽되, 개인 설명과 점수는 저장하지 않고 restoreWeeklyDrinks가 현재 snapshot·마신 이력·저장 목록·검증 카탈로그로 다시 계산한다. 근거가 사라진 후보는 제거하고 주간 생성 기한/AI 호출 횟수는 유지한다. 계약 버전이 다르면 이전처럼 invalidated다. 기록 변경 중 최초 생성의 snapshot 경계 검사는 유지한다.
+
+술장 일러스트는 각 주종의 기존 4개 SVG를 유지하며, entry별 illustration_variant를 DB에 보관한다. 기존 술은 계정·주종 내 생성 순으로 0–3을 순환 배정하고 새 술은 가장 적게 사용된 번호를 고른다. 기존 ID 해시 충돌로 맥주 3개가 전부 3번에 몰렸던 문제를 해결하며, 검색/정렬/페이지/앱 재실행 시 그림을 다시 뽑지 않는다. 그림은 실제 술의 스타일이나 색을 확정하는 제품 정보가 아니다.
+
+### 이번 변경의 검증
+
+- TypeScript 통과, lint 오류 0(기존 dev carousel 중복 import 경고 2).
+- 전체 npm test: 462 통과 / 14 제외 / 0 실패. 별도 세션이 필요한 DB 동시성 및 opt-in 관리형 HTTP 등은 제외됨.
+- 관리형 개발 DB에 20261101010000·20261101020000 적용. 실제 카카오 계정의 기존 성공 시각/다음 생성 시각 보존, cached/후보22 확인. 현재 개인 snapshot으로 후보22를 복원하고 4주종 포함/근거 ID의 현재 기록 포함을 읽기 전용 확인. 개인 기록·사진·평가는 변경하지 않음.
+- 관리형 별도 합성 계정의 실제 Gemini generated23 → cached/동일 영수증 → 기록 추가 후 cached23/동일 기한 확인, 임시 계정 정리 완료.
+- iPhone 13 Pro Max용 Release 빌드 성공·무선 설치·실행 성공. Device Hub는 현재 iOS26.6 실기기 화면 공유에 iOS27 이상을 요구해 화면 시각 확인은 하지 못함. 사용자 기기에서 홈·술장 육안 확인은 남아 있음.
+
+홈·내 취향의 기록 썸네일도 snapshot의 illustrationVariant를 사용해 술장과 같은 그림을 유지한다. 20261101030000은 표시용 번호만 snapshot에 추가하며 개인 감각 hash나 AI 근거를 바꾸지 않는다.
