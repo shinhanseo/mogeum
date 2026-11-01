@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -64,6 +64,13 @@ type Props = {
   onEvidence: (id: string) => void;
 };
 export function MenuScreen(p: Props) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() =>
+      scrollRef.current?.scrollTo({ y: 0, animated: false }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [p.step]);
   const products=p.result?.catalog ?? p.catalog ?? bundledProducts;
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<string | null>(null);
@@ -132,6 +139,7 @@ export function MenuScreen(p: Props) {
         onClose={p.onClose}
       />
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
