@@ -85,7 +85,18 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await begin(disposable,hash,910)).state,'acquired');await db.query('delete from auth.users where id=$1',[disposable]);
       assert.equal((await db.query('select * from private.menu_selection_jobs where user_id=$1',[disposable])).rows.length,0);
     });
-    await t.test('weekly generation is per user, durable, idempotent and hides changed evidence', async()=>{
+    await t.test('cellar illustrations balance per owner/category and remain fixed after edits',async()=>{
+      await db.exec('reset role');
+      const ids:{id:string;illustration_variant:number}[]=[];
+      for(let i=0;i<8;i++){
+        const result=await db.query<{id:string;illustration_variant:number}>("insert into public.cellar_entries(user_id,category,display_name) values($1,'beer','illustration test') returning id,illustration_variant",[a]);ids.push(result.rows[0]);
+      }
+      const counts=[0,1,2,3].map(v=>ids.filter(r=>r.illustration_variant===v).length);assert.deepEqual(counts,[2,2,2,2]);
+      await db.query("update public.cellar_entries set display_name='renamed' where id=$1",[ids[0].id]);
+      assert.equal((await db.query('select illustration_variant from public.cellar_entries where id=$1',[ids[0].id])).rows[0].illustration_variant,ids[0].illustration_variant);
+      for(const row of ids)await db.query('delete from public.cellar_entries where id=$1',[row.id]);
+    });
+    await t.test('weekly generation is per user, durable, idempotent and reuses only candidate IDs after record changes', async()=>{
       await db.exec('reset role');
       const hash='a'.repeat(64),changed='b'.repeat(64),version='weekly-v1';
       const begin=async(owner:string,h:string,lease:number)=>(await db.query<{result:JsonObject}>('select public.begin_discovery_generation($1,$2,$3,$4) result',[owner,h,version,operation(lease)])).rows[0].result;
@@ -98,7 +109,8 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       const interval=(new Date(String(cached.nextGenerationAt)).getTime()-new Date(String(cached.generatedAt)).getTime());assert.equal(interval,7*24*60*60*1000);
       assert.equal(await finish(800,batch),true);assert.equal((await begin(a,hash,803)).nextGenerationAt,cached.nextGenerationAt);
       assert.equal(await finish(800,{products:['different']}),false);
-      const invalid=await begin(a,changed,804);assert.equal(invalid.state,'invalidated');assert.equal(invalid.result,undefined);
+      const refreshed=await begin(a,changed,804);assert.equal(refreshed.state,'cached');assert.deepEqual(refreshed.result,batch);assert.equal(refreshed.nextGenerationAt,cached.nextGenerationAt);
+      const incompatible=(await db.query<{result:JsonObject}>('select public.begin_discovery_generation($1,$2,$3,$4) result',[a,changed,'different-contract',operation(898)])).rows[0].result;assert.equal(incompatible.state,'invalidated');assert.equal(incompatible.result,undefined);
       assert.equal((await begin(b,hash,805)).state,'acquired');
       await db.query("update private.discovery_generations set next_generation_at=clock_timestamp()-interval '1 second' where user_id=$1",[a]);
       assert.equal((await begin(a,hash,806)).state,'acquired');assert.equal(await finish(806,null),true);

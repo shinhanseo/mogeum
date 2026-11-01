@@ -19,6 +19,6 @@ export function generationCopy(generation?: DiscoveryGeneration): {title: string
     case "daily-limit":
       return {title: "오늘은 추천을 잠시 쉬어요", body: "하루 추천 시도 한도에 도달했어요. 시간이 지난 뒤 다시 확인해주세요. 기록은 계속 남길 수 있어요."};
     case "insufficient":
-      return null;
+      return {title: "추천할 한 잔을 더 찾아볼게요", body: "지금 기록과 비교할 추천 후보를 아직 찾지 못했어요. 느낌을 더 남기면 다시 살펴볼게요."};
   }
 }

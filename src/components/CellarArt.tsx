@@ -48,10 +48,12 @@ export function CellarArt({
   id,
   category,
   size = 88,
+  variant,
 }: {
   id: string;
   category: string | null;
   size?: number;
+  variant?: number;
 }) {
   const key = artCategory(category);
   const variants = assets[key as keyof typeof assets];
@@ -69,7 +71,7 @@ export function CellarArt({
             ],
           }}
         >
-          <BundledSvg module={variants[artVariant(id)]} />
+          <BundledSvg module={variants[variant !== undefined && Number.isInteger(variant) && variant >= 0 && variant < 4 ? variant : artVariant(id)]} />
         </View>
       ) : (
         <View

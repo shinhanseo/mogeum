@@ -34,7 +34,7 @@ function CellarTile({
       onPress={onPress}
     >
       <View style={styles.art}>
-        <CellarArt id={item.id} category={item.category} size={artSize} />
+        <CellarArt id={item.id} category={item.category} variant={item.illustrationVariant} size={artSize} />
         {item.recordCount > 1 ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{item.recordCount}</Text>

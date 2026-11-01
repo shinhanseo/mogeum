@@ -55,8 +55,8 @@ async function main() {
     const changed = await client.rpc("create_tasting_record", {p_operation_id:randomUUID(),p_record:{enteredName:"합성 변경 기록",category:"beer",revisit:"okay"}});
     ensure(!changed.error, "SYNTHETIC_CHANGE_FAILED");
     const invalidated = await request();
-    ensure(invalidated.generation?.state === "invalidated" && !invalidated.modelUsed && !invalidated.recommendations.length, "STALE_RESULT_EXPOSED");
-    report.invalidated = {state:invalidated.generation?.state,recommendationCount:0,modelUsed:false};
+    ensure(invalidated.generation?.state === "cached" && invalidated.modelUsed && invalidated.recommendations.length > 0 && invalidated.generation.nextGenerationAt === selected.generation!.nextGenerationAt, "CURRENT_EVIDENCE_CACHE_MISSING");
+    report.changedRecords = {state:invalidated.generation?.state,recommendationCount:invalidated.recommendations.length,modelUsed:invalidated.modelUsed,sameWeeklyDeadline:true};
     const legacy = await request(false);
     ensure(legacy.method === "evidence-rules-v1" && !legacy.modelUsed, "LEGACY_REGRESSION");
     report.legacyCompatible = true;

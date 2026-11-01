@@ -175,6 +175,7 @@ export function createCellarRepository(
       return {
         items: rows.map((row) => ({
           id: row.id,
+          illustrationVariant: Number.isInteger(row.illustration_variant) && row.illustration_variant >= 0 && row.illustration_variant < 4 ? row.illustration_variant : undefined,
           cutoutUri: cutouts.get(row.id) ?? null,
           name: row.display_name,
           category: labels[row.category] ?? null,
