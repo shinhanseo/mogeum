@@ -1,7 +1,7 @@
 import { featureCatalog } from './taste-features.ts';
 export const SUMMARY_VERSION='taste-v1';
 export type SensoryAnswer={questionId:string;status:string;descriptorCodes:string[]};
-export type TasteRecord={id:string;entryId:string;revision:number;category:string|null;name:string|null;date:string;revisit:string|null;rating:number|null;note:{mode:string;version:number;inputRevision:number;confirmedInputRevision:number|null;confirmed:boolean;text?:string|null;answers:SensoryAnswer[]}|null};
+export type TasteRecord={illustrationVariant?:number;id:string;entryId:string;revision:number;category:string|null;name:string|null;date:string;revisit:string|null;rating:number|null;note:{mode:string;version:number;inputRevision:number;confirmedInputRevision:number|null;confirmed:boolean;text?:string|null;answers:SensoryAnswer[]}|null};
 export type TasteSnapshot={hash:string;records:TasteRecord[];totalRecords:number;omittedCount:number};
 export type TasteFact={id:string;label:string;dimension:string;positiveIds:string[];negativeIds:string[];neutralIds:string[];distinctPositiveDrinks:number};
 export type TasteAnalysis={stage:'empty'|'early'|'growing'|'established';recordCount:number;drinkCount:number;positiveCount:number;facts:TasteFact[]};

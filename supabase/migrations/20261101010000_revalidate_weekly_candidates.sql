@@ -25,4 +25,3 @@ begin
  on conflict(user_id) do update set lease_id=excluded.lease_id,input_hash=excluded.input_hash,contract_version=excluded.contract_version,started_at=moment,running=true,attempt_day=(moment at time zone 'UTC')::date,attempt_count=case when discovery_generations.attempt_day=(moment at time zone 'UTC')::date then discovery_generations.attempt_count+1 else 1 end,result=null,generated_at=null,next_generation_at=null;
  return jsonb_build_object('state','acquired');
 end; $$;
-

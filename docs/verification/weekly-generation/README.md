@@ -58,3 +58,5 @@ next-drinks에서 shared-catalog-v1과 recommendationVersion=weekly-selection-v1
 - 관리형 개발 DB에 20261101010000·20261101020000 적용. 실제 카카오 계정의 기존 성공 시각/다음 생성 시각 보존, cached/후보22 확인. 현재 개인 snapshot으로 후보22를 복원하고 4주종 포함/근거 ID의 현재 기록 포함을 읽기 전용 확인. 개인 기록·사진·평가는 변경하지 않음.
 - 관리형 별도 합성 계정의 실제 Gemini generated23 → cached/동일 영수증 → 기록 추가 후 cached23/동일 기한 확인, 임시 계정 정리 완료.
 - iPhone 13 Pro Max용 Release 빌드 성공·무선 설치·실행 성공. Device Hub는 현재 iOS26.6 실기기 화면 공유에 iOS27 이상을 요구해 화면 시각 확인은 하지 못함. 사용자 기기에서 홈·술장 육안 확인은 남아 있음.
+
+홈·내 취향의 기록 썸네일도 snapshot의 illustrationVariant를 사용해 술장과 같은 그림을 유지한다. 20261101030000은 표시용 번호만 snapshot에 추가하며 개인 감각 hash나 AI 근거를 바꾸지 않는다.
