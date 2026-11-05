@@ -107,6 +107,8 @@ export function HomeCarousel({
         {Children.map(children, (child, i) => (
           <View
             key={labels[i]}
+            accessibilityElementsHidden={i !== index}
+            importantForAccessibility={i === index ? "auto" : "no-hide-descendants"}
             style={{ width, alignSelf: "flex-start" }}
             onLayout={(event) => {
               const height = Math.ceil(event.nativeEvent.layout.height);

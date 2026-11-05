@@ -1,3 +1,4 @@
+import { ScreenSkeleton } from "../src/components/LoadingSkeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Redirect,
@@ -21,7 +22,8 @@ import type { Product } from "../supabase/functions/_shared/product-catalog";
 import { colors } from "../src/theme/tokens";
 export default function DiscoveryRoute() {
   const auth = useAuth();
-  if (auth.status === "loading") return <View style={s.page} />;
+  if (auth.status === "loading")
+    return <ScreenSkeleton kind="recommendations" label="추천 불러오는 중" />;
   if (auth.status !== "signed-in") return <Redirect href="/login" />;
   return (
     <DiscoveryPanel key={auth.session.user.id} owner={auth.session.user.id} />
