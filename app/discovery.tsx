@@ -75,7 +75,7 @@ function DiscoveryPanel({ owner }: { owner: string }) {
     setError("");
     try {
       await wishlistRepository(sdk).resume(owner);
-      const data = await loadDiscovery(sdk, owner, null, {weekly: true});
+      const data = await loadDiscovery(sdk, owner, null, { weekly: true });
       if (!active()) return;
       setSelectedProduct((current) =>
         data.recommendations.some((row) => row.product.id === current)
@@ -187,6 +187,12 @@ function DiscoveryPanel({ owner }: { owner: string }) {
         {reason && result ? (
           <DiscoveryReasonScreen
             key={reason.product.id}
+            onRecord={() =>
+              router.push({
+                pathname: "/record",
+                params: { productId: reason.product.id },
+              })
+            }
             row={reason}
             records={result.evidenceRecords}
             saved={wishlist.some(

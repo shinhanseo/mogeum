@@ -161,8 +161,8 @@ export function DiscoveryScreen(props: Props) {
               </View>
               <Button
                 variant="text"
-                label={editingSaved ? "저장 해제" : "마셨어요"}
-                disabled={editingSaved && (saving || busy || !!error)}
+                label={editingSaved ? "저장 해제" : "마셔봤어요"}
+                disabled={saving || busy || !!error}
                 onPress={() =>
                   editingSaved
                     ? props.onSave(product.id)
@@ -255,6 +255,13 @@ export function DiscoveryScreen(props: Props) {
                     style={s.reasonLink}
                   />
                 </View>
+                <Button
+                  variant="text"
+                  label="마셔봤어요 · 기록하기  ›"
+                  disabled={saving || busy || !!error}
+                  onPress={() => props.onRecord(row.product.id)}
+                  style={s.recordAction}
+                />
                 <View style={s.divider} />
               </View>
             ))}
@@ -376,6 +383,12 @@ const s = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: 0,
     paddingVertical: 10,
+  },
+  recordAction: {
+    minHeight: 44,
+    paddingHorizontal: 0,
+    paddingVertical: 10,
+    alignSelf: "flex-start",
   },
   recordLink: {
     width: 88,

@@ -129,7 +129,7 @@ export default function DiscoveryPreview() {
         {notice}
       </Text>
       {reason ? (
-        <DiscoveryReasonScreen
+        <DiscoveryReasonScreen onRecord={() => setNotice("개발 시안 · 실제 기록은 인증 후 작성해요")}
           row={reason}
           records={data.evidenceRecords}
           saved={wishlist.some(
