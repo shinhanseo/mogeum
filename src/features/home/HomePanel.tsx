@@ -1,3 +1,5 @@
+import { Icon } from "../../components/Icon";
+import { BartenderOtter } from "../bartender/BartenderOtter";
 import { generationCopy } from "../discovery/generation-copy";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -167,6 +169,17 @@ export function HomePanel({
       link: "내 취향 살펴보기",
     },
     {
+      title: "오늘 이야기도,\n한 잔의 취향도.",
+      eyebrow: "모금 바텐더가 기다려요",
+      meta: "편하게 이야기를 건네주세요",
+      description: "오늘 있었던 일부터 다음에 마실 한 잔까지, 함께 이야기해요.",
+      hint: "쌓아둔 기록을 참고해 취향에 가까운 술도 골라드려요.",
+      category: null,
+      id: "bartender",
+      action: () => router.push(owner ? "/bartender" : "/login"),
+      link: "바텐더와 이야기하기",
+    },
+    {
       title: "메뉴판에서\n내 취향 찾기",
       eyebrow: "지금 메뉴판 앞이라면",
       meta: "사진 여러 장도 한 번에",
@@ -196,7 +209,7 @@ export function HomePanel({
             onPress={() => router.push(owner ? "/account" : "/login")}
             style={s.account}
           >
-            <Text style={s.white}>설정</Text>
+            <Icon name="settings" size={24} color={colors.surface} />
           </Pressable>
         </View>
         {data?.recommendationState === "loading" ? (
@@ -237,7 +250,9 @@ export function HomePanel({
                   >
                     {page.title}
                   </Text>
-                  {page.category ? (
+                  {page.id === "bartender" ? (
+                    <BartenderOtter size={88} />
+                  ) : page.category ? (
                     <CellarArt
                       id={page.id}
                       category={page.category}
@@ -287,17 +302,6 @@ export function HomePanel({
             ),
           )}
         </HomeCarousel>
-      </View>
-      <View style={s.bartenderEntry}>
-        <View style={s.copy}>
-          <Text style={s.sectionTitle}>오늘의 한 잔, 함께 골라볼까요?</Text>
-          <Text style={s.caption}>내 기록을 아는 모금 바텐더</Text>
-        </View>
-        <Button
-          label="이야기하기"
-          variant="secondary"
-          onPress={() => router.push(owner ? "/bartender" : "/login")}
-        />
       </View>
       <View style={s.records}>
         <View style={[s.sectionRow, fontScale > 1.3 && s.sectionStack]}>
@@ -401,13 +405,6 @@ function RecordThumbnail({
 }
 const s = StyleSheet.create({
   content: { paddingBottom: 24 },
-  bartenderEntry: {
-    marginHorizontal: 24,
-    paddingVertical: 20,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-  },
   hero: { backgroundColor: colors.primary },
   recommendationStatus: {
     ...typography.caption,

@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import { MoreSheet } from "./MoreSheet";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts } from "../theme/tokens";
@@ -15,85 +18,102 @@ export function BottomTabBar({
   onAccount?: () => void;
 }) {
   const inset = useSafeAreaInsets();
+  const router = useRouter();
+  const [more, setMore] = useState(false);
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(inset.bottom, 8) }]}>
-      <View style={styles.row}>
-        {(["home", "cellar", "record", "taste", "account"] as const).map(
-          (tab) =>
-            tab === "record" ? (
-              <View key={tab} style={styles.column}>
+    <>
+      <MoreSheet
+        visible={more}
+        onClose={() => setMore(false)}
+        onBartender={() => {
+          setMore(false);
+          router.push("/bartender");
+        }}
+        onAccount={() => {
+          setMore(false);
+          onAccount?.();
+        }}
+      />
+      <View style={[styles.bar, { paddingBottom: Math.max(inset.bottom, 8) }]}>
+        <View style={styles.row}>
+          {(["home", "cellar", "record", "taste", "account"] as const).map(
+            (tab) =>
+              tab === "record" ? (
+                <View key={tab} style={styles.column}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="한 잔 기록하기"
+                    onPress={onRecord}
+                    style={({ pressed }) => [
+                      styles.record,
+                      pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    <Icon name="plus" size={22} color={colors.surface} />
+                  </Pressable>
+                </View>
+              ) : tab === "account" ? (
                 <Pressable
+                  key={tab}
                   accessibilityRole="button"
-                  accessibilityLabel="한 잔 기록하기"
-                  onPress={onRecord}
-                  style={({ pressed }) => [
-                    styles.record,
-                    pressed && { opacity: 0.8 },
-                  ]}
+                  accessibilityLabel="더보기"
+                  onPress={() => setMore(true)}
+                  style={styles.tab}
                 >
-                  <Icon name="plus" size={22} color={colors.surface} />
+                  <Text allowFontScaling={false} style={styles.more}>
+                    ···
+                  </Text>
+                  <Text
+                    maxFontSizeMultiplier={1.4}
+                    numberOfLines={1}
+                    style={styles.label}
+                  >
+                    더보기
+                  </Text>
                 </Pressable>
-              </View>
-            ) : tab === "account" ? (
-              <Pressable
-                key={tab}
-                accessibilityRole="button"
-                accessibilityLabel="계정 관리"
-                onPress={onAccount}
-                style={styles.tab}
-              >
-                <Text allowFontScaling={false} style={styles.more}>
-                  ···
-                </Text>
-                <Text
-                  maxFontSizeMultiplier={1.4}
-                  numberOfLines={1}
-                  style={styles.label}
+              ) : (
+                <Pressable
+                  key={tab}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: selected === tab }}
+                  onPress={() => onSelect(tab)}
+                  style={styles.tab}
                 >
-                  더보기
-                </Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                key={tab}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: selected === tab }}
-                onPress={() => onSelect(tab)}
-                style={styles.tab}
-              >
-                <Icon
-                  name={
-                    tab === "home"
-                      ? "home"
+                  <Icon
+                    name={
+                      tab === "home"
+                        ? "home"
+                        : tab === "cellar"
+                          ? "shelf"
+                          : "taste"
+                    }
+                    size={28}
+                    color={selected === tab ? colors.primary : colors.muted}
+                  />
+                  <Text
+                    maxFontSizeMultiplier={1.4}
+                    numberOfLines={1}
+                    style={[
+                      styles.label,
+                      {
+                        color: selected === tab ? colors.primary : colors.muted,
+                        fontFamily:
+                          selected === tab ? fonts.bold : fonts.regular,
+                      },
+                    ]}
+                  >
+                    {tab === "home"
+                      ? "홈"
                       : tab === "cellar"
-                        ? "shelf"
-                        : "taste"
-                  }
-                  size={28}
-                  color={selected === tab ? colors.primary : colors.muted}
-                />
-                <Text
-                  maxFontSizeMultiplier={1.4}
-                  numberOfLines={1}
-                  style={[
-                    styles.label,
-                    {
-                      color: selected === tab ? colors.primary : colors.muted,
-                      fontFamily: selected === tab ? fonts.bold : fonts.regular,
-                    },
-                  ]}
-                >
-                  {tab === "home"
-                    ? "홈"
-                    : tab === "cellar"
-                      ? "술장"
-                      : "내 취향"}
-                </Text>
-              </Pressable>
-            ),
-        )}
+                        ? "술장"
+                        : "내 취향"}
+                  </Text>
+                </Pressable>
+              ),
+          )}
+        </View>
       </View>
-    </View>
+    </>
   );
 }
 const styles = StyleSheet.create({
