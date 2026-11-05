@@ -281,7 +281,7 @@ async function main() {
       report.smalltalk = {
         noForcedRecommendations: true,
         conditionsPreserved: true,
-        reply: last.text,
+        reply: last?.text,
       };
     }
     const cleared = await client.rpc("clear_bartender_conversation");
