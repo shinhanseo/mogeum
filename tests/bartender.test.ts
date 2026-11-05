@@ -434,3 +434,98 @@ test("pairing replies cannot switch the drink and retain the discussed product c
   assert.equal(input.topic, "pairing");
   assert.equal(input.discussedDrink[0].name, "글렌리벳 12년");
 });
+
+test("price questions are information and cannot silently replace a recommendation", async () => {
+  const parsed = parseModelAnswer(
+    { ...answer, intent: "information" },
+    products,
+  );
+  assert.deepEqual(parsed.productIds, []);
+  assert.equal(parsed.research, null);
+  const h = harness();
+  const previous = nextConversation(
+    emptyConversation(),
+    "하나 골라줘",
+    parseModelAnswer(answer, products),
+    makeCards(
+      ["glenlivet-12"],
+      parseModelAnswer(answer, products).conditions,
+      empty,
+      products,
+    ),
+  );
+  h.setPrevious(previous);
+  h.ports.converse = async () => ({
+    output: {
+      ...answer,
+      intent: "information",
+      conditions: { ...answer.conditions, budget: 30000 },
+    },
+    inputTokens: 100,
+    outputTokens: 50,
+  });
+  const result = await (
+    await h.handler(post({ ...request, text: "이거 3만원에 살 수 있어?" }))
+  ).json();
+  assert.equal(result.document.topic, "information");
+  assert.deepEqual(result.document.messages.at(-1).cards, []);
+  assert.equal(result.document.conditions.budget, null);
+});
+test("explicit dislike vocabulary survives a shortlist with no matching feature", () => {
+  const dry = parseModelAnswer(
+    {
+      ...answer,
+      conditions: {
+        ...answer.conditions,
+        desired: [],
+        avoid: ["맛:달콤한 맛"],
+      },
+    },
+    [products[0]],
+  );
+  assert.deepEqual(dry.conditions.avoid, ["맛:달콤한 맛"]);
+  const doc = nextConversation(
+    emptyConversation(),
+    "흑맥주 8퍼 이상",
+    parseModelAnswer(answer, products),
+    [],
+  );
+  assert.equal(
+    modelInput(doc, "그거랑 안주?", empty, [products[0]])
+      .latestDrinkRequestUnresolved,
+    true,
+  );
+});
+
+test("explicit percentage is kept exactly instead of rounded to a product ABV", async () => {
+  const { exactUserConditions } =
+    await import("../supabase/functions/_shared/bartender-domain");
+  const conditions = {
+    ...emptyConversation().conditions,
+    category: "beer" as const,
+    minimumAbv: 8.5,
+  };
+  assert.equal(exactUserConditions(conditions, "8퍼 이상").minimumAbv, 8);
+  assert.equal(exactUserConditions(conditions, "7.5% 이상").minimumAbv, 7.5);
+  assert.equal(exactUserConditions(conditions, "도수 높은 거").minimumAbv, 8.5);
+});
+
+test("unresolved drink stays unresolved while food discussion continues", () => {
+  const parsed = parseModelAnswer(answer, products);
+  const unresolved = nextConversation(
+    emptyConversation(),
+    "흑맥주 8% 이상",
+    parsed,
+    [],
+  );
+  const food = parseModelAnswer(
+    { ...answer, intent: "pairing", text: "구운 소시지 어떠세요?" },
+    products,
+  );
+  const follow = nextConversation(unresolved, "그거랑 안주?", food, []);
+  assert.equal(
+    modelInput(follow, "네가 골라줘", empty, [products[0]])
+      .latestDrinkRequestUnresolved,
+    true,
+  );
+});

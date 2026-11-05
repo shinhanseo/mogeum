@@ -1,8 +1,37 @@
 import { analyzeTaste, type TasteSnapshot } from "./taste-domain.ts";
 import { discoverDrinks, type DrinkHistory } from "./next-drinks-domain.ts";
-import { normalizeProductName, type Product } from "./product-catalog.ts";
+import {
+  products as baseProducts,
+  normalizeProductName,
+  type Product,
+} from "./product-catalog.ts";
 import { parseCatalogDocument } from "./catalog-contract.ts";
 import { researchQuery, type ResearchQuery } from "./product-research.ts";
+const commonFeatureIds = [
+  "맛:달콤한 맛",
+  "맛:쌉쌀한 맛",
+  "향:연기 향",
+  "질감:가벼운 바디",
+  "질감:묵직한 바디",
+];
+function featureVocabulary(products: readonly Product[]) {
+  return [
+    ...new Set([
+      ...commonFeatureIds,
+      ...baseProducts.flatMap((p) => p.features.map((f) => f.id)),
+      ...products.flatMap((p) => p.features.map((f) => f.id)),
+    ]),
+  ]
+    .filter((id) => id.length <= 160)
+    .slice(0, 80);
+}
+export const chatIntents = [
+  "conversation",
+  "recommendation",
+  "pairing",
+  "information",
+  "food",
+] as const;
 export const BARTENDER_VERSION = "bartender-v1";
 export const categories = ["whisky", "wine", "beer", "traditional"] as const;
 export type Conditions = {
@@ -11,6 +40,7 @@ export type Conditions = {
   avoid: string[];
   budget: number | null;
   food: string | null;
+  preferenceNotes?: string[];
   beerStyle?: "dark" | null;
   minimumAbv?: number | null;
 };
@@ -29,8 +59,10 @@ export type ChatMessage = {
 };
 export type Conversation = {
   snapshotHash?: string;
-  topic?: "conversation" | "recommendation" | "pairing";
+  topic?:
+    "conversation" | "recommendation" | "pairing" | "information" | "food";
   recommendationsStale?: boolean;
+  drinkUnresolved?: boolean;
   conditions: Conditions;
   messages: ChatMessage[];
   research: ResearchQuery | null;
@@ -130,6 +162,15 @@ export function parseConditions(
       v.minimumAbv > 100)
   )
     return bad();
+  if (
+    v.preferenceNotes !== undefined &&
+    (!Array.isArray(v.preferenceNotes) ||
+      v.preferenceNotes.length > 4 ||
+      v.preferenceNotes.some(
+        (note) => typeof note !== "string" || note.length > 80,
+      ))
+  )
+    return bad();
   const desired = list(v.desired),
     avoid = list(v.avoid);
   if (desired.some((id) => avoid.includes(id))) return bad();
@@ -139,6 +180,9 @@ export function parseConditions(
     avoid,
     budget: v.budget as number | null,
     food: v.food as string | null,
+    ...(v.preferenceNotes !== undefined
+      ? { preferenceNotes: v.preferenceNotes as string[] }
+      : {}),
     ...(v.beerStyle !== undefined
       ? { beerStyle: v.beerStyle as Conditions["beerStyle"] }
       : {}),
@@ -148,7 +192,8 @@ export function parseConditions(
   };
 }
 export type ModelAnswer = {
-  intent?: "conversation" | "recommendation" | "pairing";
+  intent?:
+    "conversation" | "recommendation" | "pairing" | "information" | "food";
   text: string;
   conditions: Conditions;
   productIds: string[];
@@ -159,7 +204,7 @@ export function parseModelAnswer(
   products: readonly Product[],
 ): ModelAnswer {
   const v = obj(value),
-    allowed = new Set(products.flatMap((p) => p.features.map((f) => f.id)));
+    allowed = new Set(featureVocabulary(products));
   if (
     typeof v.text !== "string" ||
     !v.text.trim() ||
@@ -174,10 +219,20 @@ export function parseModelAnswer(
     return bad();
   if (
     v.intent !== undefined &&
-    !["conversation", "recommendation", "pairing"].includes(v.intent as string)
+    ![
+      "conversation",
+      "recommendation",
+      "pairing",
+      "information",
+      "food",
+    ].includes(v.intent as string)
   )
     return bad();
-  const conversation = v.intent === "conversation" || v.intent === "pairing";
+  const conversation =
+    v.intent === "conversation" ||
+    v.intent === "pairing" ||
+    v.intent === "information" ||
+    v.intent === "food";
   return {
     intent: v.intent as ModelAnswer["intent"],
     text: v.text.trim(),
@@ -315,6 +370,10 @@ export function nextConversation(
   const document: Conversation = {
     conditions: answer.conditions,
     topic: answer.intent ?? "recommendation",
+    drinkUnresolved:
+      (answer.intent ?? "recommendation") === "recommendation"
+        ? cards.length === 0
+        : (previous.drinkUnresolved ?? false),
     research: answer.research,
     messages: [
       ...previous.messages,
@@ -338,6 +397,11 @@ export function modelInput(
   const input = {
     conditions: previous.conditions,
     topic: previous.topic ?? null,
+    latestDrinkRequestUnresolved:
+      previous.drinkUnresolved ??
+      (previous.topic === "recommendation" &&
+        !previous.messages.at(-1)?.cards?.length),
+    featureVocabulary: featureVocabulary(products),
     discussedDrink: [...previous.messages]
       .reverse()
       .flatMap((m) => m.cards ?? [])
@@ -499,8 +563,17 @@ export function parseChatState(value: unknown): ChatState {
         ? { snapshotHash: d.snapshotHash }
         : {}),
       ...(typeof d.topic === "string" &&
-      ["conversation", "recommendation", "pairing"].includes(d.topic)
+      [
+        "conversation",
+        "recommendation",
+        "pairing",
+        "information",
+        "food",
+      ].includes(d.topic)
         ? { topic: d.topic as Conversation["topic"] }
+        : {}),
+      ...(typeof d.drinkUnresolved === "boolean"
+        ? { drinkUnresolved: d.drinkUnresolved }
         : {}),
       conditions: parseConditions(conditions, allowed),
       messages,
@@ -560,4 +633,19 @@ export function matchesBeerRequirements(
     if (!abv || Number(abv[1]) < conditions.minimumAbv) return false;
   }
   return true;
+}
+
+/** Numeric user requirements override model rounding or a candidate's own ABV. */
+export function exactUserConditions(
+  conditions: Conditions,
+  text: string,
+): Conditions {
+  const minimum = text.match(
+    /(\d+(?:\.\d+)?)\s*(?:%|퍼센트|퍼|도)\s*(?:이상|넘|부터)/,
+  );
+  if (!minimum) return conditions;
+  const value = Number(minimum[1]);
+  return value >= 0 && value <= 100
+    ? { ...conditions, minimumAbv: value }
+    : conditions;
 }

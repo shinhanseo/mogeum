@@ -8,6 +8,7 @@ import {
   nextConversation,
   parseChatRequest,
   parseModelAnswer,
+  exactUserConditions,
   type Conversation,
 } from "./bartender-domain.ts";
 import type { TasteSnapshot } from "./taste-domain.ts";
@@ -202,15 +203,32 @@ export function bartenderHandler(ports: BartenderPorts) {
         inputTokens = result.inputTokens;
         outputTokens = result.outputTokens;
         const answer = parseModelAnswer(result.output, candidates);
-        if (answer.intent === "conversation" || answer.intent === "pairing")
+        if (
+          answer.intent === "conversation" ||
+          answer.intent === "pairing" ||
+          answer.intent === "information" ||
+          answer.intent === "food"
+        )
           answer.conditions = previous.conditions;
+        if (answer.intent === "recommendation")
+          answer.conditions = exactUserConditions(
+            answer.conditions,
+            input.text,
+          );
         const cards = makeCards(
           answer.productIds,
           answer.conditions,
           ctx.snapshot,
           candidates,
         );
-        if (answer.productIds.length && !cards.length) {
+        if (
+          !cards.length &&
+          !answer.research &&
+          (answer.productIds.length ||
+            (answer.intent === "recommendation" &&
+              (answer.conditions.beerStyle ||
+                answer.conditions.minimumAbv != null)))
+        ) {
           const requirements = [
             answer.conditions.beerStyle === "dark" ? "흑맥주" : null,
             answer.conditions.minimumAbv != null
@@ -222,6 +240,13 @@ export function bartenderHandler(ports: BartenderPorts) {
           answer.text = requirements
             ? `${requirements} 조건을 모두 확인할 수 있는 제품을 지금 후보에서 찾지 못했어요. 궁금한 제품 이름을 알려주면 정보를 찾아볼 수 있어요.`
             : "말해준 조건과 확인된 제품 정보가 잘 맞지 않아요. 원하는 느낌을 조금 바꿔볼까요?";
+        }
+        if (cards.length && answer.conditions.avoid.length) {
+          const unknown = answer.conditions.avoid.filter((id) =>
+            cards.some((c) => !c.product.features.some((f) => f.id === id)),
+          );
+          if (unknown.length)
+            answer.text += ` 다만 ${unknown.map((id) => id.split(":").slice(1).join(":")).join("·")}이 없다고 확인된 제품은 아니어서 실제 느낌은 확인이 필요해요.`;
         }
         document = nextConversation(previous, input.text, answer, cards);
       }
