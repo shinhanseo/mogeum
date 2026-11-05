@@ -37,6 +37,8 @@
     "supabase/functions/menu-recommend/select.ts",
     "supabase/functions/menu-recommend/selection-service.ts",
     "supabase/functions/menu-recommend/research-service.ts",
-    "supabase/functions/menu-recommend/research-identify.ts"
+    "supabase/functions/menu-recommend/research-identify.ts",
+    "supabase/functions/bartender/index.ts",
+    "supabase/functions/bartender/provider.ts"
   ]
 }

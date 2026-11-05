@@ -67,7 +67,7 @@ export function HomePanel({
         async discovery() {
           const client = getSupabase();
           if (!client || !owner) throw Error("NO_CLIENT");
-          return loadDiscovery(client, owner, null, {weekly: true});
+          return loadDiscovery(client, owner, null, { weekly: true });
         },
         publish: setState,
       }),
@@ -288,6 +288,17 @@ export function HomePanel({
           )}
         </HomeCarousel>
       </View>
+      <View style={s.bartenderEntry}>
+        <View style={s.copy}>
+          <Text style={s.sectionTitle}>오늘의 한 잔, 함께 골라볼까요?</Text>
+          <Text style={s.caption}>내 기록을 아는 모금 바텐더</Text>
+        </View>
+        <Button
+          label="이야기하기"
+          variant="secondary"
+          onPress={() => router.push(owner ? "/bartender" : "/login")}
+        />
+      </View>
       <View style={s.records}>
         <View style={[s.sectionRow, fontScale > 1.3 && s.sectionStack]}>
           <Text style={s.sectionTitle}>최근 테이스팅 노트</Text>
@@ -390,6 +401,13 @@ function RecordThumbnail({
 }
 const s = StyleSheet.create({
   content: { paddingBottom: 24 },
+  bartenderEntry: {
+    marginHorizontal: 24,
+    paddingVertical: 20,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
   hero: { backgroundColor: colors.primary },
   recommendationStatus: {
     ...typography.caption,

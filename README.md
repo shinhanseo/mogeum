@@ -6,6 +6,8 @@
 
 ## 현재 상태
 
+2026-11-05: [AI 바텐더 첫 연결판](docs/ai-bartender.md)을 추가했습니다. 자유 대화·시작 선택지·관련 기록 기반 추천·출처·관심 저장, 명시적 제품 조사, 서버 호출 한도와 요청 재사용을 연결했습니다. [검증 및 미지원 범위](docs/verification/bartender/README.md).
+
 2026-11-01: 기록 변경 시 주간 후보를 최신 감각으로 재비교하도록 보완하고, 술장 일러스트는 주종별 4종이 한 번호로 몰리지 않도록 entry별 배정을 보관합니다. [규칙과 검증](docs/verification/weekly-generation/README.md).
 
 2026-10-29 승인 PNG 기준으로 홈·술장·내 취향 UI를 개편 중입니다. + 버튼은 탭바 안 중앙으로 옮겼습니다. [변경·검증 범위](docs/verification/ui-refresh/README.md). 기존 Figma 전체 개편 및 양 플랫폼 실기기 검증 완료를 뜻하지 않습니다.

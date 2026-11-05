@@ -123,3 +123,7 @@ test("deletion waits for an in-flight menu preparation to discard its files and 
     /ACCOUNT_DELETING/,
   );
 });
+
+test("bartender pending messages participate in owner cleanup",()=>{
+ assert.deepEqual(deletedAccountKeys(a,[`mogeum:bartender:v1:${a}`,`mogeum:bartender:v1:${b}`]),[`mogeum:bartender:v1:${a}`]);
+});
