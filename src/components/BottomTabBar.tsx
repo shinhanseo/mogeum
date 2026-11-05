@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { BartenderOtter } from "../features/bartender/BartenderOtter";
 import { useRouter } from "expo-router";
-import { MoreSheet } from "./MoreSheet";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts } from "../theme/tokens";
@@ -10,30 +9,17 @@ export function BottomTabBar({
   selected,
   onSelect,
   onRecord,
-  onAccount,
 }: {
-  selected: MainTab;
+  selected: MainTab | "bartender";
   onSelect: (tab: MainTab) => void;
   onRecord: () => void;
   onAccount?: () => void;
 }) {
   const inset = useSafeAreaInsets();
   const router = useRouter();
-  const [more, setMore] = useState(false);
+
   return (
     <>
-      <MoreSheet
-        visible={more}
-        onClose={() => setMore(false)}
-        onBartender={() => {
-          setMore(false);
-          router.push("/bartender");
-        }}
-        onAccount={() => {
-          setMore(false);
-          onAccount?.();
-        }}
-      />
       <View style={[styles.bar, { paddingBottom: Math.max(inset.bottom, 8) }]}>
         <View style={styles.row}>
           {(["home", "cellar", "record", "taste", "account"] as const).map(
@@ -55,20 +41,27 @@ export function BottomTabBar({
               ) : tab === "account" ? (
                 <Pressable
                   key={tab}
-                  accessibilityRole="button"
-                  accessibilityLabel="더보기"
-                  onPress={() => setMore(true)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: selected === "bartender" }}
+                  accessibilityLabel="모금 바텐더"
+                  onPress={() => {
+                    if (selected !== "bartender") router.push("/bartender");
+                  }}
                   style={styles.tab}
                 >
-                  <Text allowFontScaling={false} style={styles.more}>
-                    ···
-                  </Text>
+                  <BartenderOtter size={28} />
                   <Text
                     maxFontSizeMultiplier={1.4}
                     numberOfLines={1}
-                    style={styles.label}
+                    style={[
+                      styles.label,
+                      selected === "bartender" && {
+                        color: colors.primary,
+                        fontFamily: fonts.bold,
+                      },
+                    ]}
                   >
-                    더보기
+                    모금 바텐더
                   </Text>
                 </Pressable>
               ) : (

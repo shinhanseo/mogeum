@@ -52,7 +52,13 @@ const starts = [
   { label: "새로운 술 만나기", message: "조금 새로운 술을 마시고 싶어" },
   { label: "음식과 함께", message: "음식에 어울리는 술을 찾고 있어" },
 ];
-export function BartenderScreen({ owner }: { owner: string }) {
+export function BartenderScreen({
+  owner,
+  tabMode = false,
+}: {
+  owner: string;
+  tabMode?: boolean;
+}) {
   const router = useRouter(),
     dialog = useConfirmDialog(),
     scroll = useRef<ScrollViewInstance>(null),
@@ -233,12 +239,12 @@ export function BartenderScreen({ owner }: { owner: string }) {
   const blocked = busy || loading || !!saving;
   const c = state.document.conditions;
   return (
-    <SafeAreaView style={s.page} edges={["top", "bottom"]}>
+    <SafeAreaView style={s.page} edges={tabMode ? ["top"] : ["top", "bottom"]}>
       <WebStatusSpace />
       <ScreenHeader
         title="AI 바텐더"
-        onBack={() => router.back()}
-        onClose={() => router.back()}
+        onBack={tabMode ? undefined : () => router.back()}
+        onClose={tabMode ? undefined : () => router.back()}
       />
       <KeyboardAvoidingView
         style={s.flex}

@@ -205,8 +205,8 @@ export function HomePanel({
           <Text style={s.brand}>모금</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="계정 관리"
-            onPress={() => router.push(owner ? "/account" : "/login")}
+            accessibilityLabel="설정"
+            onPress={() => router.push("/settings")}
             style={s.account}
           >
             <Icon name="settings" size={24} color={colors.surface} />
