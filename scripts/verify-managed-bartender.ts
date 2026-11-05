@@ -284,6 +284,50 @@ async function main() {
         reply: last?.text,
       };
     }
+    if (process.env.MOGEUM_VERIFY_CHAT_PAIRING === "1") {
+      let revision = second.revision;
+      const turns = [];
+      for (const message of [
+        "시원한 맥주가 땡겨. 맥주 추천해줘.",
+        "흑맥주 중 도수 높은 걸로 추천해줘. 최소 8%로.",
+        "그 술과 같이 먹을 안주 추천해줘.",
+        "너가 추천하는 걸로 먹을게. 안주 하나 골라줘.",
+      ]) {
+        const response = await post({
+          operationId: randomUUID(),
+          revision,
+          action: "say",
+          text: message,
+        });
+        ensure(response.status === 200, "PAIRING_TURN_FAILED");
+        const state = parseChatState(response.value);
+        revision = state.revision;
+        const last = state.document.messages.at(-1)!;
+        if (turns.length === 1) {
+          ensure(
+            state.document.conditions.beerStyle === "dark" &&
+              state.document.conditions.minimumAbv === 8,
+            "BEER_REQUIREMENTS_LOST",
+          );
+          ensure(
+            !(last.cards ?? []).some((c) => c.product.name.includes("듀벨")),
+            "GOLDEN_BEER_AS_DARK",
+          );
+        }
+        if (turns.length >= 2)
+          ensure(
+            last.cards?.length === 0 && state.document.topic === "pairing",
+            "PAIRING_CHANGED_DRINK",
+          );
+        turns.push({
+          message,
+          reply: last.text,
+          topic: state.document.topic,
+          products: last.cards?.map((c) => c.product.name) ?? [],
+        });
+      }
+      report.pairing = { turns };
+    }
     const cleared = await client.rpc("clear_bartender_conversation");
     ensure(!cleared.error && cleared.data === true, "CLEAR_FAILED");
     const empty = await client.rpc("bartender_context");

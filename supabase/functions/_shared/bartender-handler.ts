@@ -202,7 +202,7 @@ export function bartenderHandler(ports: BartenderPorts) {
         inputTokens = result.inputTokens;
         outputTokens = result.outputTokens;
         const answer = parseModelAnswer(result.output, candidates);
-        if (answer.intent === "conversation")
+        if (answer.intent === "conversation" || answer.intent === "pairing")
           answer.conditions = previous.conditions;
         const cards = makeCards(
           answer.productIds,
@@ -210,9 +210,19 @@ export function bartenderHandler(ports: BartenderPorts) {
           ctx.snapshot,
           candidates,
         );
-        if (answer.productIds.length && !cards.length)
-          answer.text =
-            "말해준 조건과 확인된 제품 정보가 잘 맞지 않아요. 원하는 느낌을 조금 바꿔볼까요?";
+        if (answer.productIds.length && !cards.length) {
+          const requirements = [
+            answer.conditions.beerStyle === "dark" ? "흑맥주" : null,
+            answer.conditions.minimumAbv != null
+              ? `도수 ${answer.conditions.minimumAbv}% 이상`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          answer.text = requirements
+            ? `${requirements} 조건을 모두 확인할 수 있는 제품을 지금 후보에서 찾지 못했어요. 궁금한 제품 이름을 알려주면 정보를 찾아볼 수 있어요.`
+            : "말해준 조건과 확인된 제품 정보가 잘 맞지 않아요. 원하는 느낌을 조금 바꿔볼까요?";
+        }
         document = nextConversation(previous, input.text, answer, cards);
       }
       document.snapshotHash = ctx.snapshot.hash;

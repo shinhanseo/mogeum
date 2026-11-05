@@ -11,6 +11,8 @@ export type Conditions = {
   avoid: string[];
   budget: number | null;
   food: string | null;
+  beerStyle?: "dark" | null;
+  minimumAbv?: number | null;
 };
 export type ChatCard = {
   product: Product;
@@ -27,6 +29,7 @@ export type ChatMessage = {
 };
 export type Conversation = {
   snapshotHash?: string;
+  topic?: "conversation" | "recommendation" | "pairing";
   recommendationsStale?: boolean;
   conditions: Conditions;
   messages: ChatMessage[];
@@ -112,6 +115,21 @@ export function parseConditions(
     return bad();
   if (v.food !== null && (typeof v.food !== "string" || v.food.length > 80))
     return bad();
+  if (
+    v.beerStyle !== undefined &&
+    v.beerStyle !== null &&
+    v.beerStyle !== "dark"
+  )
+    return bad();
+  if (
+    v.minimumAbv !== undefined &&
+    v.minimumAbv !== null &&
+    (typeof v.minimumAbv !== "number" ||
+      !Number.isFinite(v.minimumAbv) ||
+      v.minimumAbv < 0 ||
+      v.minimumAbv > 100)
+  )
+    return bad();
   const desired = list(v.desired),
     avoid = list(v.avoid);
   if (desired.some((id) => avoid.includes(id))) return bad();
@@ -121,10 +139,16 @@ export function parseConditions(
     avoid,
     budget: v.budget as number | null,
     food: v.food as string | null,
+    ...(v.beerStyle !== undefined
+      ? { beerStyle: v.beerStyle as Conditions["beerStyle"] }
+      : {}),
+    ...(v.minimumAbv !== undefined
+      ? { minimumAbv: v.minimumAbv as Conditions["minimumAbv"] }
+      : {}),
   };
 }
 export type ModelAnswer = {
-  intent?: "conversation" | "recommendation";
+  intent?: "conversation" | "recommendation" | "pairing";
   text: string;
   conditions: Conditions;
   productIds: string[];
@@ -150,10 +174,10 @@ export function parseModelAnswer(
     return bad();
   if (
     v.intent !== undefined &&
-    !["conversation", "recommendation"].includes(v.intent as string)
+    !["conversation", "recommendation", "pairing"].includes(v.intent as string)
   )
     return bad();
-  const conversation = v.intent === "conversation";
+  const conversation = v.intent === "conversation" || v.intent === "pairing";
   return {
     intent: v.intent as ModelAnswer["intent"],
     text: v.text.trim(),
@@ -235,7 +259,8 @@ export function makeCards(
     if (
       !p ||
       (conditions.category && p.category !== conditions.category) ||
-      p.features.some((f) => conditions.avoid.includes(f.id))
+      p.features.some((f) => conditions.avoid.includes(f.id)) ||
+      !matchesBeerRequirements(p, conditions)
     )
       return [];
     const comparisons = p.features.flatMap((feature) => {
@@ -289,6 +314,7 @@ export function nextConversation(
 ): Conversation {
   const document: Conversation = {
     conditions: answer.conditions,
+    topic: answer.intent ?? "recommendation",
     research: answer.research,
     messages: [
       ...previous.messages,
@@ -311,10 +337,28 @@ export function modelInput(
 ) {
   const input = {
     conditions: previous.conditions,
+    topic: previous.topic ?? null,
+    discussedDrink: [...previous.messages]
+      .reverse()
+      .flatMap((m) => m.cards ?? [])
+      .slice(0, 1)
+      .map((c) => ({
+        id: c.product.id,
+        name: c.product.name,
+        category: c.product.category,
+        edition: c.product.edition,
+        features: c.product.features.map((f) => f.label),
+      })),
     messages: previous.messages.slice(-6).map((m) => ({
       role: m.role,
       text: m.text.slice(0, 500),
-      productIds: m.cards?.map((c) => c.product.id) ?? [],
+      products:
+        m.cards?.map((c) => ({
+          id: c.product.id,
+          name: c.product.name,
+          category: c.product.category,
+          edition: c.product.edition,
+        })) ?? [],
     })),
     message: text,
     evidence: compactEvidence(snapshot),
@@ -323,6 +367,7 @@ export function modelInput(
       name: p.name,
       category: p.category,
       edition: p.edition,
+      description: p.description.slice(0, 300),
       features: p.features
         .slice(0, 8)
         .map((f) => ({ id: f.id, label: f.label })),
@@ -453,6 +498,10 @@ export function parseChatState(value: unknown): ChatState {
       /^[a-f0-9]{64}$/.test(d.snapshotHash)
         ? { snapshotHash: d.snapshotHash }
         : {}),
+      ...(typeof d.topic === "string" &&
+      ["conversation", "recommendation", "pairing"].includes(d.topic)
+        ? { topic: d.topic as Conversation["topic"] }
+        : {}),
       conditions: parseConditions(conditions, allowed),
       messages,
       research: d.research === null ? null : researchQuery(d.research),
@@ -484,4 +533,31 @@ export function showDrinkRefinements(document: Conversation): boolean {
     latest?.role === "assistant" &&
     (latest.cards?.length ?? 0) > 0
   );
+}
+
+/** A hard requirement needs explicit catalog text, never a model's guess from a name. */
+export function matchesBeerRequirements(
+  product: Product,
+  conditions: Conditions,
+): boolean {
+  if (!conditions.beerStyle && conditions.minimumAbv == null) return true;
+  if (product.category !== "beer") return false;
+  const facts = [
+    product.name,
+    product.edition,
+    product.description,
+    ...product.features.map((f) => f.evidence),
+  ]
+    .join(" ")
+    .normalize("NFKC");
+  if (
+    conditions.beerStyle === "dark" &&
+    !/스타우트|흑맥주|포터|\bstout\b|\bporter\b|dark beer/i.test(facts)
+  )
+    return false;
+  if (conditions.minimumAbv != null) {
+    const abv = product.edition.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (!abv || Number(abv[1]) < conditions.minimumAbv) return false;
+  }
+  return true;
 }

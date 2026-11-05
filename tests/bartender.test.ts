@@ -362,3 +362,75 @@ test("ordinary conversation suppresses product suggestions even after a recommen
   assert.equal(result.document.conditions.category, "whisky");
   assert.deepEqual(result.document.messages.at(-1).cards, []);
 });
+
+test("dark beer and ABV requirements require explicit product evidence", async () => {
+  const { matchesBeerRequirements } =
+    await import("../supabase/functions/_shared/bartender-domain");
+  const base = {
+    ...products[0],
+    category: "beer" as const,
+    name: "합성 골든 에일",
+    edition: "Original · 8.5%",
+    description: "골든 에일",
+    features: [],
+  };
+  const conditions = {
+    ...emptyConversation().conditions,
+    category: "beer" as const,
+    beerStyle: "dark" as const,
+    minimumAbv: 8,
+  };
+  assert.equal(matchesBeerRequirements(base, conditions), false);
+  assert.equal(
+    matchesBeerRequirements(
+      { ...base, name: "합성 스타우트", description: "Imperial stout" },
+      conditions,
+    ),
+    true,
+  );
+  assert.equal(
+    matchesBeerRequirements(
+      { ...base, name: "합성 스타우트", edition: "4.2%" },
+      conditions,
+    ),
+    false,
+  );
+  assert.equal(
+    matchesBeerRequirements(
+      { ...base, name: "합성 스타우트", edition: "기본판" },
+      conditions,
+    ),
+    false,
+  );
+  assert.deepEqual(makeCards([base.id], conditions, empty, [base]), []);
+});
+test("pairing replies cannot switch the drink and retain the discussed product context", () => {
+  const parsed = parseModelAnswer(answer, products),
+    cards = makeCards(parsed.productIds, parsed.conditions, empty, products);
+  const previous = nextConversation(
+    emptyConversation(),
+    "술 추천해줘",
+    parsed,
+    cards,
+  );
+  const pairing = parseModelAnswer(
+    { ...answer, intent: "pairing", text: "감자튀김을 곁들여보면 어때요?" },
+    products,
+  );
+  assert.deepEqual(pairing.productIds, []);
+  assert.equal(pairing.research, null);
+  const conversation = nextConversation(
+    previous,
+    "안주 뭐 먹을까?",
+    pairing,
+    [],
+  );
+  const input = modelInput(
+    conversation,
+    "너가 골라줘",
+    empty,
+    products.slice(0, 5),
+  );
+  assert.equal(input.topic, "pairing");
+  assert.equal(input.discussedDrink[0].name, "글렌리벳 12년");
+});
