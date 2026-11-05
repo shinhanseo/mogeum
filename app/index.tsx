@@ -1,8 +1,9 @@
+import { ScreenSkeleton } from "../src/components/LoadingSkeleton";
 import { StatusBar } from "expo-status-bar";
 import { HomePanel } from "../src/features/home/HomePanel";
 import { useState } from "react";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebStatusSpace } from "../src/components/ScreenHeader";
 import { BottomTabBar, type MainTab } from "../src/components/BottomTabBar";
@@ -32,14 +33,7 @@ export default function HomeScreen() {
   const [query, setQuery] = useState("");
   const cellar = useCellar(owner, { query, category }, tab === "cellar");
   if (auth.status === "loading")
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator
-          accessibilityLabel="로그인 확인 중"
-          color={colors.primary}
-        />
-      </View>
-    );
+    return <ScreenSkeleton kind="home" label="홈 불러오는 중" />;
   if (!owner && browse !== "1") return <Redirect href="/login" />;
   const openRecord = () => router.push(owner ? "/record" : "/login");
   return (

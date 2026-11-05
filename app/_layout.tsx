@@ -1,3 +1,4 @@
+import { ScreenSkeleton } from "../src/components/LoadingSkeleton";
 import { DeletionBoundary } from "../src/features/auth/DeletionBoundary";
 import { AuthProvider } from "../src/features/auth/AuthProvider";
 import { useEffect } from "react";
@@ -11,7 +12,7 @@ import {
   NotoSansKR_500Medium,
   NotoSansKR_700Bold,
 } from "@expo-google-fonts/noto-sans-kr";
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { colors } from "../src/theme/tokens";
 
 export default function RootLayout() {
@@ -30,19 +31,9 @@ export default function RootLayout() {
   });
   if (!loaded && !error)
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: colors.background,
-        }}
-      >
-        <ActivityIndicator
-          color={colors.primary}
-          accessibilityLabel="모금 준비 중"
-        />
-      </View>
+      <SafeAreaProvider>
+        <ScreenSkeleton kind="home" label="모금 준비 중" />
+      </SafeAreaProvider>
     );
   if (error)
     return (

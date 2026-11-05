@@ -1,3 +1,4 @@
+import {ScreenSkeleton} from "../src/components/LoadingSkeleton";
 import { useScreenBack } from '../src/hooks/useScreenBack';
 import { loadDiscoveryPrefill } from '../src/features/discovery/repository';
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
@@ -35,7 +36,7 @@ type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
   const auth = useAuth();
   const { entryId, productId } = useLocalSearchParams<{entryId?:string;productId?:string}>();
-  if (auth.status === 'loading') return <View style={{ flex:1, backgroundColor:colors.background }} />;
+  if (auth.status === 'loading') return <ScreenSkeleton kind="form"/>;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
   return <RecordComposer key={`${auth.session.user.id}-${entryId??productId??'new'}`} owner={auth.session.user.id} entryId={entryId} productId={productId} />;
 }
@@ -211,7 +212,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
     }
     finally { busyRef.current = false; setSaving(false); }
   }
-  if (restoring) return <View style={styles.page} />;
+  if (restoring) return <ScreenSkeleton kind="form" label="작성 중인 기록 복원 중"/>;
   if(restoreFailed)return <SafeAreaView style={[styles.page,{padding:24,justifyContent:'center',gap:16}]}><Text accessibilityRole="alert" style={styles.body}>{error}</Text><Button label="술장으로 돌아가기" onPress={()=>router.replace('/')} /></SafeAreaView>;
   const summary = <View style={styles.summary}>
     {photo ? <Image source={{ uri: photo.uri }} resizeMode="cover" style={styles.photo} accessibilityLabel="선택한 술 사진" /> : <View style={[styles.photo, styles.noPhoto]}><Text style={styles.caption}>사진 없이{`\n`}남기는 한 잔</Text></View>}

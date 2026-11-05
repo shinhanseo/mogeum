@@ -49,6 +49,15 @@ export function HomeCarousel({
       sub.remove();
     };
   }, []);
+  useEffect(() => {
+    if (index < labels.length) return;
+    const frame = requestAnimationFrame(() => {
+      setIndex(0);
+      offset.setValue(0);
+      pager.current?.scrollTo({ x: 0, animated: false });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [index, labels.length, offset]);
   const targetHeight = heights[index];
   useEffect(() => {
     if (!targetHeight) return;

@@ -1,6 +1,7 @@
+import {LoadingSkeleton,ScreenSkeleton} from "../src/components/LoadingSkeleton";
 import { useEffect, useRef, useState } from 'react';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { getSupabase } from '../src/lib/supabase';
 import { Button } from '../src/components/Button';
@@ -11,7 +12,7 @@ import { drainPhotoDeletions } from '../src/features/records/edit';
 import { colors, typography } from '../src/theme/tokens';
 export default function Manage() {
   const auth = useAuth(); const { entryId, confirm } = useLocalSearchParams<{ entryId: string; confirm?: string }>();
-  if (auth.status === 'loading') return <ActivityIndicator color={colors.primary} />;
+  if(auth.status === "loading")return <ScreenSkeleton kind="form"/>;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
   return <Connected key={`${auth.session.user.id}:${entryId}`} owner={auth.session.user.id} entryId={entryId} initialConfirm={confirm === "1"} />;
 }
@@ -29,5 +30,6 @@ function Connected({ owner, entryId, initialConfirm }: { owner: string; entryId:
     void drainPhotoDeletions(client, owner).catch(() => {});
     if (alive.current) close();
   }} />;
-  return <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16, backgroundColor: colors.background }}>{error ? <><Text accessibilityRole="alert" style={{ ...typography.body, color: colors.text }}>술 기록을 불러오지 못했어요.</Text><Button label="다시 불러오기" onPress={reload} /><Button label="술장으로 돌아가기" variant="text" onPress={close} /></> : <ActivityIndicator color={colors.primary} accessibilityLabel="술 관리 불러오는 중" />}</View>;
+ if(!error)return <ScreenSkeleton kind="form"/>;
+  return <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 16, backgroundColor: colors.background }}>{error ? <><Text accessibilityRole="alert" style={{ ...typography.body, color: colors.text }}>술 기록을 불러오지 못했어요.</Text><Button label="다시 불러오기" onPress={reload} /><Button label="술장으로 돌아가기" variant="text" onPress={close} /></> : <LoadingSkeleton kind="form"/>}</View>;
 }

@@ -1,16 +1,17 @@
+import {
+  ScreenSkeleton,
+} from "../src/components/LoadingSkeleton";
 import { requestAccountDeletion } from "../src/features/auth/deletion-device";
-import { ActivityIndicator } from "react-native";
+
 import { Redirect, useRouter } from "expo-router";
 import { useAuth } from "../src/features/auth/AuthProvider";
 import { AccountScreen } from "../src/features/auth/AccountScreen";
 import { logoutAccount } from "../src/features/auth/logout";
 import { getSupabase } from "../src/lib/supabase";
-import { colors } from "../src/theme/tokens";
 export default function AccountRoute() {
   const auth = useAuth(),
     router = useRouter();
-  if (auth.status === "loading")
-    return <ActivityIndicator color={colors.primary} />;
+  if (auth.status === "loading") return <ScreenSkeleton kind="settings" />;
   if (auth.status !== "signed-in") return <Redirect href="/login" />;
   return (
     <AccountScreen

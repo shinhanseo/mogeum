@@ -1,6 +1,6 @@
+import { LoadingSkeleton } from "../../components/LoadingSkeleton";
 import { useEffect, useRef, useState, type ComponentRef } from "react";
 import {
-  ActivityIndicator,
   Image,
   Linking,
   Keyboard,
@@ -31,7 +31,7 @@ import {
 import type { MenuDraft, DevicePhoto } from "./device";
 import { drinkArt } from "./drink-art";
 import type { MenuResult } from "./repository";
-import {menuResearchMessage} from "./result-contract";
+import { menuResearchMessage } from "./result-contract";
 export type MenuStep =
   | "start"
   | "photos"
@@ -71,7 +71,7 @@ export function MenuScreen(p: Props) {
     );
     return () => cancelAnimationFrame(frame);
   }, [p.step]);
-  const products=p.result?.catalog ?? p.catalog ?? bundledProducts;
+  const products = p.result?.catalog ?? p.catalog ?? bundledProducts;
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<MenuItem | null>(null);
@@ -82,7 +82,9 @@ export function MenuScreen(p: Props) {
   const selectedRec = p.result?.recommendations.find(
     (r) => r.itemId === selected,
   );
-  const selectedResearch=p.result?.research?.find(e=>e.itemId===selected);
+  const selectedResearch = p.result?.research?.find(
+    (e) => e.itemId === selected,
+  );
   const selectedPhoto = p.draft.photos.find(
     (f) => f.id === (originalPhotoId ?? selectedItem?.photoId),
   );
@@ -144,7 +146,9 @@ export function MenuScreen(p: Props) {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {p.restoreState && p.restoreState !== "ready" ? (
+        {p.restoreState === "loading" ? (
+          <LoadingSkeleton kind="menu" label="메뉴판 복원 중" />
+        ) : p.restoreState && p.restoreState !== "ready" ? (
           <>
             <Text style={s.title}>메뉴판을 다시{`\n`}불러올게요.</Text>
             <Text style={s.body}>
@@ -153,10 +157,8 @@ export function MenuScreen(p: Props) {
                 : "이전에 남긴 사진과 입력을 확인하고 있어요."}
             </Text>
             <Button
-              label={
-                p.restoreState === "loading" ? "불러오는 중" : "다시 불러오기"
-              }
-              loading={p.restoreState === "loading"}
+              label={"다시 불러오기"}
+
               onPress={p.onRestoreRetry ?? (() => {})}
             />
           </>
@@ -411,7 +413,8 @@ export function MenuScreen(p: Props) {
             />
             <Text style={s.caption}>
               이름·가격·용량을 확인한 뒤 추천받기를 눌러주세요. 제품 후보는
-              정확히 맞을 때만 선택해요. 미확인 메뉴는 최대 2개까지 출처를 찾아 비교해요.
+              정확히 맞을 때만 선택해요. 미확인 메뉴는 최대 2개까지 출처를 찾아
+              비교해요.
             </Text>
           </>
         ) : p.step === "results" ? (
@@ -430,14 +433,20 @@ export function MenuScreen(p: Props) {
               메뉴판 {p.draft.photos.length}장 · 내 기록{" "}
               {p.result?.recordCount ?? 0}개로 고른 술
             </Text>
-            {p.result?.selectionState ? <Text style={s.caption}>
-              {p.result.modelUsed ? "내 기록과 비교한 메뉴에서 Gemini가 순서를 골랐어요."
-                : p.result.selectionState === "insufficient" ? "아직 비교할 취향 근거가 부족해요. 확인된 제품 정보부터 살펴봐요."
-                : "AI 선택은 잠시 이용할 수 없어 기록과 제품 정보의 기본 비교 결과를 보여드려요."}
-            </Text> : null}
+            {p.result?.selectionState ? (
+              <Text style={s.caption}>
+                {p.result.modelUsed
+                  ? "내 기록과 비교한 메뉴에서 Gemini가 순서를 골랐어요."
+                  : p.result.selectionState === "insufficient"
+                    ? "아직 비교할 취향 근거가 부족해요. 확인된 제품 정보부터 살펴봐요."
+                    : "AI 선택은 잠시 이용할 수 없어 기록과 제품 정보의 기본 비교 결과를 보여드려요."}
+              </Text>
+            ) : null}
             {p.result?.recommendations.map((r) => {
               const item = p.draft.items.find((i) => i.id === r.itemId)!;
-              const researched=p.result?.research?.find(e=>e.itemId===r.itemId);
+              const researched = p.result?.research?.find(
+                (e) => e.itemId === r.itemId,
+              );
               return (
                 <Pressable
                   accessibilityRole="button"
@@ -446,13 +455,15 @@ export function MenuScreen(p: Props) {
                   style={[s.recommend, r.status === "similar" && s.highlight]}
                 >
                   <Text style={s.primary}>
-                    {researched?.state==="compared" ? "검색으로 찾은 제품 후보" : r.status === "similar"
-                      ? "좋게 남긴 기록과 닮았어요"
-                      : r.status === "known"
-                        ? "같은 이름으로 좋게 남겼어요"
-                        : r.status === "unverified"
-                          ? "제품 정보 확인이 필요해요"
-                          : "비교할 취향 근거가 아직 부족해요"}
+                    {researched?.state === "compared"
+                      ? "검색으로 찾은 제품 후보"
+                      : r.status === "similar"
+                        ? "좋게 남긴 기록과 닮았어요"
+                        : r.status === "known"
+                          ? "같은 이름으로 좋게 남겼어요"
+                          : r.status === "unverified"
+                            ? "제품 정보 확인이 필요해요"
+                            : "비교할 취향 근거가 아직 부족해요"}
                   </Text>
                   <View style={s.productRow}>
                     {r.productId && (
@@ -481,13 +492,21 @@ export function MenuScreen(p: Props) {
                       ? `${r.similar.map((f) => f.label).join(" · ")}이 기록과 이어져요.`
                       : "확인되지 않은 맛은 추측하지 않았어요."}
                   </Text>
-                  {researched ? <Text style={s.caption}>{menuResearchMessage(researched)}{researched.state==="compared" ? ` · ${products.find(p=>p.id===researched.productId)?.name??""}` : ""}</Text> : null}
+                  {researched ? (
+                    <Text style={s.caption}>
+                      {menuResearchMessage(researched)}
+                      {researched.state === "compared"
+                        ? ` · ${products.find((p) => p.id === researched.productId)?.name ?? ""}`
+                        : ""}
+                    </Text>
+                  ) : null}
                   <Text style={s.primary}>내 기록과 어떤 점이 닮았나요? ›</Text>
                 </Pressable>
               );
             })}
             <Text style={s.caption}>
-              출처에서 확인된 특징만 비교해요. 검색 후보는 실제 메뉴의 제품·연산·빈티지와 같은지 확인해 주세요.
+              출처에서 확인된 특징만 비교해요. 검색 후보는 실제 메뉴의
+              제품·연산·빈티지와 같은지 확인해 주세요.
             </Text>
             <Button
               label="메뉴판 추가하고 다시 추천받기"
@@ -498,7 +517,14 @@ export function MenuScreen(p: Props) {
         ) : p.step === "reason" && selectedItem && selectedRec ? (
           <>
             <Text style={s.title}>좋아했던 느낌을,{"\n"}새로운 술에서도.</Text>
-            {selectedResearch ? <Text style={s.caption}>{menuResearchMessage(selectedResearch)}{selectedResearch.state==="compared" ? `\n검색한 제품: ${products.find(v=>v.id===selectedResearch.productId)?.name??""}` : ""}</Text> : null}
+            {selectedResearch ? (
+              <Text style={s.caption}>
+                {menuResearchMessage(selectedResearch)}
+                {selectedResearch.state === "compared"
+                  ? `\n검색한 제품: ${products.find((v) => v.id === selectedResearch.productId)?.name ?? ""}`
+                  : ""}
+              </Text>
+            ) : null}
             <View style={s.menuRow}>
               {selectedRec.productId && (
                 <SvgXml
@@ -587,7 +613,10 @@ export function MenuScreen(p: Props) {
               </Text>
             </View>
             {selectedRec.productId && (
-              <ProductSource catalog={products} productId={selectedRec.productId} />
+              <ProductSource
+                catalog={products}
+                productId={selectedRec.productId}
+              />
             )}
             <Button
               label="비교에 쓰인 내 기록 보기"
@@ -774,9 +803,17 @@ export function MenuScreen(p: Props) {
           </>
         ) : null}
         {p.busy && (
-          <View style={s.loading}>
-            <ActivityIndicator color={colors.primary} />
-            <Text style={[s.caption,{flex:1}]}>{p.step==="review"&&p.draft.items.some(i=>i.productId===null) ? "미등록 술의 출처를 찾고 내 기록과 비교하고 있어요. 잠시 걸릴 수 있어요." : "메뉴를 살펴보고 있어요."}</Text>
+          <View style={{ gap: 16 }}>
+            <LoadingSkeleton
+              kind={p.step === "results" ? "recommendations" : "menu"}
+              label="메뉴 분석 중"
+            />
+            <Text style={[s.caption, { flex: 1 }]}>
+              {p.step === "review" &&
+              p.draft.items.some((i) => i.productId === null)
+                ? "미등록 술의 출처를 찾고 내 기록과 비교하고 있어요. 잠시 걸릴 수 있어요."
+                : "메뉴를 살펴보고 있어요."}
+            </Text>
           </View>
         )}
         {!!p.error && (
@@ -848,7 +885,11 @@ export function MenuScreen(p: Props) {
                     onSubmitEditing={() => Keyboard.dismiss()}
                     accessibilityLabel="메뉴 가격"
                     value={editing.price?.toString() ?? ""}
-                    keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "number-pad"}
+                    keyboardType={
+                      Platform.OS === "ios"
+                        ? "numbers-and-punctuation"
+                        : "number-pad"
+                    }
                     onChangeText={(v) =>
                       setEditing({
                         ...editing,
@@ -878,16 +919,18 @@ export function MenuScreen(p: Props) {
                       주세요.
                     </Text>
                   )}
-                  {productCandidates(editing.name, products).map((candidate) => (
-                    <ChoiceChip
-                      key={candidate.id}
-                      label={`이 제품이 맞아요 · ${candidate.name}`}
-                      selected={editing.productId === candidate.id}
-                      onPress={() =>
-                        setEditing({ ...editing, productId: candidate.id })
-                      }
-                    />
-                  ))}
+                  {productCandidates(editing.name, products).map(
+                    (candidate) => (
+                      <ChoiceChip
+                        key={candidate.id}
+                        label={`이 제품이 맞아요 · ${candidate.name}`}
+                        selected={editing.productId === candidate.id}
+                        onPress={() =>
+                          setEditing({ ...editing, productId: candidate.id })
+                        }
+                      />
+                    ),
+                  )}
                   <ChoiceChip
                     label="제품 정보는 아직 모르겠어요"
                     selected={editing.productId === null}
@@ -933,7 +976,13 @@ export function MenuScreen(p: Props) {
     </SafeAreaView>
   );
 }
-function ProductSource({ productId, catalog }: { productId: string; catalog: Product[] }) {
+function ProductSource({
+  productId,
+  catalog,
+}: {
+  productId: string;
+  catalog: Product[];
+}) {
   const [error, setError] = useState(false);
   const product = catalog.find((p) => p.id === productId);
   if (!product) return null;

@@ -1,7 +1,8 @@
+import {LoadingSkeleton,ScreenSkeleton} from "../src/components/LoadingSkeleton";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { getSupabase } from '../src/lib/supabase';
 import { loadRecordDetail } from '../src/features/records/detail';
@@ -14,7 +15,7 @@ import { Button } from '../src/components/Button';
 import { colors,typography } from '../src/theme/tokens';
 export default function AttachmentRoute(){
  const auth=useAuth();const params=useLocalSearchParams<{recordId:string;kind:string}>();
- if(auth.status==='loading')return <ActivityIndicator color={colors.primary}/>;
+ if(auth.status === "loading")return <ScreenSkeleton kind="form"/>;
  if(auth.status!=='signed-in')return <Redirect href="/login"/>;
  return <ConnectedAttachment key={`${auth.session.user.id}-${params.recordId}-${params.kind}`} owner={auth.session.user.id} recordId={params.recordId} kind={params.kind==='photo'?'photo':'move'}/>;
 }
@@ -38,5 +39,6 @@ function ConnectedAttachment({owner,recordId,kind}:{owner:string;recordId:string
  if(data&&!error)return <AttachmentScreen record={data.record} photoUri={data.photoUri} kind={kind} pending={pending} loadTargets={loadTargets} onApply={apply} onRetry={async()=>{if(pendingRef.current)await finish(pendingRef.current);}} onDiscard={async()=>{
    const value=pendingRef.current;if(value){const client=getSupabase();if(value.change.kind==='photo'&&client){const removed=await client.storage.from('record-photos').remove([value.change.storagePath]);if(removed.error)throw removed.error;}await finishAttachment(value);pendingRef.current=null;setPending(null);}close();
  }} onClose={close}/>;
- return <View style={{flex:1,justifyContent:'center',padding:24,gap:16,backgroundColor:colors.background}}>{error?<><Text style={{...typography.body,color:colors.text}}>기록과 보관한 변경을 불러오지 못했어요.</Text><Button label="다시 시도" onPress={()=>{setError(false);setReload(n=>n+1);}}/><Button variant="text" label="술장으로 돌아가기" onPress={()=>router.replace('/')}/></>:<ActivityIndicator color={colors.primary}/>}</View>;
+ if(!error)return <ScreenSkeleton kind="form"/>;
+ return <View style={{flex:1,justifyContent:'flex-start',padding:24,gap:16,backgroundColor:colors.background}}>{error?<><Text style={{...typography.body,color:colors.text}}>기록과 보관한 변경을 불러오지 못했어요.</Text><Button label="다시 시도" onPress={()=>{setError(false);setReload(n=>n+1);}}/><Button variant="text" label="술장으로 돌아가기" onPress={()=>router.replace('/')}/></>:<LoadingSkeleton kind="form"/>}</View>;
 }

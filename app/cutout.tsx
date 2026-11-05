@@ -1,6 +1,7 @@
+import { LoadingSkeleton, ScreenSkeleton } from "../src/components/LoadingSkeleton";
 import { useEffect, useRef, useState } from "react";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import * as FS from "expo-file-system/legacy";
 import * as Crypto from "expo-crypto";
 import { useAuth } from "../src/features/auth/AuthProvider";
@@ -61,13 +62,14 @@ function Connected({ owner, recordId }: { owner: string; recordId: string }) {
     };
   }, [owner, recordId]);
   const close = () => router.back();
+  if (!value && !error)return <ScreenSkeleton kind="detail"/>;
   if (!value)
     return (
       <View
         style={{
           flex: 1,
           backgroundColor: colors.background,
-          justifyContent: "center",
+          justifyContent: "flex-start",
           padding: 24,
         }}
       >
@@ -77,7 +79,7 @@ function Connected({ owner, recordId }: { owner: string; recordId: string }) {
             <Button label="기록으로 돌아가기" onPress={close} />
           </>
         ) : (
-          <ActivityIndicator color={colors.primary} />
+          <LoadingSkeleton kind="detail" />
         )}
       </View>
     );

@@ -1,6 +1,6 @@
+import { LoadingSkeleton } from "../../components/LoadingSkeleton";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Linking,
@@ -259,10 +259,7 @@ export function BartenderScreen({
           contentContainerStyle={s.content}
         >
           {loading ? (
-            <ActivityIndicator
-              color={colors.primary}
-              accessibilityLabel="대화 불러오는 중"
-            />
+            <LoadingSkeleton kind="chat" label="대화 불러오는 중" />
           ) : null}
           {!state.document.messages.length && !loading ? (
             <>
@@ -426,8 +423,8 @@ export function BartenderScreen({
             </View>
           ) : null}
           {busy ? (
-            <View style={s.speaker}>
-              <ActivityIndicator color={colors.primary} />
+            <View style={{ gap: space.md }}>
+              <LoadingSkeleton kind="chat" label="바텐더 답변 준비 중" />
               <Text accessibilityLiveRegion="polite" style={s.muted}>
                 {pending?.action === "research"
                   ? "출처를 확인하고 있어요. 잠시 걸릴 수 있어요."

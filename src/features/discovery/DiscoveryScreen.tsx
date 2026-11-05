@@ -1,20 +1,12 @@
+import { LoadingSkeleton } from "../../components/LoadingSkeleton";
 import { personalizedDrinks } from "../../../supabase/functions/_shared/next-drinks-domain";
 import { Mogu } from "../../components/Mogu";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { ChoiceChip } from "../../components/ChoiceChip";
 import { colors, layout, radius, space, typography } from "../../theme/tokens";
-import {
-  type Product,
-} from "../../../supabase/functions/_shared/product-catalog";
+import { type Product } from "../../../supabase/functions/_shared/product-catalog";
 import type { NextDrink } from "../../../supabase/functions/_shared/next-drinks-domain";
 import type { DiscoveryResult } from "./contract";
 import { generationCopy } from "./generation-copy";
@@ -53,10 +45,16 @@ export function DiscoveryScreen(props: Props) {
     wishlist.filter((r) => r.saved).map((r) => r.productId),
   );
   // Use the latest durable wishlist result, not the older recommendation response.
-  const recommendations = personalizedDrinks(result?.recommendations ?? [], saved);
-  const rows = mode === "saved" ? (result?.catalog ?? []).filter((p) => saved.has(p.id)) : [];
-  const knownIds = new Set(rows.map(p => p.id));
-  const unavailable = [...saved].filter(id => !knownIds.has(id));
+  const recommendations = personalizedDrinks(
+    result?.recommendations ?? [],
+    saved,
+  );
+  const rows =
+    mode === "saved"
+      ? (result?.catalog ?? []).filter((p) => saved.has(p.id))
+      : [];
+  const knownIds = new Set(rows.map((p) => p.id));
+  const unavailable = [...saved].filter((id) => !knownIds.has(id));
   function explanation(row: NextDrink) {
     if (!row.similar.length)
       return row.cautions.length
@@ -106,9 +104,10 @@ export function DiscoveryScreen(props: Props) {
             />
           </View>
           <Text style={s.body}>
-            {generation?.body ?? (recommendations.length
-              ? "좋게 남긴 느낌과 닮은 한 잔을 찾아봤어요."
-              : "내가 남긴 느낌을 바탕으로 찾아드려요.")}
+            {generation?.body ??
+              (recommendations.length
+                ? "좋게 남긴 느낌과 닮은 한 잔을 찾아봤어요."
+                : "내가 남긴 느낌을 바탕으로 찾아드려요.")}
           </Text>
           {recommendations.length > 0 && (
             <ScrollView
@@ -131,9 +130,9 @@ export function DiscoveryScreen(props: Props) {
         </>
       )}
       {busy ? (
-        <ActivityIndicator
-          accessibilityLabel="다음 한 잔 불러오는 중"
-          color={colors.primary}
+        <LoadingSkeleton
+          kind="recommendations"
+          label="다음 한 잔 불러오는 중"
         />
       ) : null}
       {error ? (
@@ -173,12 +172,25 @@ export function DiscoveryScreen(props: Props) {
               />
             </View>
           ))}
-          {!busy && !error && unavailable.map(id => (
-            <View key={id} style={s.wishRow}>
-              <View style={s.flex}><Text style={s.label}>제품 정보 확인 중</Text><Text style={s.caption}>저장은 유지돼요. 확인 후 다시 보여드릴게요.</Text></View>
-              <Button variant="text" label="저장 해제" disabled={saving} onPress={() => props.onSave(id)} style={s.recordLink} />
-            </View>
-          ))}
+          {!busy &&
+            !error &&
+            unavailable.map((id) => (
+              <View key={id} style={s.wishRow}>
+                <View style={s.flex}>
+                  <Text style={s.label}>제품 정보 확인 중</Text>
+                  <Text style={s.caption}>
+                    저장은 유지돼요. 확인 후 다시 보여드릴게요.
+                  </Text>
+                </View>
+                <Button
+                  variant="text"
+                  label="저장 해제"
+                  disabled={saving}
+                  onPress={() => props.onSave(id)}
+                  style={s.recordLink}
+                />
+              </View>
+            ))}
           {!busy && !error && !saved.size ? (
             <Text style={s.body}>궁금한 술의 북마크를 눌러 모아보세요.</Text>
           ) : null}
@@ -252,14 +264,17 @@ export function DiscoveryScreen(props: Props) {
                 <Mogu />
               </View>
               <Text style={s.emptyTitle}>
-                {generation?.title ?? (!result.sensoryRecordCount
-                  ? "한 잔의 느낌부터 남겨볼까요?"
-                  : "새롭게 추천할 술이 아직 없어요.")}
+                {generation?.title ??
+                  (!result.sensoryRecordCount
+                    ? "한 잔의 느낌부터 남겨볼까요?"
+                    : "새롭게 추천할 술이 아직 없어요.")}
               </Text>
               <Text style={s.emptyCopy}>
-                {generation ? "추천을 기다리는 동안에도 한 잔의 기록은 남길 수 있어요." : !result.sensoryRecordCount
-                  ? "어떤 향과 맛이 좋았는지 알려주면\n그 느낌과 닮은 술을 찾아드려요."
-                  : "마신 술과 저장한 술은 제외하고 찾아요.\n좋게 남긴 느낌이 더 쌓이면 다시 비교해볼게요."}
+                {generation
+                  ? "추천을 기다리는 동안에도 한 잔의 기록은 남길 수 있어요."
+                  : !result.sensoryRecordCount
+                    ? "어떤 향과 맛이 좋았는지 알려주면\n그 느낌과 닮은 술을 찾아드려요."
+                    : "마신 술과 저장한 술은 제외하고 찾아요.\n좋게 남긴 느낌이 더 쌓이면 다시 비교해볼게요."}
               </Text>
               <Button
                 label={

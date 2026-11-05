@@ -1,3 +1,4 @@
+import { ScreenSkeleton } from "../../components/LoadingSkeleton";
 import { tasteSummaryFailureMessage } from "./failure-message";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppState } from "react-native";
@@ -125,6 +126,10 @@ export function TastePanel({
       router.push({ pathname: "/detail", params: { recordId: record.id } });
     else onRecord();
   }
+  if (owner && state.status === "loading")
+    return (
+      <ScreenSkeleton inset={false} kind="taste" label="내 취향 불러오는 중" />
+    );
   return (
     <TasteScreen
       context={context}
