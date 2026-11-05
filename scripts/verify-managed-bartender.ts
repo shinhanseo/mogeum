@@ -254,6 +254,36 @@ async function main() {
         unsupportedFactsHidden: !verified,
       };
     }
+    if (process.env.MOGEUM_VERIFY_CHAT_SMALLTALK === "1") {
+      const talk = await post({
+        operationId: randomUUID(),
+        revision: second.revision,
+        action: "say",
+        text: "추천은 잠깐 쉬고 그냥 너랑 이야기하고 싶어. 오늘 오랜만에 친구를 만나서 즐거웠어.",
+      });
+      ensure(talk.status === 200, "SMALLTALK_FAILED");
+      const conversation = parseChatState(talk.value),
+        last = conversation.document.messages.at(-1);
+      ensure(
+        last?.role === "assistant" &&
+          last.text.length > 0 &&
+          !last.cards?.length &&
+          !conversation.document.research,
+        "SMALLTALK_FORCED_RECOMMENDATION",
+      );
+      ensure(
+        isDeepStrictEqual(
+          conversation.document.conditions,
+          second.document.conditions,
+        ),
+        "SMALLTALK_CHANGED_DRINK_CONDITIONS",
+      );
+      report.smalltalk = {
+        noForcedRecommendations: true,
+        conditionsPreserved: true,
+        reply: last.text,
+      };
+    }
     const cleared = await client.rpc("clear_bartender_conversation");
     ensure(!cleared.error && cleared.data === true, "CLEAR_FAILED");
     const empty = await client.rpc("bartender_context");

@@ -202,6 +202,8 @@ export function bartenderHandler(ports: BartenderPorts) {
         inputTokens = result.inputTokens;
         outputTokens = result.outputTokens;
         const answer = parseModelAnswer(result.output, candidates);
+        if (answer.intent === "conversation")
+          answer.conditions = previous.conditions;
         const cards = makeCards(
           answer.productIds,
           answer.conditions,

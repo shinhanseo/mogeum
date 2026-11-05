@@ -317,3 +317,48 @@ test("record changes hide stale recommendation evidence, while old words remain 
   assert.equal(hidden.messages.at(-1)?.text, doc.messages.at(-1)?.text);
   assert.equal(currentConversation(doc, "a".repeat(64)), doc);
 });
+
+test("ordinary conversation suppresses product suggestions even after a recommendation", async () => {
+  const { showDrinkRefinements } =
+    await import("../supabase/functions/_shared/bartender-domain");
+  const parsed = parseModelAnswer(answer, products);
+  const recommended = nextConversation(
+    emptyConversation(),
+    "술 골라줘",
+    parsed,
+    makeCards(parsed.productIds, parsed.conditions, empty, products),
+  );
+  assert.equal(showDrinkRefinements(recommended), true);
+  const talk = parseModelAnswer(
+    { ...answer, intent: "conversation", text: "오늘 어떤 일이 있었어요?" },
+    products,
+  );
+  assert.deepEqual(talk.productIds, []);
+  assert.equal(talk.research, null);
+  const conversation = nextConversation(
+    recommended,
+    "그냥 이야기하고 싶어",
+    talk,
+    [],
+  );
+  assert.equal(showDrinkRefinements(conversation), false);
+  assert.equal(
+    showDrinkRefinements({ ...recommended, recommendationsStale: true }),
+    false,
+  );
+  const h = harness();
+  h.setPrevious(recommended);
+  h.ports.converse = async () => ({
+    output: {
+      ...answer,
+      intent: "conversation",
+      conditions: { ...answer.conditions, category: "beer" },
+      text: "편하게 이야기해요.",
+    },
+    inputTokens: 100,
+    outputTokens: 50,
+  });
+  const result = await (await h.handler(post())).json();
+  assert.equal(result.document.conditions.category, "whisky");
+  assert.deepEqual(result.document.messages.at(-1).cards, []);
+});

@@ -89,9 +89,9 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
       assert.equal((await begin(disposable,9209)).state,'acquired');
       await as(disposable);assert.equal((await db.query('select public.clear_bartender_conversation() ok')).rows[0].ok,false);
       await db.exec('reset role');await db.query('delete from auth.users where id=$1',[disposable]);
-      assert.equal((await db.query('select count(*) n from private.bartender_sessions where user_id=$1',[disposable])).rows[0].n,0);
-      assert.equal((await db.query('select count(*) n from private.bartender_turns where user_id=$1',[disposable])).rows[0].n,0);
-      assert.equal((await db.query('select count(*) n from private.bartender_daily where bucket=$1',[disposable])).rows[0].n,0);
+      assert.equal((await db.query('select count(*)::integer n from private.bartender_sessions where user_id=$1',[disposable])).rows[0].n,0);
+      assert.equal((await db.query('select count(*)::integer n from private.bartender_turns where user_id=$1',[disposable])).rows[0].n,0);
+      assert.equal((await db.query('select count(*)::integer n from private.bartender_daily where bucket=$1',[disposable])).rows[0].n,0);
       await db.exec('delete from private.bartender_turns; delete from private.bartender_sessions; delete from private.bartender_daily');
     });
     await t.test('menu AI reservations isolate owners, count failed attempts and replay cached IDs', async()=>{

@@ -34,6 +34,7 @@ import {
 } from "./repository";
 import {
   emptyConversation,
+  showDrinkRefinements,
   parseChatRequest,
   type ChatCard,
   type ChatRequest,
@@ -424,7 +425,7 @@ export function BartenderScreen({ owner }: { owner: string }) {
               <Text accessibilityLiveRegion="polite" style={s.muted}>
                 {pending?.action === "research"
                   ? "출처를 확인하고 있어요. 잠시 걸릴 수 있어요."
-                  : "한 잔을 함께 고르고 있어요."}
+                  : "이야기를 듣고 있어요."}
               </Text>
             </View>
           ) : null}
@@ -460,7 +461,7 @@ export function BartenderScreen({ owner }: { owner: string }) {
               onPress={() => void send("", "research")}
             />
           ) : null}
-          {!!state.document.messages.length && !blocked && !pending ? (
+          {showDrinkRefinements(state.document) && !blocked && !pending ? (
             <View style={s.choices}>
               {[
                 "다른 술로 골라줘",
@@ -501,7 +502,7 @@ export function BartenderScreen({ owner }: { owner: string }) {
         <View style={s.composer}>
           <TextInput
             accessibilityLabel="바텐더에게 이야기하기"
-            placeholder="오늘 마시고 싶은 느낌을 말해주세요"
+            placeholder="오늘 있었던 일도 편하게 이야기해요"
             placeholderTextColor={colors.muted}
             value={input}
             onChangeText={setInput}

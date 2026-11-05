@@ -124,6 +124,7 @@ export function parseConditions(
   };
 }
 export type ModelAnswer = {
+  intent?: "conversation" | "recommendation";
   text: string;
   conditions: Conditions;
   productIds: string[];
@@ -147,11 +148,19 @@ export function parseModelAnswer(
     new Set(v.productIds).size !== v.productIds.length
   )
     return bad();
+  if (
+    v.intent !== undefined &&
+    !["conversation", "recommendation"].includes(v.intent as string)
+  )
+    return bad();
+  const conversation = v.intent === "conversation";
   return {
+    intent: v.intent as ModelAnswer["intent"],
     text: v.text.trim(),
     conditions: parseConditions(v.conditions, allowed),
-    productIds: v.productIds as string[],
-    research: v.research === null ? null : researchQuery(v.research),
+    productIds: conversation ? [] : (v.productIds as string[]),
+    research:
+      conversation || v.research === null ? null : researchQuery(v.research),
   };
 }
 export function compactEvidence(snapshot: TasteSnapshot) {
@@ -465,4 +474,14 @@ export function currentConversation(
       ...(m.cards ? { cards: [] } : {}),
     })),
   };
+}
+
+/** Only the latest assistant turn may offer recommendation refinements. */
+export function showDrinkRefinements(document: Conversation): boolean {
+  const latest = document.messages.at(-1);
+  return (
+    !document.recommendationsStale &&
+    latest?.role === "assistant" &&
+    (latest.cards?.length ?? 0) > 0
+  );
 }
