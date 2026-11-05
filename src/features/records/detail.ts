@@ -1,3 +1,8 @@
+import {
+  compareRecords,
+  type ComparisonAnswer,
+  type RecordComparison,
+} from "./comparison";
 import { signPhotoBatch } from "./photo-links";
 import type { SupabaseClient } from "@supabase/supabase-js";
 export type RecordDetail = {
@@ -16,10 +21,13 @@ export type RecordDetail = {
     sort_order: number;
     upload_status: string;
   }[];
+  record_answers?: ComparisonAnswer[];
   record_notes: {
     confirmed_note: string | null;
     mode: string;
     catalog_version: number;
+    input_revision?: number;
+    confirmed_input_revision?: number | null;
   } | null;
 };
 export async function loadRecordDetail(
@@ -32,7 +40,7 @@ export async function loadRecordDetail(
   let query = client
     .from("tasting_records")
     .select(
-      "id,revision,cellar_entry_id,entered_name,category,consumed_at,revisit,rating,vintage_status,vintage_year,record_photos(storage_path,sort_order,upload_status),record_notes(confirmed_note,mode,catalog_version)",
+      "id,revision,cellar_entry_id,entered_name,category,consumed_at,revisit,rating,vintage_status,vintage_year,record_photos(storage_path,sort_order,upload_status),record_notes(confirmed_note,mode,catalog_version,input_revision,confirmed_input_revision),record_answers(mode,catalog_version,question_id,status,descriptor_codes)",
     )
     .eq("user_id", owner);
   query = target.recordId
@@ -68,6 +76,32 @@ export async function loadRecordDetail(
     .limit(100)
     .abortSignal(signal);
   if (historyError) throw historyError;
+  let comparison: RecordComparison | undefined;
+  let comparisonFailed = false;
+  const index = (history ?? []).findIndex((r) => r.id === record.id);
+  const previous = index >= 0 ? history?.[index + 1] : null;
+  if (previous) {
+    const { data: earlier, error: comparisonError } = await client
+      .from("tasting_records")
+      .select(
+        "id,cellar_entry_id,category,consumed_at,revisit,vintage_status,vintage_year,record_notes(confirmed_note,mode,catalog_version,input_revision,confirmed_input_revision),record_answers(mode,catalog_version,question_id,status,descriptor_codes)",
+      )
+      .eq("user_id", owner)
+      .eq("cellar_entry_id", record.cellar_entry_id)
+      .eq("id", previous.id)
+      .abortSignal(signal)
+      .maybeSingle();
+    if (comparisonError || !earlier) comparisonFailed = true;
+    else {
+      const rawEarlier = earlier as unknown as RecordDetail;
+      const notes = rawEarlier.record_notes;
+      comparison =
+        compareRecords(record, {
+          ...rawEarlier,
+          record_notes: Array.isArray(notes) ? (notes[0] ?? null) : notes,
+        }) ?? undefined;
+    }
+  }
   const photo = record.record_photos
     .filter((p) => p.upload_status === "ready")
     .sort((a, b) => a.sort_order - b.sort_order)[0];
@@ -78,7 +112,16 @@ export async function loadRecordDetail(
     );
     photoUri = signed.get(photo.storage_path) ?? null;
   }
-  return { record, history: history ?? [], photoUri };
+  const result: {
+    record: RecordDetail;
+    history: { id: string; consumed_at: string }[];
+    photoUri: string | null;
+    comparison?: RecordComparison;
+    comparisonFailed?: boolean;
+  } = { record, history: history ?? [], photoUri };
+  if (comparison) result.comparison = comparison;
+  if (comparisonFailed) result.comparisonFailed = true;
+  return result;
 }
 export function recordDate(value: string) {
   return new Intl.DateTimeFormat("ko-KR", {

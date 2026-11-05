@@ -1,3 +1,6 @@
+import { loadRecordDetail } from "../src/features/records/detail";
+import { tastingRepository } from "../src/features/tasting/repository";
+import { newTastingDraft, setAnswer } from "../src/features/tasting/draft";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -118,6 +121,53 @@ test(
         .select("id", { count: "exact" });
       assert.ifError(records.error);
       assert.equal(records.count, 4);
+      // Two actual experiences in one cellar entry, saved through the same RPCs as the app.
+      const old = await client
+        .from("tasting_records")
+        .select("id,cellar_entry_id")
+        .eq("category", "whisky")
+        .single();
+      assert.ifError(old.error);
+      const again = await createRecordRepository(client).save(
+        randomUUID(),
+        {
+          enteredName: "글렌리벳 12년",
+          category: "whisky",
+          revisit: "again",
+          consumedAt: "2026-12-01T12:00:00Z",
+        },
+        old.data!.cellar_entry_id,
+      );
+      for (const [id, code] of [
+        [old.data!.id, "fruit"],
+        [again.recordId, "honey_vanilla"],
+      ]) {
+        const draft = setAnswer(
+          newTastingDraft(user.id, id, "whisky", "light"),
+          "nose",
+          {
+            status: "answered",
+            descriptors: [code],
+            intensity: null,
+            freeText: "",
+          },
+        );
+        await tastingRepository(client).save(
+          draft,
+          randomUUID(),
+          1,
+          "선택한 향을 확인했어요.",
+          false,
+        );
+      }
+      const detail = await loadRecordDetail(client, user.id, {
+        recordId: again.recordId,
+      });
+      assert.equal(detail.history.length, 2);
+      assert.equal(detail.comparison?.previousId, old.data!.id);
+      assert.deepEqual(detail.comparison?.changes, [
+        { label: "향", before: "과일", after: "꿀·바닐라" },
+      ]);
     } finally {
       for (const [index, key] of [
         "EXPO_PUBLIC_SUPABASE_URL",

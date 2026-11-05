@@ -1,3 +1,5 @@
+import { RecordComparisonSection } from "./RecordComparisonSection";
+import type { RecordComparison } from "./comparison";
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +11,7 @@ import { colors, fonts, typography } from '../../theme/tokens';
 import { recordDate, type RecordDetail } from './detail';
 const categories:Record<string,string>={whisky:'위스키',wine:'와인',beer:'맥주',traditional:'전통주',other:'기타'};
 const feelings={again:'또 마시고 싶어요',okay:'괜찮아요',not_for_me:'내 취향이 아니에요'};
-export function RecordDetailScreen({record,photoUri,history,onClose,onNote,onSelect,onRepeat,onEdit,onPhotoError}:{record:RecordDetail;photoUri:string|null;history:{id:string;consumed_at:string}[];onClose:()=>void;onNote:()=>void;onSelect:(id:string)=>void;onRepeat:()=>void;onEdit:()=>void;onPhotoError?:(uri:string)=>void;onCutout?:()=>void}){
+export function RecordDetailScreen({record,photoUri,history,comparison,comparisonFailed,onClose,onNote,onSelect,onRepeat,onEdit,onPhotoError}:{record:RecordDetail;photoUri:string|null;history:{id:string;consumed_at:string}[];comparison?:RecordComparison;comparisonFailed?:boolean;onClose:()=>void;onNote:()=>void;onSelect:(id:string)=>void;onRepeat:()=>void;onEdit:()=>void;onPhotoError?:(uri:string)=>void;onCutout?:()=>void}){
  const [failed,setFailed]=useState<string|null>(null);
  const note=record.record_notes?.confirmed_note;
  return <SafeAreaView style={s.page}><WebStatusSpace/><ScreenHeader title="내 술 기록" onBack={onClose} onClose={onClose}/><ScrollView contentContainerStyle={s.content}>
@@ -20,6 +22,8 @@ export function RecordDetailScreen({record,photoUri,history,onClose,onNote,onSel
  {record.revisit&&<Text style={s.feeling}>{feelings[record.revisit]}</Text>}
  {note?<View style={s.note}><Text style={s.noteTitle}>나의 테이스팅 노트</Text><Text style={s.prose}>{note}</Text></View>:<Text style={s.meta}>테이스팅 노트는 나중에 추가해도 돼요.</Text>}
  {record.rating!==null&&<View style={s.stars} accessibilityLabel={`내 별점 ${record.rating}점`}>{[1,2,3,4,5].map(n=><RatingStar key={n} filled={n<=record.rating!}/>)}</View>}
+ {comparison&&<RecordComparisonSection value={comparison} onOpen={onSelect}/>}
+ {comparisonFailed&&<Text style={s.meta}>이전 기록과 비교를 불러오지 못했어요. 상세를 다시 열어 확인해주세요.</Text>}
  {history.length>1&&<View style={s.history}><Text style={s.noteTitle}>이 술을 마신 날</Text>{history.map(item=><Pressable key={item.id} accessibilityRole="button" accessibilityState={{selected:item.id===record.id}} onPress={()=>onSelect(item.id)} style={s.historyRow}><Text style={[s.meta,item.id===record.id&&s.active]}>{recordDate(item.consumed_at)}</Text><Text style={s.meta}>{item.id===record.id?'보고 있는 기록':'기록 보기 ›'}</Text></Pressable>)}</View>}
  </ScrollView><View style={s.footer}><Button label={note?'한 번 더 기록하기':'테이스팅 노트 추가'} onPress={note?onRepeat:onNote}/><Button variant="text" label={note?'테이스팅 노트 수정':'한 번 더 기록하기'} onPress={note?onNote:onRepeat}/></View></SafeAreaView>;
 }
