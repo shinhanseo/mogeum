@@ -1,3 +1,4 @@
+import { createBartenderConsent, bartenderConsentKey } from "./consent";
 import { LoadingSkeleton } from "../../components/LoadingSkeleton";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -77,6 +78,33 @@ export function BartenderScreen({
     [saved, setSaved] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const key = `mogeum:bartender:v1:${owner}`;
+  const consent = useRef<ReturnType<typeof createBartenderConsent> | null>(
+    null,
+  );
+  const showConsent = dialog.show;
+  useEffect(() => {
+    consent.current = createBartenderConsent({
+      read: () => accountStorage.getItem(bartenderConsentKey(owner)),
+      write: (value) =>
+        accountStorage.setItem(bartenderConsentKey(owner), value),
+      active: () => alive.current,
+      error: () =>
+        setError("AI 이용 동의를 보관하지 못했어요. 다시 시도해주세요."),
+      ask: (agree) =>
+        showConsent(
+          "바텐더와 이야기하기 전에",
+          "대화 내용과 최근 대화 일부, 기록에서 추린 감각·평가 정보, 제품 후보를 Google Gemini에 전송해 답변을 만들어요. 사진 원본·노트 원문·로그인 식별자는 보내지 않아요. 대화는 모금 서버에 저장되며 대화 비우기로 지울 수 있어요. 개인정보나 민감한 정보는 입력하지 마세요. 동의하지 않아도 술 기록은 이용할 수 있어요.",
+          [
+            { text: "다음에 할게요", style: "cancel" },
+            { text: "동의하고 보내기", onPress: agree },
+          ],
+        ),
+    });
+    return () => {
+      consent.current = null;
+    };
+  }, [owner, showConsent]);
+
   async function refresh() {
     const sdk = getSupabase();
     if (!sdk) return;
@@ -127,7 +155,23 @@ export function BartenderScreen({
     );
     return () => cancelAnimationFrame(frame);
   }, [state.document.messages.length, busy, pending?.operationId]);
-  async function send(
+  function send(
+    text: string,
+    action: "say" | "research" = "say",
+    retry?: ChatRequest,
+  ) {
+    if (
+      lock.current ||
+      loading ||
+      (!retry && pending) ||
+      (action === "say" && !(retry?.text ?? text).trim())
+    )
+      return;
+    return consent.current?.run(() => {
+      void sendConsented(text, action, retry);
+    });
+  }
+  async function sendConsented(
     text: string,
     action: "say" | "research" = "say",
     retry?: ChatRequest,
@@ -525,7 +569,8 @@ export function BartenderScreen({
           />
         </View>
         <Text style={s.footer}>
-          AI 답변은 틀릴 수 있어요. 대화는 저장되며 언제든 비울 수 있어요.
+          Google Gemini로 대화를 전송해요. AI 답변은 틀릴 수 있고, 저장된 대화는
+          비울 수 있어요.
         </Text>
       </KeyboardAvoidingView>
       {dialog.modal}

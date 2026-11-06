@@ -7,7 +7,7 @@ export function localDataOwner(key: string): string | null {
   return (
     key.match(
       new RegExp(
-        `^(?:mogeum-pending-v1-|mogeum:(?:menu|wishlist|cutout|bartender):v1:)(${uuid})$`,
+        `^(?:mogeum-pending-v1-|mogeum:(?:menu|wishlist|cutout|bartender|bartender-consent):v1:)(${uuid})$`,
         "i",
       ),
     )?.[1] ??
