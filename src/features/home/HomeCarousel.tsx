@@ -49,6 +49,15 @@ export function HomeCarousel({
       sub.remove();
     };
   }, []);
+  useEffect(() => {
+    if (index < labels.length) return;
+    const frame = requestAnimationFrame(() => {
+      setIndex(0);
+      offset.setValue(0);
+      pager.current?.scrollTo({ x: 0, animated: false });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [index, labels.length, offset]);
   const targetHeight = heights[index];
   useEffect(() => {
     if (!targetHeight) return;
@@ -98,6 +107,8 @@ export function HomeCarousel({
         {Children.map(children, (child, i) => (
           <View
             key={labels[i]}
+            accessibilityElementsHidden={i !== index}
+            importantForAccessibility={i === index ? "auto" : "no-hide-descendants"}
             style={{ width, alignSelf: "flex-start" }}
             onLayout={(event) => {
               const height = Math.ceil(event.nativeEvent.layout.height);

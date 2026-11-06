@@ -38,7 +38,7 @@ export function serializeAnswers(draft: TastingDraft): StoredAnswer[] {
   }));
 }
 
-const aromaLabels: Record<string, string> = {
+export const aromaLabels: Record<string, string> = {
   fruit:'과일', flower:'꽃', flower_herb:'꽃·허브', grain_malt:'곡물·맥아', sweet:'달콤한 향', wood_spice:'나무·향신료', peat_smoke:'피트·스모크',
   herb_grass:'허브·풀', wood_vanilla:'나무·바닐라', spice:'향신료', earthy:'흙·버섯·가죽', malt_grain:'맥아·곡물', hop:'홉', yeast_ferment:'효모·발효', roast:'로스팅',
   rice_grain:'쌀·곡물', ferment:'누룩·발효', nuts:'견과류', wood:'나무',

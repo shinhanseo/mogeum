@@ -43,7 +43,18 @@
       "distribution": "store",
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "MOGEUM_APP_VARIANT": "beta",
+        "MOGEUM_STORE_RELEASE": "1",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://quiet-lifter-473.notion.site/40b12450961b813cad78c4e24a9537e5",
+        "EXPO_PUBLIC_TERMS_URL": "https://quiet-lifter-473.notion.site/40b12450961b81ea9176ee281ea0dcdc"
       }
+    }
+  },
+  "submit": {
+    "beta-store": {
+      "ios": { "ascAppId": "6829393325" }
     }
   }
 }

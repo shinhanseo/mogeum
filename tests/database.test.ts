@@ -54,6 +54,46 @@ test(`record database invariants (${databaseUrl ? 'Supabase PostgreSQL' : 'PGlit
     await db.exec('reset role');
     await db.query('insert into auth.users(id,email) values ($1,$2),($3,$4)', [a, 'mogeum-a@example.test', b, 'mogeum-b@example.test']);
 
+    await t.test('bartender auth isolation, durable replay, failed-attempt quotas, clearing and delete cascade',async()=>{
+      await db.exec('reset role');
+      const hash='a'.repeat(64), document={conditions:{category:null,desired:[],avoid:[],budget:null,food:null},messages:[],research:null};
+      const begin=async(owner:string,n:number,revision=0,h=hash)=>(await db.query<{result:JsonObject}>('select public.begin_bartender_turn($1,$2,$3,$4) result',[owner,operation(n),h,revision])).rows[0].result;
+      const finish=async(owner:string,n:number,result:JsonObject|null)=>(await db.query('select public.finish_bartender_turn($1,$2,$3,$4,$5,$6,$7) ok',[owner,operation(n),hash,result?document:null,result,2000,300])).rows[0].ok;
+      assert.equal((await begin(a,9200)).state,'acquired');
+      assert.equal((await begin(a,9201)).state,'running');
+      assert.equal((await begin(b,9202)).state,'acquired');
+      assert.equal((await begin(a,9200,0,'b'.repeat(64))).state,'conflict');
+      assert.equal(await finish(b,9200,{revision:1}),false);
+      assert.equal(await finish(a,9200,{revision:1,document}),true);
+      assert.equal((await begin(a,9200)).state,'cached');
+      assert.equal((await begin(a,9203)).state,'stale');
+      assert.equal((await begin(a,9203,1)).state,'acquired');
+      assert.equal(await finish(a,9203,null),true);
+      assert.equal((await begin(a,9203,1)).state,'failed');
+      assert.equal((await db.query("select attempts from private.bartender_daily where bucket=$1",[a])).rows[0].attempts,2);
+      await as(a);
+      assert.equal((await db.query<{result:JsonObject}>('select public.bartender_context() result')).rows[0].result.revision,1);
+      await assert.rejects(db.query('select * from private.bartender_sessions'),{code:'42501'});
+      await assert.rejects(db.query('select public.begin_bartender_turn($1,$2,$3,$4)',[b,operation(9205),hash,0]),{code:'42501'});
+      assert.equal((await db.query('select public.clear_bartender_conversation() ok')).rows[0].ok,true);
+      await db.exec('reset role');
+      assert.equal((await db.query('select attempts from private.bartender_daily where bucket=$1',[a])).rows[0].attempts,2);
+      assert.equal((await db.query('select revision from private.bartender_sessions where user_id=$1',[a])).rows[0].revision,2);
+      await db.query('update private.bartender_daily set attempts=30 where bucket=$1',[a]);
+      assert.equal((await begin(a,9206,2)).state,'daily-limit');
+      await db.query('update private.bartender_daily set attempts=1 where bucket=$1',[a]);
+      await db.query("update private.bartender_daily set attempts=1000 where bucket='global'");
+      assert.equal((await begin(a,9207,2)).state,'global-limit');
+      await db.query("update private.bartender_daily set attempts=1 where bucket='global'");
+      const disposable=operation(9208);await db.query('insert into auth.users(id,email) values($1,$2)',[disposable,'bartender-cascade@example.test']);
+      assert.equal((await begin(disposable,9209)).state,'acquired');
+      await as(disposable);assert.equal((await db.query('select public.clear_bartender_conversation() ok')).rows[0].ok,false);
+      await db.exec('reset role');await db.query('delete from auth.users where id=$1',[disposable]);
+      assert.equal((await db.query('select count(*)::integer n from private.bartender_sessions where user_id=$1',[disposable])).rows[0].n,0);
+      assert.equal((await db.query('select count(*)::integer n from private.bartender_turns where user_id=$1',[disposable])).rows[0].n,0);
+      assert.equal((await db.query('select count(*)::integer n from private.bartender_daily where bucket=$1',[disposable])).rows[0].n,0);
+      await db.exec('delete from private.bartender_turns; delete from private.bartender_sessions; delete from private.bartender_daily');
+    });
     await t.test('menu AI reservations isolate owners, count failed attempts and replay cached IDs', async()=>{
       await db.exec('reset role');
       const hash='c'.repeat(64), version='menu-selection-test';

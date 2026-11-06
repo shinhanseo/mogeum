@@ -125,3 +125,33 @@ test("an unexpected foreign photo path is never sent for signing", async () => {
   );
   assert.equal(reads, 2);
 });
+
+test("previous-record read failure preserves current detail and exposes a comparison retry notice", async () => {
+  let reads = 0;
+  const sdk = client(async (input, options) => {
+    const url = new URL(String(input));
+    assert.equal(url.pathname, "/rest/v1/tasting_records");
+    assert.equal(url.searchParams.get("user_id"), `eq.${owner}`);
+    assert.ok(options?.signal);
+    if (++reads === 1) return Response.json({ ...record, record_photos: [] });
+    if (reads === 2)
+      return Response.json([
+        { id: record.id, consumed_at: "2026-11-06T12:00:00Z" },
+        { id: "previous", consumed_at: "2026-11-01T12:00:00Z" },
+      ]);
+    assert.equal(
+      url.searchParams.get("cellar_entry_id"),
+      `eq.${record.cellar_entry_id}`,
+    );
+    assert.equal(url.searchParams.get("id"), "eq.previous");
+    return Response.json(
+      { message: "synthetic comparison read unavailable" },
+      { status: 503 },
+    );
+  });
+  const detail = await loadRecordDetail(sdk, owner, { recordId: record.id });
+  assert.equal(detail.record.id, record.id);
+  assert.equal(detail.history.length, 2);
+  assert.equal(detail.comparisonFailed, true);
+  assert.equal(detail.comparison, undefined);
+});

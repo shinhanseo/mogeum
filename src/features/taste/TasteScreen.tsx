@@ -1,5 +1,5 @@
+import { LoadingSkeleton } from "../../components/LoadingSkeleton";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -68,12 +68,20 @@ export function TasteScreen({
     >
       <Text style={s.title}>내 취향</Text>
       <View style={[s.stats, largeText && s.stack]}>
-        <View style={s.stat} accessible accessibilityLabel={`느낌 기록 ${analysis?.recordCount ?? 0}잔`}>
+        <View
+          style={s.stat}
+          accessible
+          accessibilityLabel={`느낌 기록 ${analysis?.recordCount ?? 0}잔`}
+        >
           <Text style={s.caption}>느낌 기록</Text>
           <Text style={s.count}>{analysis?.recordCount ?? 0}</Text>
           <Text style={s.caption}>잔</Text>
         </View>
-        <View style={s.stat} accessible accessibilityLabel={`서로 다른 술 ${analysis?.drinkCount ?? 0}종`}>
+        <View
+          style={s.stat}
+          accessible
+          accessibilityLabel={`서로 다른 술 ${analysis?.drinkCount ?? 0}종`}
+        >
           <Text style={s.caption}>서로 다른 술</Text>
           <Text style={s.count}>{analysis?.drinkCount ?? 0}</Text>
           <Text style={s.caption}>종</Text>
@@ -111,12 +119,7 @@ export function TasteScreen({
           {error}
         </Text>
       ) : null}
-      {busy ? (
-        <ActivityIndicator
-          accessibilityLabel="취향 요약 중"
-          color={colors.primary}
-        />
-      ) : null}
+      {busy ? <LoadingSkeleton kind="chat" label="취향 요약 중" /> : null}
       {facts.map((fact) => {
         const positive = fact.positiveIds.length,
           other = fact.negativeIds.length + fact.neutralIds.length,
@@ -241,7 +244,12 @@ export function TasteScreen({
                 onPress={() => onOpen(r.id)}
                 style={s.category}
               >
-                <CellarArt id={r.entryId} category={r.category} variant={r.illustrationVariant} size={48} />
+                <CellarArt
+                  id={r.entryId}
+                  category={r.category}
+                  variant={r.illustrationVariant}
+                  size={48}
+                />
                 <View style={s.copy}>
                   <Text
                     style={s.factName}
@@ -281,7 +289,12 @@ const s = StyleSheet.create({
   stats: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
   stack: { flexDirection: "column", alignItems: "flex-start", gap: 8 },
   caption: { ...typography.caption, color: colors.muted },
-  stat: { flexDirection: "row", alignItems: "baseline", gap: 4, paddingVertical: 2 },
+  stat: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+    paddingVertical: 2,
+  },
   count: { ...typography.title, color: colors.text, includeFontPadding: true },
   heading: {
     marginTop: 20,

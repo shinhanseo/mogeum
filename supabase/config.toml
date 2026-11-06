@@ -437,3 +437,7 @@ verify_jwt = false
 [functions.product-research]
 # Internal operations endpoint validates exact service-role secret; user JWTs cannot trigger it.
 verify_jwt = false
+
+[functions.bartender]
+# Auth.getUser validates the signed user; conversation and budgets are server owned.
+verify_jwt = false

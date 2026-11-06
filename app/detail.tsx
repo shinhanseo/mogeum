@@ -1,3 +1,4 @@
+import { LoadingSkeleton, ScreenSkeleton } from "../src/components/LoadingSkeleton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Redirect,
@@ -5,7 +6,7 @@ import {
   useLocalSearchParams,
   useRouter,
 } from "expo-router";
-import { ActivityIndicator, AppState, Text, View } from "react-native";
+import { AppState, Text, View } from "react-native";
 import { useAuth } from "../src/features/auth/AuthProvider";
 import { getSupabase } from "../src/lib/supabase";
 import { loadRecordDetail } from "../src/features/records/detail";
@@ -89,7 +90,12 @@ function ConnectedDetail({
     return (
       <RecordDetailScreen
         {...value}
-        onCutout={() => router.push({pathname:"/cutout",params:{recordId:value.record.id}})}
+        onCutout={() =>
+          router.push({
+            pathname: "/cutout",
+            params: { recordId: value.record.id },
+          })
+        }
         onPhotoError={(uri) => {
           if (focused.current && AppState.currentState === "active")
             void loader.refreshPhoto(uri);
@@ -119,12 +125,13 @@ function ConnectedDetail({
       />
     );
   }
+  if(state.status !== "failed")return <ScreenSkeleton kind="detail"/>;
   return (
     <View
       style={{
         flex: 1,
         backgroundColor: colors.background,
-        justifyContent: "center",
+        justifyContent: "flex-start",
         padding: 24,
         gap: 16,
       }}
@@ -146,10 +153,7 @@ function ConnectedDetail({
           />
         </>
       ) : (
-        <ActivityIndicator
-          color={colors.primary}
-          accessibilityLabel="기록 불러오는 중"
-        />
+        <LoadingSkeleton kind="detail" />
       )}
     </View>
   );

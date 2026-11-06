@@ -22,6 +22,7 @@ type Props = {
   onSave: () => void;
   onRetry: () => void;
   onEvidence: (recordId: string) => void;
+  onRecord: () => void;
 };
 /** Latest 04 / 19:926, high-fidelity context captured 2026-10-24. No tab bar on this view. */
 export function DiscoveryReasonScreen(props: Props) {
@@ -176,6 +177,12 @@ export function DiscoveryReasonScreen(props: Props) {
       </ScrollView>
       <View style={s.footer}>
         <Button
+          label="마셔봤어요 · 기록하기"
+          onPress={props.onRecord}
+          disabled={props.busy || props.saving || !!props.error}
+        />
+        <Button
+          variant="secondary"
           label={
             props.saved
               ? "마셔보고 싶은 술에서 해제"
@@ -218,6 +225,7 @@ const s = StyleSheet.create({
   evidence: { gap: space.md },
   evidenceRow: { gap: space.xs },
   footer: {
+    gap: space.sm,
     paddingHorizontal: layout.screenPadding,
     paddingVertical: space.lg,
   },

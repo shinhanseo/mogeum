@@ -464,7 +464,9 @@ export default function NativeRecordProbe() {
         recordId: saved.recordId,
       });
       await deleteExperience(a, owner, detail.record);
-      await drainPhotoDeletions(a, owner);
+      // Probe clients deliberately do not sign into the app-wide Auth provider.
+      // This run creates no cutout derivative; derivative ownership is verified in the cutout probe.
+      await drainPhotoDeletions(a, owner, async () => {});
       const removed = await a.storage
         .from("record-photos")
         .download(pending.input.photo!.storagePath);

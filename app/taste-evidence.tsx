@@ -1,3 +1,7 @@
+import {
+  ScreenSkeleton,
+  LoadingSkeleton,
+} from "../src/components/LoadingSkeleton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Redirect,
@@ -5,7 +9,7 @@ import {
   useLocalSearchParams,
   useRouter,
 } from "expo-router";
-import { ActivityIndicator, AppState, Text, View } from "react-native";
+import { AppState, Text, View } from "react-native";
 import { useAuth } from "../src/features/auth/AuthProvider";
 import { getSupabase } from "../src/lib/supabase";
 import {
@@ -21,8 +25,7 @@ import { Button } from "../src/components/Button";
 import { colors, typography } from "../src/theme/tokens";
 export default function EvidenceRoute() {
   const auth = useAuth();
-  if (auth.status === "loading")
-    return <ActivityIndicator color={colors.primary} />;
+  if (auth.status === "loading") return <ScreenSkeleton kind="evidence" />;
   if (auth.status !== "signed-in") return <Redirect href="/login" />;
   return (
     <ConnectedEvidence
@@ -97,13 +100,14 @@ function ConnectedEvidence({ owner }: { owner: string }) {
         }
       />
     );
+  if(state.status !== "failed")return <ScreenSkeleton kind="evidence"/>;
   return (
     <View
       style={{
         flex: 1,
         padding: 24,
         backgroundColor: colors.background,
-        justifyContent: "center",
+        justifyContent: "flex-start",
         gap: 16,
       }}
     >
@@ -116,7 +120,7 @@ function ConnectedEvidence({ owner }: { owner: string }) {
           <Button label="내 취향으로" variant="text" onPress={close} />
         </>
       ) : (
-        <ActivityIndicator color={colors.primary} />
+        <LoadingSkeleton kind="evidence" />
       )}
     </View>
   );

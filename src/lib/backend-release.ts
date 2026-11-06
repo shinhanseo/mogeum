@@ -9,6 +9,7 @@ export const BACKEND_FUNCTIONS = [
   "taste-summary",
   "menu-recommend",
   "next-drinks",
+  "bartender",
   "delete-account",
   "provider-credentials",
 ] as const;

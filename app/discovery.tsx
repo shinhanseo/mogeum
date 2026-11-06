@@ -1,3 +1,4 @@
+import { ScreenSkeleton } from "../src/components/LoadingSkeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Redirect,
@@ -21,7 +22,8 @@ import type { Product } from "../supabase/functions/_shared/product-catalog";
 import { colors } from "../src/theme/tokens";
 export default function DiscoveryRoute() {
   const auth = useAuth();
-  if (auth.status === "loading") return <View style={s.page} />;
+  if (auth.status === "loading")
+    return <ScreenSkeleton kind="recommendations" label="추천 불러오는 중" />;
   if (auth.status !== "signed-in") return <Redirect href="/login" />;
   return (
     <DiscoveryPanel key={auth.session.user.id} owner={auth.session.user.id} />
@@ -75,7 +77,7 @@ function DiscoveryPanel({ owner }: { owner: string }) {
     setError("");
     try {
       await wishlistRepository(sdk).resume(owner);
-      const data = await loadDiscovery(sdk, owner, null, {weekly: true});
+      const data = await loadDiscovery(sdk, owner, null, { weekly: true });
       if (!active()) return;
       setSelectedProduct((current) =>
         data.recommendations.some((row) => row.product.id === current)
@@ -187,6 +189,12 @@ function DiscoveryPanel({ owner }: { owner: string }) {
         {reason && result ? (
           <DiscoveryReasonScreen
             key={reason.product.id}
+            onRecord={() =>
+              router.push({
+                pathname: "/record",
+                params: { productId: reason.product.id },
+              })
+            }
             row={reason}
             records={result.evidenceRecords}
             saved={wishlist.some(

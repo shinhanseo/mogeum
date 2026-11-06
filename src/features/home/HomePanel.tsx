@@ -1,7 +1,9 @@
+import { LoadingSkeleton } from "../../components/LoadingSkeleton";
+import { Icon } from "../../components/Icon";
+import { BartenderOtter } from "../bartender/BartenderOtter";
 import { generationCopy } from "../discovery/generation-copy";
 import { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   AppState,
   Image,
   Pressable,
@@ -67,7 +69,7 @@ export function HomePanel({
         async discovery() {
           const client = getSupabase();
           if (!client || !owner) throw Error("NO_CLIENT");
-          return loadDiscovery(client, owner, null, {weekly: true});
+          return loadDiscovery(client, owner, null, { weekly: true });
         },
         publish: setState,
       }),
@@ -106,40 +108,55 @@ export function HomePanel({
         ) === i,
     )
     .slice(0, 4);
-  const pagerKey = `${data?.context.snapshot.hash ?? "empty"}:${unique.map((row) => row.product.id).join(":")}:${width}`;
+  const recommendationsLoading = Boolean(
+    owner && !failed && (!data || data.recommendationState === "loading"),
+  );
   const loading = Boolean(owner && !data && !failed);
   const hasPositive = facts.some((fact) => fact.positiveIds.length > 0);
   const pages = [
-    ...unique.map((row) => {
-      const match = row.similar[0];
-      const source = data?.context.snapshot.records.find((record) =>
-        match?.recordIds.includes(record.id),
-      );
-      return {
-        title: row.product.name,
-        eyebrow: "내 기록에서 이어지는 한 잔",
-        description: source?.name
-          ? `${source.name}에서 좋게 남긴 ${match.label}. 이 술의 제품 설명에도 같은 특징이 있어요.`
-          : `${row.similar
-              .slice(0, 2)
-              .map((f) => f.label)
-              .join(" · ")}을 좋게 남긴 기록과 이어져요.`,
-        hint: row.cautions.length
-          ? `${row.cautions[0].label}은 아쉽게 남긴 기록도 있어요. 함께 살펴봐요.`
-          : row.unconfirmedFeatures.length
-            ? `${row.unconfirmedFeatures[0].label}은 새롭게 살펴볼 특징이에요. 아직 내 선호는 몰라요.`
-            : "제품 설명과 내 경험은 다를 수 있어요. 닮은 점부터 골라봤어요.",
-        category: row.product.category,
-        meta: `${{ whisky: "위스키", wine: "와인", beer: "맥주", traditional: "전통주" }[row.product.category]} · ${row.product.edition}`,
-        id: row.product.id,
-        action: () =>
-          router.push({
-            pathname: "/discovery",
-            params: { productId: row.product.id },
-          }),
-        link: "내 기록과 비교하기",
-      };
-    }),
+    ...(recommendationsLoading
+      ? (["위스키", "와인", "맥주", "전통주"] as const).map((name, i) => ({
+          skeleton: true,
+          title: `${name} 추천 불러오는 중`,
+          eyebrow: "",
+          meta: "",
+          description: "",
+          hint: "",
+          category: null,
+          id: `loading-${i}`,
+          action: () => {},
+          link: "",
+        }))
+      : unique.map((row) => {
+          const match = row.similar[0];
+          const source = data?.context.snapshot.records.find((record) =>
+            match?.recordIds.includes(record.id),
+          );
+          return {
+            title: row.product.name,
+            eyebrow: "내 기록에서 이어지는 한 잔",
+            description: source?.name
+              ? `${source.name}에서 좋게 남긴 ${match.label}. 이 술의 제품 설명에도 같은 특징이 있어요.`
+              : `${row.similar
+                  .slice(0, 2)
+                  .map((f) => f.label)
+                  .join(" · ")}을 좋게 남긴 기록과 이어져요.`,
+            hint: row.cautions.length
+              ? `${row.cautions[0].label}은 아쉽게 남긴 기록도 있어요. 함께 살펴봐요.`
+              : row.unconfirmedFeatures.length
+                ? `${row.unconfirmedFeatures[0].label}은 새롭게 살펴볼 특징이에요. 아직 내 선호는 몰라요.`
+                : "제품 설명과 내 경험은 다를 수 있어요. 닮은 점부터 골라봤어요.",
+            category: row.product.category,
+            meta: `${{ whisky: "위스키", wine: "와인", beer: "맥주", traditional: "전통주" }[row.product.category]} · ${row.product.edition}`,
+            id: row.product.id,
+            action: () =>
+              router.push({
+                pathname: "/discovery",
+                params: { productId: row.product.id },
+              }),
+            link: "내 기록과 비교하기",
+          };
+        })),
     {
       title: loading
         ? "내 기록을\n살펴보고 있어요"
@@ -167,6 +184,17 @@ export function HomePanel({
       link: "내 취향 살펴보기",
     },
     {
+      title: "오늘 이야기도,\n한 잔의 취향도.",
+      eyebrow: "모금 바텐더가 기다려요",
+      meta: "편하게 이야기를 건네주세요",
+      description: "오늘 있었던 일부터 다음에 마실 한 잔까지, 함께 이야기해요.",
+      hint: "쌓아둔 기록을 참고해 취향에 가까운 술도 골라드려요.",
+      category: null,
+      id: "bartender",
+      action: () => router.push(owner ? "/bartender" : "/login"),
+      link: "바텐더와 이야기하기",
+    },
+    {
       title: "메뉴판에서\n내 취향 찾기",
       eyebrow: "지금 메뉴판 앞이라면",
       meta: "사진 여러 장도 한 번에",
@@ -192,11 +220,11 @@ export function HomePanel({
           <Text style={s.brand}>모금</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="계정 관리"
-            onPress={() => router.push(owner ? "/account" : "/login")}
+            accessibilityLabel="설정"
+            onPress={() => router.push("/settings")}
             style={s.account}
           >
-            <Text style={s.white}>설정</Text>
+            <Icon name="settings" size={24} color={colors.surface} />
           </Pressable>
         </View>
         {data?.recommendationState === "loading" ? (
@@ -215,12 +243,14 @@ export function HomePanel({
           <Text style={s.recommendationStatus}>{recommendationCopy.body}</Text>
         ) : null}
         <HomeCarousel
-          key={pagerKey}
+          key={width}
           width={width}
           labels={pages.map((page) => page.title)}
         >
           {pages.map((page) =>
-            page.id === "menu" ? (
+            "skeleton" in page ? (
+              <LoadingSkeleton key={page.id} kind="hero" label={page.title} />
+            ) : page.id === "menu" ? (
               <HomeMenuSlide key={page.id} onOpen={page.action} />
             ) : (
               <View key={page.id} style={s.slide}>
@@ -237,7 +267,9 @@ export function HomePanel({
                   >
                     {page.title}
                   </Text>
-                  {page.category ? (
+                  {page.id === "bartender" ? (
+                    <BartenderOtter size={88} />
+                  ) : page.category ? (
                     <CellarArt
                       id={page.id}
                       category={page.category}
@@ -300,10 +332,7 @@ export function HomePanel({
           </Pressable>
         </View>
         {owner && !data && !failed ? (
-          <ActivityIndicator
-            accessibilityLabel="내 기록 불러오는 중"
-            color={colors.primary}
-          />
+          <LoadingSkeleton kind="recent" label="최근 기록 불러오는 중" />
         ) : null}
         {failed ? (
           <>

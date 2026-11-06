@@ -1,6 +1,6 @@
+import { LoadingSkeleton } from "../../components/LoadingSkeleton";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Keyboard,
   Pressable,
@@ -34,7 +34,12 @@ function CellarTile({
       onPress={onPress}
     >
       <View style={styles.art}>
-        <CellarArt id={item.id} category={item.category} variant={item.illustrationVariant} size={artSize} />
+        <CellarArt
+          id={item.id}
+          category={item.category}
+          variant={item.illustrationVariant}
+          size={artSize}
+        />
         {item.recordCount > 1 ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{item.recordCount}</Text>
@@ -80,12 +85,15 @@ export function CellarScreen({
   const filtered = items;
   const empty = !items.length && totalCount === 0 && !loading && !error;
   const status = (
-    <View style={styles.noResults}>
+    <View
+      style={
+        loading
+          ? { paddingHorizontal: 16, paddingVertical: 12 }
+          : styles.noResults
+      }
+    >
       {loading ? (
-        <ActivityIndicator
-          accessibilityLabel="술장 불러오는 중"
-          color={colors.primary}
-        />
+        <LoadingSkeleton kind="cellar" label="술장 불러오는 중" />
       ) : error ? (
         <>
           <Text accessibilityRole="alert" style={styles.emptyBody}>
@@ -110,7 +118,13 @@ export function CellarScreen({
             <Icon name="search" color={colors.text} />
           </Pressable>
         </View>
-        <Text style={styles.count}>모아둔 술 {totalCount}</Text>
+        {loading && !items.length ? (
+          <View style={{ width: 110 }}>
+            <LoadingSkeleton kind="count" label="술장 개수 확인 중" />
+          </View>
+        ) : (
+          <Text style={styles.count}>모아둔 술 {totalCount}</Text>
+        )}
         {searchOpen && (
           <TextInput
             returnKeyType="done"

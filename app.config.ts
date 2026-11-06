@@ -5,18 +5,23 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   if (!["development", "beta"].includes(variant))
     throw new Error("Unknown MOGEUM_APP_VARIANT");
   const beta = variant === "beta";
+  const storeRelease = process.env.MOGEUM_STORE_RELEASE === "1";
+  if (storeRelease && !beta) throw new Error("Store release requires beta identifiers");
   return {
     ...config,
     owner: "shinhanseo",
-    name: beta ? "모금 베타" : "모금",
+    name: beta && !storeRelease ? "모금 베타" : "모금",
     slug: "mogeum",
-    version: "0.1.0",
+    version: storeRelease ? "1.0.1" : "0.1.0",
     scheme: beta ? "mogeum-beta" : "mogeum-dev",
     orientation: "portrait",
     userInterfaceStyle: "light",
     icon: "./assets/brand/icon.png",
     ios: {
       supportsTablet: false,
+      usesAppleSignIn: true,
+      entitlements: { "com.apple.developer.applesignin": ["Default"] },
+      infoPlist: { ITSAppUsesNonExemptEncryption: false },
       buildNumber: "1",
       ...(beta
         ? { bundleIdentifier: "com.hanseo.mogeum" }

@@ -1,6 +1,7 @@
+import {LoadingSkeleton,ScreenSkeleton} from "../src/components/LoadingSkeleton";
 import { useEffect, useRef, useState } from 'react';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuth } from '../src/features/auth/AuthProvider';
 import { getSupabase } from '../src/lib/supabase';
 import { colors, typography } from '../src/theme/tokens';
@@ -72,5 +73,6 @@ function ConnectedTasting({ owner, recordId }: {owner:string;recordId:string}) {
     if(active.current)router.replace({pathname:'/detail',params:{recordId}});
   }
   if(draft)return <><TastingComposer initial={draft} onChange={value=>{void persistDraft(value).catch(()=>setError('임시 저장에 실패했어요.'));}} onSave={save} onClose={close}/>{!!error&&<Text accessibilityRole="alert" style={{...typography.caption,color:colors.primary,padding:12}}>{error}</Text>}</>;
-  return <View style={{flex:1,backgroundColor:colors.background,justifyContent:'center',padding:24,gap:16}}>{loading?<ActivityIndicator color={colors.primary}/>:<><Text style={{...typography.body,color:colors.text}}>{error||'기본 기록을 저장했어요.'}</Text><Button label="술장으로 돌아가기" onPress={close}/></>}{category&&<ModeSheet visible={modeSheet} category={category} onChoose={chooseMode} onClose={close}/>}</View>;
+  if(loading)return <ScreenSkeleton kind="question"/>;
+  return <View style={{flex:1,backgroundColor:colors.background,justifyContent:'flex-start',padding:24,gap:16}}>{loading?<LoadingSkeleton kind="question"/>:<><Text style={{...typography.body,color:colors.text}}>{error||'기본 기록을 저장했어요.'}</Text><Button label="술장으로 돌아가기" onPress={close}/></>}{category&&<ModeSheet visible={modeSheet} category={category} onChoose={chooseMode} onClose={close}/>}</View>;
 }

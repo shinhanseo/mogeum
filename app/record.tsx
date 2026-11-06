@@ -1,3 +1,4 @@
+import {ScreenSkeleton} from "../src/components/LoadingSkeleton";
 import { useScreenBack } from '../src/hooks/useScreenBack';
 import { loadDiscoveryPrefill } from '../src/features/discovery/repository';
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
@@ -35,7 +36,7 @@ type Sheet = 'category' | 'date' | 'vintage' | null;
 export default function RecordScreen() {
   const auth = useAuth();
   const { entryId, productId } = useLocalSearchParams<{entryId?:string;productId?:string}>();
-  if (auth.status === 'loading') return <View style={{ flex:1, backgroundColor:colors.background }} />;
+  if (auth.status === 'loading') return <ScreenSkeleton kind="form"/>;
   if (auth.status !== 'signed-in') return <Redirect href="/login" />;
   return <RecordComposer key={`${auth.session.user.id}-${entryId??productId??'new'}`} owner={auth.session.user.id} entryId={entryId} productId={productId} />;
 }
@@ -211,7 +212,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
     }
     finally { busyRef.current = false; setSaving(false); }
   }
-  if (restoring) return <View style={styles.page} />;
+  if (restoring) return <ScreenSkeleton kind="form" label="작성 중인 기록 복원 중"/>;
   if(restoreFailed)return <SafeAreaView style={[styles.page,{padding:24,justifyContent:'center',gap:16}]}><Text accessibilityRole="alert" style={styles.body}>{error}</Text><Button label="술장으로 돌아가기" onPress={()=>router.replace('/')} /></SafeAreaView>;
   const summary = <View style={styles.summary}>
     {photo ? <Image source={{ uri: photo.uri }} resizeMode="cover" style={styles.photo} accessibilityLabel="선택한 술 사진" /> : <View style={[styles.photo, styles.noPhoto]}><Text style={styles.caption}>사진 없이{`\n`}남기는 한 잔</Text></View>}
@@ -219,7 +220,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
   </View>;
   return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <PhotoAccessSheet access={picker.access} busy={picker.busy} onClose={picker.close} onContinue={picker.proceed} onDismiss={picker.onDismiss}/>
-    <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (repeatEntry || pending?.entryId || category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
+    <WebStatusSpace /><ScreenHeader title={step === 'start' ? '한 잔 기록' : step === 'info' ? (repeatEntry || pending?.entryId || productId || !photo || category === '와인' ? '기록하기' : '사진 확인') : '기록하기'} onBack={back} onClose={close} />
     <ScrollView ref={recordScroll} pointerEvents={saving||photoPreparing ? 'none' : 'auto'} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       {step === 'start' ? <View style={styles.start}>
         <Text style={styles.display}>오늘의 한 잔을{`\n`}사진으로 남겨볼까?</Text><Text style={[styles.body, { marginTop: 8 }]}>잘 찍은 사진이 아니어도 괜찮아요.</Text>
@@ -229,6 +230,7 @@ export function RecordComposer({ owner, entryId, productId, previewEntry, previe
       </View> : <View style={styles.form}>
         {(repeatEntry||pending?.entryId)&&<Text style={[styles.caption,{marginBottom:12}]}>같은 술에 새로운 한 잔을 남겨요.</Text>}
         {pending&&<Text style={[styles.caption,{marginBottom:12}]}>이전에 저장 중이던 기록을 먼저 완료해주세요.</Text>}
+        {!!productId&&!pending&&!repeatEntry&&<Text style={[styles.caption,{marginBottom:12}]}>마셔본 한 잔을 기록해요. 이름과 종류는 수정할 수 있어요.</Text>}
         {summary}
         {step === 'info' ? <><View style={styles.fields}><View><Text style={styles.label}>술 이름</Text><TextInput ref={nameInput} returnKeyType="done" submitBehavior="blurAndSubmit" onSubmitEditing={() => Keyboard.dismiss()} accessibilityLabel="술 이름" maxLength={200} value={name} onChangeText={text=>{setName(text);if(repeatEntry)setRepeatEntry(null);setSeparateName(null);}} placeholder="술 이름을 입력해주세요" placeholderTextColor={colors.muted} style={styles.input} />{!pending&&(repeatEntry||separateName!==name)&&<ExistingDrinkChoice owner={owner} query={name} selected={repeatEntry} fixtures={previewCandidates} onSelect={entry=>{Keyboard.dismiss();setRepeatEntry(entry);setName(entry.name??name);setCategory(entry.category);setSeparateName(null);}} onSeparate={()=>{setRepeatEntry(null);setSeparateName(name);}}/>}</View>
           <View><Text style={styles.label}>술 종류</Text><Button label={`${category ?? '종류 선택'}  ›`} variant="secondary" onPress={() => setSheet('category')} /></View>
