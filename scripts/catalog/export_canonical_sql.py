@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Export bounded, replay-safe imports. Run after inventory-import.sql."""
-import argparse,json,re,unicodedata
+import argparse,hashlib,json,re,unicodedata
 from pathlib import Path
 
 def alias(value):
@@ -30,7 +30,9 @@ def export(root):
                 statements.append('insert into public.catalog_product_features(feature_id,product_id) values('+quote(feature['id'])+','+quote(row['id'])+') on conflict do nothing;')
         statements.append('commit;')
         (folder/f'{start//100:05}.sql').write_text('\n'.join(statements)+'\n')
-    return {'products':len(rows),'batches':(len(rows)+99)//100}
+    summary={'products':len(rows),'batches':(len(rows)+99)//100}
+    (root/'canonical-export-report.json').write_text(json.dumps({**summary,'sha256':hashlib.sha256((root/'canonical-products.jsonl').read_bytes()).hexdigest()}))
+    return summary
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--root',type=Path,default=Path('artifacts/catalog-ingestion'))
     print(json.dumps(export(parser.parse_args().root)))

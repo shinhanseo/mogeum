@@ -16,6 +16,9 @@ def plan(root):
     if report['sourceRecords']!=count:raise RuntimeError('STALE_NORMALIZATION')
     canonical=[json.loads(line) for line in (root/'canonical-products.jsonl').read_text().splitlines() if line]
     if len(canonical)!=report['canonicalProducts'] or len({row['id'] for row in canonical})!=len(canonical):raise RuntimeError('INVALID_CANONICAL_EXPORT')
+    source_report=json.loads((root/'inventory-export-report.json').read_text())
+    canonical_report=json.loads((root/'canonical-export-report.json').read_text())
+    if source_report['products']!=count or canonical_report['sha256']!=hashlib.sha256((root/'canonical-products.jsonl').read_bytes()).hexdigest():raise RuntimeError('STALE_SQL_EXPORT')
     files=sorted((root/'inventory-sql').glob('*.sql'))+sorted((root/'canonical-sql').glob('*.sql'))
     if not files:raise RuntimeError('MISSING_SQL_BATCHES')
     return files,report

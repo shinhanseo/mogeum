@@ -37,4 +37,6 @@ with (args.root/'inventory-import.sql.tmp').open('w',encoding='utf-8') as stream
     output.write('commit;\n')
     output.flush()
 (args.root/'inventory-import.sql.tmp').replace(args.root/'inventory-import.sql')
-print(json.dumps({'products':db.execute('select count(*) from products').fetchone()[0],'sql':str(args.root/'inventory-import.sql')}))
+summary={'products':db.execute('select count(*) from products').fetchone()[0],'images':db.execute('select count(*) from images').fetchone()[0]}
+(args.root/'inventory-export-report.json').write_text(json.dumps(summary))
+print(json.dumps({**summary,'sql':str(args.root/'inventory-import.sql')}))
