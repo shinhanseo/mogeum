@@ -58,6 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "expo-web-browser",
       "expo-router",
       "expo-dev-client",
+      "expo-status-bar",
       [
         "expo-splash-screen",
         {
