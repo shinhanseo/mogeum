@@ -28,6 +28,12 @@ class InventoryTests(unittest.TestCase):
         self.assertNotIn('Private', json.dumps(parsed))
         self.assertNotIn('copied prose', json.dumps(parsed))
 
+    def test_product_redirect_cannot_silently_change_identity(self):
+        data={'@type':'Product','name':'Different Bottle','url':'https://dailyshot.co/m/item/2'}
+        html='<script type="application/ld+json">'+json.dumps(data)+'</script>'
+        with self.assertRaisesRegex(ValueError,'does not match'):
+            parse_dailyshot(html,'https://dailyshot.co/m/item/1')
+
     def test_domestic_title_uses_product_not_section_heading(self):
         html = '''<div class="product-view"><dl><dt class="subject">테스트 약주</dt>
         <dd><div class="info"><div class="title">상세 정보</div><ul class="info-list">

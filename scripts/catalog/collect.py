@@ -182,11 +182,17 @@ def parse_dailyshot(data, url):
     if not product or not product.get('name'):
         title = soup.select_one('meta[property="og:title"]')
         image = soup.select_one('meta[property="og:image"]')
-        if not title or not title.get('content'):
+        product_type = soup.select_one('meta[property="og:type"]')
+        if not title or not title.get('content') or not product_type or product_type.get('content') != 'product':
             raise ValueError('No public product title')
         name = title['content'].split(' 전국 가격비교')[0].strip()
         product = {'name': name, 'image': [image['content']] if image else [],
                    'category': [], 'additionalProperty': [], 'keywords': []}
+    declared_url = product.get('url')
+    og_url = soup.select_one('meta[property="og:url"]')
+    declared_url = declared_url or (og_url.get('content') if og_url else None)
+    if declared_url and urllib.parse.urlsplit(declared_url).path.rstrip('/') != urllib.parse.urlsplit(url).path.rstrip('/'):
+        raise ValueError('Product URL does not match the requested item')
     props = {p['name']: p.get('value') for p in (product.get('additionalProperty') or [])
              if isinstance(p, dict) and 'name' in p}
     for attribute in public_details.get('information', []):
