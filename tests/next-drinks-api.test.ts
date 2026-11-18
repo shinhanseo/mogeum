@@ -1,5 +1,5 @@
 import { products } from "../supabase/functions/_shared/product-catalog";
-import { SHARED_CATALOG_VERSION } from "../supabase/functions/_shared/catalog-contract";
+import { RICH_CATALOG_VERSION, SHARED_CATALOG_VERSION } from "../supabase/functions/_shared/catalog-contract";
 import { loadDiscoveryPrefill } from "../src/features/discovery/repository";
 import { createWishlistQueue } from "../src/features/discovery/wishlist";
 import { parseDiscoveryResult } from "../src/features/discovery/contract";
@@ -87,7 +87,7 @@ test(
       assert.equal((await request({recommendationVersion:'invented'},token)).status,400);
       const weeklyEmpty=await request({recommendationVersion:'weekly-selection-v1'},token);
       assert.equal(weeklyEmpty.status,200);const weeklyEmptyResult=await weeklyEmpty.json();
-      assert.deepEqual(weeklyEmptyResult.recommendations,[]);assert.equal(weeklyEmptyResult.modelUsed,false);assert.equal(weeklyEmptyResult.generation.state,'insufficient');
+      assert.deepEqual(weeklyEmptyResult.recommendations,[]);assert.equal(weeklyEmptyResult.modelUsed,false);assert.equal(weeklyEmptyResult.generation,undefined);assert.equal(weeklyEmptyResult.method,'evidence-rules-v1');
       const operation = randomUUID();
       const bookmark = () =>
         a.rpc("set_drink_wishlist", {
@@ -205,12 +205,16 @@ test(
       );
       if(process.env.MOGEUM_TEST_WEEKLY_NO_KEY==='1'){
         const missingKey=await request({recommendationVersion:'weekly-selection-v1'},token);
-        assert.equal(missingKey.status,503);assert.equal((await missingKey.json()).code,'AI_NOT_CONFIGURED');
+        assert.equal(missingKey.status,200);assert.equal((await missingKey.json()).method,'evidence-rules-v1');
       }
       const response = await request({}, token);
       assert.equal(response.status, 200);
       const value = await response.json();
       parseDiscoveryResult(value);
+      const richResponse=await request({catalogVersion:RICH_CATALOG_VERSION},token);
+      assert.equal(richResponse.status,200);
+      const richValue=await richResponse.json();parseDiscoveryResult(richValue);
+      assert.equal(richValue.catalogVersion,RICH_CATALOG_VERSION);assert.equal(richValue.modelUsed,false);
       assert.equal(value.recordCount, 201);
       assert.equal(value.omittedSensoryRecords, 1);
       assert.equal(value.modelUsed, false);

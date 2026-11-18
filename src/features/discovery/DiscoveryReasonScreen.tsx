@@ -130,7 +130,7 @@ export function DiscoveryReasonScreen(props: Props) {
             {"\n"}
             {row.product.source.kind === "producer"
               ? "생산자 설명"
-              : "전문 테이스팅 자료"}{" "}
+              : row.product.source.kind === "retailer" ? "판매처 제품 정보" : row.product.source.kind === "public-dataset" ? "공공 제품 정보" : "전문 테이스팅 자료"}{" "}
             · {row.product.source.checkedAt} 확인
           </Text>
           <Text style={s.secondary}>{row.product.description}</Text>

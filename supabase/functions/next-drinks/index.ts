@@ -1,3 +1,4 @@
+import {catalogCandidates} from '../_shared/catalog-database.ts';
 import {generateWeeklySelection} from './weekly-service.ts';
 import {restoreWeeklyDrinks,WEEKLY_DISCOVERY_VERSION} from '../_shared/weekly-discovery.ts';
 import {
@@ -17,6 +18,7 @@ import {
   products,
 } from "../_shared/product-catalog.ts";
 import {
+  RICH_CATALOG_VERSION, isSharedCatalogVersion,
   type CatalogDocument,
   catalogProduct,
   MAX_CATALOG_PRODUCTS,
@@ -103,14 +105,15 @@ Deno.serve(async (request) => {
       (body as { catalogVersion?: unknown }).catalogVersion;
     if (
       requestedCatalog !== undefined &&
-      requestedCatalog !== SHARED_CATALOG_VERSION
+      !isSharedCatalogVersion(requestedCatalog)
     ) {
       return reply({ code: "INVALID_CATALOG_VERSION" }, 400);
     }
-    const dynamic = requestedCatalog === SHARED_CATALOG_VERSION;
+    const rich = requestedCatalog === RICH_CATALOG_VERSION;
+    const dynamic = isSharedCatalogVersion(requestedCatalog);
     const weeklyVersion=(body as {recommendationVersion?:unknown}).recommendationVersion;
     if(weeklyVersion!==undefined&&(weeklyVersion!==WEEKLY_DISCOVERY_VERSION||!dynamic))return reply({code:'INVALID_RECOMMENDATION_VERSION'},400);
-    const weekly=weeklyVersion===WEEKLY_DISCOVERY_VERSION;
+    const weekly=weeklyVersion===WEEKLY_DISCOVERY_VERSION && !rich && Deno.env.get('MOGEUM_RECOMMENDATION_ENGINE')==='gemini';
     const owner = auth.data.user.id;
     const result = await withStableDiscoverySnapshot(
       async () => {
@@ -138,6 +141,7 @@ Deno.serve(async (request) => {
           if (!page.data || page.data.length < 200) break;
           productCursor = page.data.at(-1)!.id;
         }
+        if(rich)catalog.push(...await catalogCandidates(client,analyzeTaste(snapshot).facts.filter(f=>f.positiveIds.length>0).map(f=>f.id)));
         // Legacy binaries require their pinned facts. Keep this compatibility view read-only;
         // new clients explicitly opt into the authenticated dynamic catalog contract.
         const availableProducts = dynamic
@@ -194,6 +198,7 @@ Deno.serve(async (request) => {
           availableProducts,
         );
         let generation:Record<string,unknown>|undefined;
+        if(!weekly)recommendations=recommendations.slice(0,24);
         if(weekly){
           const eligible=discoverDrinks(snapshot,history,null,new Set(wishlist.filter(r=>r.saved).map(r=>r.product_id)),availableProducts);
           if(!eligible.length){recommendations=[];generation={state:'insufficient'};}
@@ -212,7 +217,7 @@ Deno.serve(async (request) => {
             recommendations='result' in generated?restoreWeeklyDrinks(generated.result,snapshot,history,new Set(wishlist.filter(r=>r.saved).map(r=>r.product_id)),availableProducts,category as Product['category']|null):[];
           }
         }
-        if(weekly){
+        if(weekly||rich){
           const currentCatalog:CatalogDocument[]=[];let after:string|null=null;
           for(;;){
             let query=client.from('product_catalog').select('id,family_id,category,status,revision,document').eq('status','verified').order('id').limit(200);
@@ -221,6 +226,7 @@ Deno.serve(async (request) => {
             if(currentCatalog.length>MAX_CATALOG_PRODUCTS)throw Error('CATALOG_TOO_LARGE');
             if(!page.data||page.data.length<200)break;after=page.data.at(-1)!.id;
           }
+          if(rich)currentCatalog.push(...await catalogCandidates(client,analyzeTaste(snapshot).facts.filter(f=>f.positiveIds.length>0).map(f=>f.id)));
           const currentWishlist:typeof wishlist=[];after=null;
           for(;;){
             let query=client.from('drink_wishlist').select('product_id,saved,revision').eq('user_id',owner).order('product_id').limit(200);
@@ -266,7 +272,7 @@ Deno.serve(async (request) => {
           modelUsed: weekly&&!!generation&&['cached','generated'].includes(String(generation.state)),
           ...(weekly?{generation}:{}),
           catalogVersion: dynamic
-            ? SHARED_CATALOG_VERSION
+            ? (rich ? RICH_CATALOG_VERSION : SHARED_CATALOG_VERSION)
             : PRODUCT_CATALOG_VERSION,
           catalogSize: dynamic ? catalog.length : products.length,
           limitedCatalog: true,

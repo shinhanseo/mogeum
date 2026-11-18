@@ -5,7 +5,7 @@ import {randomUUID} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {createClient} from '@supabase/supabase-js';
 import {products} from '../supabase/functions/_shared/product-catalog';
-import {SHARED_CATALOG_VERSION} from '../supabase/functions/_shared/catalog-contract';
+import {RICH_CATALOG_VERSION,SHARED_CATALOG_VERSION} from '../supabase/functions/_shared/catalog-contract';
 test('dynamic menu HTTP uses verified new products, hides candidates and preserves menu amounts', {skip:process.env.MOGEUM_TEST_SUPABASE_HTTP!=='1',timeout:60000},async()=>{
  const status=JSON.parse(execFileSync('node_modules/.bin/supabase',['status','-o','json'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
  assert.equal(status.API_URL,'http://127.0.0.1:54321');
@@ -29,18 +29,22 @@ test('dynamic menu HTTP uses verified new products, hides candidates and preserv
   const items=[{...parsed.items[0],productId:id,confirmed:true}];
   const result=await request({action:'recommend',photos,items,catalogVersion:SHARED_CATALOG_VERSION});
   assert.equal(result.catalogVersion,SHARED_CATALOG_VERSION);
+  const richParsed=await request({action:'parse',photos,catalogVersion:RICH_CATALOG_VERSION});
+  assert.equal(richParsed.catalogVersion,RICH_CATALOG_VERSION);assert.ok(menuCatalog(richParsed).some(p=>p.id===id));
+  const richResult=await request({action:'recommend',photos,items,catalogVersion:RICH_CATALOG_VERSION});
+  assert.equal(validateMenuResult(richResult,items).catalogVersion,RICH_CATALOG_VERSION);assert.equal(richResult.modelUsed,false);
   assert.ok(menuCatalog(parsed).some(p=>p.id===id));
   assert.ok(validateMenuResult(result,items).catalog?.some(p=>p.id===id));
   assert.equal(result.recommendations[0].productId,id);
   assert.deepEqual(result.recommendations[0].similar,[]);
   const insufficient=await request({action:'recommend',photos,items,catalogVersion:SHARED_CATALOG_VERSION,recommendationVersion:'menu-selection-v1',researchVersion:'menu-research-v1'});
-  assert.equal(insufficient.selectionState,'insufficient');assert.equal(insufficient.modelUsed,false);assert.equal(insufficient.research,undefined);
+  assert.equal(insufficient.selectionState,undefined);assert.equal(insufficient.modelUsed,false);assert.equal(insufficient.research,undefined);
   assert.equal(validateMenuResult(insufficient,items).method,'evidence-rules-v1');
   if(process.env.MOGEUM_TEST_MENU_NO_KEY==='1'){
    const unknown={...items[0],id:`${photoId}:1:manual-research`,name:'합성 미등록 12년',productId:null,price:19000,serving:'45ml'};
    const unavailable=validateMenuResult(await request({action:'recommend',photos,items:[...items,unknown],catalogVersion:SHARED_CATALOG_VERSION,researchVersion:'menu-research-v1'}),[...items,unknown]);
    assert.equal(unavailable.recommendations.find(r=>r.itemId===unknown.id)?.status,'unverified');
-   assert.equal(unavailable.research?.find(r=>r.itemId===unknown.id)?.state,'unavailable');
+   assert.equal(unavailable.research,undefined);
    assert.equal(unavailable.recommendations.length,2);
   }
   const invalid=await client.functions.invoke('menu-recommend',{body:{action:'recommend',photos,items:[{...items[0],name:'다른 제품'}],catalogVersion:SHARED_CATALOG_VERSION}});

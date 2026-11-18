@@ -36,7 +36,7 @@ export function parseCatalogDocument(value: unknown): CatalogDocument {
   const v = obj(value), source = obj(v.source);
   if (
     !["whisky", "beer", "wine", "traditional"].includes(v.category as string) ||
-    !["producer", "expert-tasting"].includes(source.kind as string)
+    !["producer", "expert-tasting", "retailer", "public-dataset"].includes(source.kind as string)
   ) return bad();
   const aliases = (input: unknown) => {
     if (!Array.isArray(input) || input.length > 60) return bad();
@@ -102,3 +102,7 @@ export function catalogProduct(document: CatalogDocument): Product {
   const { familyId: _familyId, ...product } = document;
   return product;
 }
+
+/** Explicit opt-in keeps older binaries on their original source vocabulary. */
+export const RICH_CATALOG_VERSION = "shared-catalog-v2";
+export const isSharedCatalogVersion = (value: unknown) => value === SHARED_CATALOG_VERSION || value === RICH_CATALOG_VERSION;

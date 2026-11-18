@@ -1,8 +1,9 @@
+import {searchCatalog} from '../_shared/catalog-database.ts';
 import {researchMenu} from "./research-service.ts";
 import {MENU_RESEARCH_VERSION,type MenuResearchBatch} from "../_shared/menu-research.ts";
 import {selectMenu} from "./selection-service.ts";
 import {menuSelectionCandidates} from "../_shared/menu-selection.ts";
-import { type CatalogDocument, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION, verifiedCatalogRow, catalogProduct } from "../_shared/catalog-contract.ts";
+import { type CatalogDocument, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION, RICH_CATALOG_VERSION, isSharedCatalogVersion, verifiedCatalogRow, catalogProduct } from "../_shared/catalog-contract.ts";
 import { stableMenuRecommendation } from "../_shared/menu-recommendation.ts";
 import { DiscoverySnapshotChanged } from "../_shared/discovery-snapshot.ts";
 import { readMenuBody, MenuBodyTooLargeError } from "../_shared/menu-body.ts";
@@ -56,13 +57,15 @@ Deno.serve(async (request) => {
   try {
     const raw = await readMenuBody(request);
     const body = JSON.parse(raw);
-    if (body.catalogVersion !== undefined && body.catalogVersion !== SHARED_CATALOG_VERSION)
+    if (body.catalogVersion !== undefined && !isSharedCatalogVersion(body.catalogVersion))
       return reply({code:"INVALID_CATALOG_VERSION"},400);
-    if (body.recommendationVersion !== undefined && (body.recommendationVersion !== "menu-selection-v1" || body.catalogVersion !== SHARED_CATALOG_VERSION))
+    if (body.recommendationVersion !== undefined && (body.recommendationVersion !== "menu-selection-v1" || !isSharedCatalogVersion(body.catalogVersion)))
       return reply({code:"INVALID_RECOMMENDATION_VERSION"},400);
     if(body.researchVersion!==undefined&&(body.researchVersion!==MENU_RESEARCH_VERSION||body.catalogVersion!==SHARED_CATALOG_VERSION))return reply({code:"INVALID_RESEARCH_VERSION"},400);
+    const photos = validatePhotos(body.photos);
+    const rich=body.catalogVersion===RICH_CATALOG_VERSION;
     let catalog: CatalogDocument[] | undefined;
-    if(body.catalogVersion === SHARED_CATALOG_VERSION){
+    if(isSharedCatalogVersion(body.catalogVersion)){
       catalog=[]; let cursor: string | null=null;
       for(;;){
         let query=client.from("product_catalog").select("id,family_id,category,status,revision,document")
@@ -76,13 +79,17 @@ Deno.serve(async (request) => {
         cursor=page.data.at(-1)!.id;
       }
     }
-    const photos = validatePhotos(body.photos);
+    if(rich&&catalog){
+      const lookupItems=body.action==='parse'?parseMenu(photos,[]):validateItems(body.items,photos,'stored');
+      const names=[...lookupItems.map(item=>item.name),...photos.flatMap(photo=>photo.lines.map(line=>line.text))];
+      catalog=[...new Map([...catalog,...await searchCatalog(client,names,lookupItems.flatMap(item=>item.productId?[item.productId]:[]))].map(product=>[product.id,product])).values()];
+    }
     if (body.action === "parse")
       return reply({
         items: parseMenu(photos, catalog?.map(catalogProduct)),
         ...(catalog ? {catalog} : {}),
         parser: "geometry-v5",
-        catalogVersion: catalog ? SHARED_CATALOG_VERSION : PRODUCT_CATALOG_VERSION,
+        catalogVersion: catalog ? (rich?RICH_CATALOG_VERSION:SHARED_CATALOG_VERSION) : PRODUCT_CATALOG_VERSION,
         reviewRequired: true,
       });
     if (body.action !== "recommend")
@@ -91,7 +98,7 @@ Deno.serve(async (request) => {
     if (!items.length || items.some((i) => !i.confirmed))
       return reply({ code: "CONFIRM_MENU" }, 400);
     let research:MenuResearchBatch|undefined;
-    if(body.researchVersion===MENU_RESEARCH_VERSION&&catalog&&items.some(i=>i.productId===null)){
+    if(!rich&&Deno.env.get('MOGEUM_RECOMMENDATION_ENGINE')==='gemini'&&body.researchVersion===MENU_RESEARCH_VERSION&&catalog&&items.some(i=>i.productId===null)){
       const apiKey=Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY"),serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),model=Deno.env.get("MOGEUM_RESEARCH_MODEL");
       if(apiKey&&serviceKey&&model&&catalog.length<=MAX_CATALOG_PRODUCTS-2){
         const admin=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init)=>fetch(input,{...init,signal})}});
@@ -105,7 +112,7 @@ Deno.serve(async (request) => {
       const { data, error } = await client.rpc("taste_summary_context");
       if (error) throw error;
       return data.snapshot as TasteSnapshot;
-    }, comparisonCatalog, !research&&body.recommendationVersion === "menu-selection-v1" ? async (rows, snapshot) => {
+    }, comparisonCatalog, !rich&&Deno.env.get('MOGEUM_RECOMMENDATION_ENGINE')==='gemini'&&!research&&body.recommendationVersion === "menu-selection-v1" ? async (rows, snapshot) => {
       if (!menuSelectionCandidates(rows).length) return {recommendations: rows, modelUsed: false, state: "insufficient"};
       const apiKey = Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY"), serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"), model = Deno.env.get("GEMINI_MODEL");
       if (!apiKey || !serviceKey || !model) return {recommendations: rows, modelUsed: false, state: "unavailable"};
@@ -117,7 +124,7 @@ Deno.serve(async (request) => {
       try {return await selectMenu(admin,{owner:auth.user.id,hash,rows},{apiKey,model});}
       catch {return {recommendations:rows,modelUsed:false,state:"unavailable"};}
     } : undefined);
-    return reply({...result,...(research?{researchVersion:MENU_RESEARCH_VERSION,research:research.entries}:{} )});
+    return reply({modelUsed:false,...result,...(rich?{catalogVersion:RICH_CATALOG_VERSION}:{}),...(research?{researchVersion:MENU_RESEARCH_VERSION,research:research.entries}:{} )});
   } catch (error) {
     if (error instanceof DiscoverySnapshotChanged)
       return reply({ code: "MENU_EVIDENCE_STALE" }, 409);
