@@ -18,3 +18,10 @@ jobs:
       - run: npm run check
       - run: npx expo install --check
       - run: npx expo export --platform all
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m venv /tmp/mogeum-catalog-ci
+      - run: /tmp/mogeum-catalog-ci/bin/pip install -r scripts/catalog/requirements.txt
+      - run: /tmp/mogeum-catalog-ci/bin/python -m unittest discover -s scripts/catalog -p 'test_*.py' -v

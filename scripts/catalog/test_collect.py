@@ -1,9 +1,12 @@
 import json
 import tempfile
+import io
+from unittest.mock import patch
+from PIL import Image
 import unittest
 from pathlib import Path
 
-from collect import category_for, connect, normalize, parse_dailyshot, parse_thesool, store_product
+from collect import category_for, connect, normalize, parse_dailyshot, parse_thesool, store_product, image_job
 
 
 class InventoryTests(unittest.TestCase):
@@ -52,6 +55,42 @@ class InventoryTests(unittest.TestCase):
                 store_product(db, document, source_id, 'dailyshot', url)
             self.assertEqual(db.execute('select count(*) from products').fetchone()[0], 2)
             self.assertEqual(db.execute('select count(*) from product_search').fetchone()[0], 2)
+            db.close()
+
+    def test_binary_image_is_verified_and_keeps_portrait_ratio(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            db = connect(root)
+            url = 'https://dailyshot.co/m/item/1'
+            db.execute('insert into jobs(url,source) values(?,?)', (url,'dailyshot'))
+            document = {'id':'dailyshot-1','name':'Bottle','category':'whisky','aliases':[],
+                        'imageSourceUrl':'https://thesool.com/common/imageView.do?targetId=PR1'}
+            store_product(db,document,'1','dailyshot',url)
+            source = io.BytesIO()
+            Image.new('RGB',(100,200),'white').save(source,'PNG')
+            with patch('collect.fetch',return_value=(source.getvalue(),'application/octet-stream')):
+                image_job(root,('dailyshot-1',document['imageSourceUrl']))
+            row = db.execute('select state,original_path,preview_path,width,height,rights_status from images').fetchone()
+            self.assertEqual(row[0],'downloaded')
+            self.assertTrue(row[1].endswith('.png'))
+            with Image.open(root/row[2]) as preview:
+                self.assertEqual(preview.size,(100,200))
+            self.assertEqual(row[3:5],(100,200))
+            self.assertEqual(row[5],'permission_unconfirmed')
+            db.close()
+
+    def test_invalid_image_bytes_remain_failed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            db = connect(root)
+            url = 'https://dailyshot.co/m/item/1'
+            db.execute('insert into jobs(url,source) values(?,?)', (url,'dailyshot'))
+            document = {'id':'dailyshot-1','name':'Bottle','category':'whisky','aliases':[],
+                        'imageSourceUrl':'https://thesool.com/common/imageView.do?targetId=PR1'}
+            store_product(db,document,'1','dailyshot',url)
+            with patch('collect.fetch',return_value=(b'<html>error</html>','application/octet-stream')):
+                image_job(root,('dailyshot-1',document['imageSourceUrl']))
+            self.assertEqual(db.execute('select state from images').fetchone()[0],'failed')
             db.close()
 
     def test_name_normalization_preserves_strength_decimal(self):

@@ -31,4 +31,5 @@ create table private.product_inventory_images (
 alter table private.product_inventory enable row level security;
 alter table private.product_inventory_images enable row level security;
 revoke all on private.product_inventory,private.product_inventory_images from public,anon,authenticated;
+grant usage on schema private to service_role;
 grant all on private.product_inventory,private.product_inventory_images to service_role;

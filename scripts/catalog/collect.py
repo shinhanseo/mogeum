@@ -61,6 +61,7 @@ def fetch(url, delay=1.0):
 def connect(root):
     db = sqlite3.connect(root / 'catalog.sqlite', timeout=60)
     db.execute('pragma journal_mode=WAL')
+    db.execute('pragma foreign_keys=ON')
     db.executescript('''
     create table if not exists jobs (
       url text primary key, source text not null, state text not null default 'pending',
