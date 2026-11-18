@@ -4,7 +4,7 @@ import {
   MAX_CATALOG_PRODUCTS,
   MAX_WISHLIST_ROWS,
   parseCatalogDocument,
-  SHARED_CATALOG_VERSION,
+  isSharedCatalogVersion,
 } from "../../../supabase/functions/_shared/catalog-contract";
 import { personalizedDrinks } from "../../../supabase/functions/_shared/next-drinks-domain";
 import {
@@ -104,7 +104,7 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
   if (weekly) {
     const g = object(v.generation);
     const states = ["generated", "cached", "insufficient", "running", "backoff", "invalidated", "daily-limit"];
-    if (!states.includes(g.state as string) || v.catalogVersion !== SHARED_CATALOG_VERSION) return fail();
+    if (!states.includes(g.state as string) || !isSharedCatalogVersion(v.catalogVersion)) return fail();
     const selected = g.state === "generated" || g.state === "cached";
     if (v.modelUsed !== selected) return fail();
     const timestamp = (value: unknown): string | undefined => {
@@ -121,7 +121,7 @@ export function parseDiscoveryResult(value: unknown): DiscoveryResult {
     return fail();
   }
   const legacy = v.catalogVersion === PRODUCT_CATALOG_VERSION;
-  if (!legacy && v.catalogVersion !== SHARED_CATALOG_VERSION) return fail();
+  if (!legacy && !isSharedCatalogVersion(v.catalogVersion)) return fail();
   let catalog: Product[];
   try {
     catalog = legacy ? clone(products) : unique(

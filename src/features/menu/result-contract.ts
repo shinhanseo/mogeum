@@ -1,5 +1,5 @@
 import {MENU_RESEARCH_VERSION,validateMenuResearchBatch,type MenuResearchEntry} from "../../../supabase/functions/_shared/menu-research";
-import { parseCatalogDocument, catalogProduct, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION } from "../../../supabase/functions/_shared/catalog-contract";
+import { parseCatalogDocument, catalogProduct, MAX_CATALOG_PRODUCTS, SHARED_CATALOG_VERSION, RICH_CATALOG_VERSION } from "../../../supabase/functions/_shared/catalog-contract";
 import {
   productCandidates,
   products,
@@ -57,7 +57,7 @@ function ids(value: unknown, allowed: Set<string>, nonempty = false): string[] {
   return list as string[];
 }
 export function requireCatalogVersion(value: unknown) {
-  if (![PRODUCT_CATALOG_VERSION, SHARED_CATALOG_VERSION].includes(obj(value).catalogVersion as string))
+  if (![PRODUCT_CATALOG_VERSION, SHARED_CATALOG_VERSION, RICH_CATALOG_VERSION].includes(obj(value).catalogVersion as string))
     throw new Error("MENU_CATALOG_MISMATCH");
 }
 /** Validate before exposing a remote result. Ownership is enforced by verified JWT/RLS on the server, not by this client check. */
@@ -205,7 +205,7 @@ export function validateMenuResult(
     const first = obj(array(data.recommendations, 100)[0]);
     if (!["similar", "known"].includes(first.status as string) || typeof first.score !== "number" || first.score <= 0) fail();
   }
-  return data.catalogVersion === SHARED_CATALOG_VERSION ? {...data, catalog} as MenuResult : value as MenuResult;
+  return data.catalogVersion !== PRODUCT_CATALOG_VERSION ? {...data, catalog} as MenuResult : value as MenuResult;
 }
 export function menuFailureMessage(
   error: unknown,
@@ -231,7 +231,7 @@ export function menuCatalog(value: unknown) {
  if(data.catalogVersion===PRODUCT_CATALOG_VERSION)return products;
  try {
   const catalog=array(data.catalog,MAX_CATALOG_PRODUCTS).map(raw=>catalogProduct(parseCatalogDocument(raw)));
-  if(new Set(catalog.map(p=>p.id)).size!==catalog.length||catalog.some(p=>!p.features.length))fail();
+  if(new Set(catalog.map(p=>p.id)).size!==catalog.length||(data.catalogVersion !== RICH_CATALOG_VERSION && catalog.some(p=>!p.features.length)))fail();
   return catalog;
  } catch { return fail(); }
 }

@@ -17,7 +17,7 @@ export type Product = {
     url: string;
     title: string;
     checkedAt: string;
-    kind: "producer" | "expert-tasting";
+    kind: "producer" | "expert-tasting" | "retailer" | "public-dataset";
   };
   description: string;
 };

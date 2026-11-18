@@ -54,3 +54,15 @@ CSV가 없으면 importer가 공공데이터포털의 공식 다운로드 참조
 ## Expo 호환성 보완
 
 2026-11-18 SDK 58의 권장 패치(Expo 58.0.26 및 대응 모듈)로 package/lock을 정렬하고 동적 설정에 expo-status-bar 플러그인을 추가했다. `expo install --check`, 타입/린트/전체 테스트(491 통과, 15 환경 의존 skip), 세 플랫폼 JS export를 확인했다. 수집기 Python 테스트 8개도 통과했다. 이번 검증은 새 네이티브 스토어 빌드 검증을 포함하지 않는다.
+
+## DB-first recommendation contract (2026-11-19)
+
+New clients opt into `shared-catalog-v2`. The original verified catalog and v1 source vocabulary remain available to released binaries. Source observations are normalized into edition-scoped `catalog_products`; exact normalized aliases and feature IDs have separate indexes. Menu requests fetch only exact current-menu matches (bounded to 950), while next-drink requests fetch up to 100 feature-matched products per category. No full-catalog mobile download is required.
+
+`normalize.py` merges only matching name/strength/volume/producer identities. Unknown producers remain source-scoped. Volume units are normalized, but differing strengths, wine name years and gift sets remain separate. Structured retailer aroma terms never imply sweetness, ABV or personal experience. Unrecognized terms remain unmapped. Products without supported tasting terms are `identity-only`: searchable, but never personal recommendation evidence. The original source URL, date, source kind, literal evidence and raw observation links are retained. Public image reuse still requires a separately reviewed right; this migration does not publish image binaries.
+
+`export_sql.py` prepares private source inventory imports plus bounded `inventory-sql/*.sql`; `export_canonical_sql.py` prepares replay-safe `canonical-sql/*.sql` after normalization. Apply source batches before canonical batches. Held decisions survive reimport. All generated data and SQL remain gitignored.
+
+By default `next-drinks` and `menu-recommend` use evidence rules against the database without Gemini selection/search calls. Legacy provider selection can only be explicitly enabled server-side with `MOGEUM_RECOMMENDATION_ENGINE=gemini` for v1 clients. The bartender and note prose providers are separate features and unchanged. Old clients keep their catalog vocabulary; the expanded catalog requires the new app contract.
+
+Validation includes normalization regressions, transport bounds, source provenance, SQL import replay, RLS, held products, wishlist family exclusion, legacy/v2 HTTP and missing-provider-key behavior. Production imports and function deployment must follow passing CI; collection counts are observations rather than unique verified drinks.

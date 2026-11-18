@@ -1,4 +1,5 @@
-import { SHARED_CATALOG_VERSION, verifiedCatalogRow, catalogProduct, MAX_CATALOG_PRODUCTS } from "../../../supabase/functions/_shared/catalog-contract";
+import {searchCatalog} from "../../../supabase/functions/_shared/catalog-database";
+import { RICH_CATALOG_VERSION, verifiedCatalogRow, catalogProduct, MAX_CATALOG_PRODUCTS } from "../../../supabase/functions/_shared/catalog-contract";
 import { refreshMenuEvidence } from "./evidence";
 import { tastePhotoUrls } from "../taste/repository";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -42,7 +43,7 @@ export async function menuRequest(
   if (items) validateItems(items, photos, "stored");
   const scoped = await menuClient(client, owner);
   const { data, error } = await scoped.functions.invoke("menu-recommend", {
-    body: { action: items ? "recommend" : "parse", photos, items, catalogVersion: SHARED_CATALOG_VERSION, ...(items && options.gemini ? {recommendationVersion: "menu-selection-v1"} : {}), ...(items && options.research ? {researchVersion:"menu-research-v1"} : {}) },
+    body: { action: items ? "recommend" : "parse", photos, items, catalogVersion: RICH_CATALOG_VERSION },
     timeout: options.research ? 85000 : 50000,
   });
   if (error) {
@@ -115,7 +116,7 @@ export async function loadMenuEvidence(
   });
 }
 
-export async function loadMenuCatalog(client: SupabaseClient, owner: string) {
+export async function loadMenuCatalog(client: SupabaseClient, owner: string, names: string[] = [], ids: string[] = []) {
  const scoped=await menuClient(client,owner), signal=AbortSignal.timeout(20000);
  const catalog: import("../../../supabase/functions/_shared/product-catalog").Product[]=[];
  let cursor:string|null=null;
@@ -129,5 +130,5 @@ export async function loadMenuCatalog(client: SupabaseClient, owner: string) {
   if(data.length<200)break;
   cursor=data.at(-1)!.id;
  }
- return catalog;
+ return [...new Map([...catalog,...await searchCatalog(scoped,names,ids)].map(product=>[product.id,product])).values()];
 }

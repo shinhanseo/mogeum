@@ -34,6 +34,13 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'does not match'):
             parse_dailyshot(html,'https://dailyshot.co/m/item/1')
 
+    def test_visible_structured_notes_are_collected_without_hydration(self):
+        html='<script type="application/ld+json">'+json.dumps({'@type':'Product','name':'Test Whisky','category':['위스키']})+'</script>'
+        html+='<div><div><h3>Aroma</h3><span>향</span></div><div>사과, 오크</div></div>'
+        parsed,_=parse_dailyshot(html,'https://dailyshot.co/m/item/1')
+        self.assertEqual(parsed['retailerProvidedNotes'],[{'dimension':'향','terms':'사과, 오크'}])
+        self.assertTrue(parsed['tastingNotesRead'])
+
     def test_domestic_title_uses_product_not_section_heading(self):
         html = '''<div class="product-view"><dl><dt class="subject">테스트 약주</dt>
         <dd><div class="info"><div class="title">상세 정보</div><ul class="info-list">

@@ -31,6 +31,8 @@ Image.MAX_IMAGE_PIXELS = 40_000_000
 LIMITER_LOCK = threading.Lock()
 NEXT_REQUEST = {}
 POLICIES = {}
+REQUEST_INTERVAL = 1.0
+ROBOT_INTERVALS = {}
 
 
 def now():
@@ -41,14 +43,24 @@ def normalize(value):
     return re.sub(r'[^\w.]', '', unicodedata.normalize('NFKC', value).casefold())
 
 
-def fetch(url, delay=1.0):
+def fetch(url, delay=None):
     host = urllib.parse.urlsplit(url).hostname
+    interval = max(REQUEST_INTERVAL if delay is None else delay, ROBOT_INTERVALS.get(host, 0))
     with LIMITER_LOCK:
         scheduled = max(time.monotonic(), NEXT_REQUEST.get(host, 0))
-        NEXT_REQUEST[host] = scheduled + delay
+        NEXT_REQUEST[host] = scheduled + interval
     time.sleep(max(0, scheduled - time.monotonic()))
     request = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
-    with urllib.request.urlopen(request, timeout=30) as response:
+    try:
+        response = urllib.request.urlopen(request, timeout=30)
+    except urllib.error.HTTPError as error:
+        if error.code in (429, 503):
+            retry = error.headers.get('Retry-After', '30')
+            cooldown = int(retry) if retry.isdigit() else 60
+            with LIMITER_LOCK:
+                NEXT_REQUEST[host] = time.monotonic() + max(30, cooldown)
+        raise
+    with response:
         # Do not follow redirects into an unrelated host.
         if urllib.parse.urlsplit(response.url).hostname != host:
             raise ValueError('Cross-host redirect requires source review')
@@ -97,6 +109,7 @@ def policy(db, source, base):
     text = data.decode('utf-8', errors='replace')
     robots.parse(text.splitlines())
     POLICIES[source] = robots
+    ROBOT_INTERVALS[urllib.parse.urlsplit(base).hostname] = robots.crawl_delay(USER_AGENT) or 0
     db.execute('insert or replace into source_policies values(?,?,?,?)',
                (source, robots_url, text, now()))
     db.commit()
@@ -201,7 +214,7 @@ def parse_dailyshot(data, url):
     for section in soup.find_all(string=re.compile(r'^Information$')):
         parent = section.parent.parent
         tokens = list(parent.stripped_strings)
-        for key in ('종류', '국가', '용량', '도수', '품종', '지역', '케이스'):
+        for key in ('종류', '국가', '용량', '도수', '품종', '지역', '케이스', '빈티지', '숙성연수'):
             if key in tokens and tokens.index(key) + 1 < len(tokens):
                 props.setdefault(key, tokens[tokens.index(key) + 1])
     categories = product.get('category', [])
@@ -224,6 +237,19 @@ def parse_dailyshot(data, url):
     images = product.get('image') or []
     if isinstance(images, str):
         images = [images]
+    provided_notes = [note for note in (public_details.get('tasting_notes') or [])
+                      if isinstance(note, dict)]
+    if not provided_notes:
+        for heading in soup.find_all(['h3','h4']):
+            dimension = {'Aroma':'향','Taste':'맛','Finish':'여운'}.get(heading.get_text(strip=True))
+            if not dimension or not heading.parent or not heading.parent.parent:
+                continue
+            group = heading.parent.parent
+            children = [child for child in group.children if getattr(child,'name',None)]
+            if len(children) == 2 and heading in children[0].descendants:
+                value = children[1].get_text(' ',strip=True)
+                if 0 < len(value) <= 500:
+                    provided_notes.append({'label_ko':dimension,'value':value})
     # Never ingest customer review names, review bodies, or marketing prose.
     document = {
         'id': 'dailyshot-' + source_id, 'name': product['name'],
@@ -231,9 +257,10 @@ def parse_dailyshot(data, url):
                                  str(props.get('국가', ''))),
         'sourceCategories': categories, 'attributes': props,
         'sourceProductId': public_details.get('top_product_id'),
+        'tastingNotesRead': True,
         'retailerProvidedNotes': [
             {'dimension': note.get('label_ko'), 'terms': note.get('value')}
-            for note in (public_details.get('tasting_notes') or [])
+            for note in provided_notes
             if isinstance(note, dict) and note.get('label_ko') in ('향', '맛', '여운')
         ],
         'editionFields': {'yearMentionInName': (re.search(r'(?<!\d)(?:19|20)\d{2}(?!\d)', product['name']).group(0)
@@ -293,7 +320,7 @@ def store_product(db, document, source_id, source, url):
     db.commit()
 
 
-def product_job(root, row):
+def product_job(root, row, paired_images=False):
     url, source = row
     db = connect(root)
     try:
@@ -303,6 +330,8 @@ def product_job(root, row):
             raise ValueError('Expected product HTML')
         document, source_id = (parse_dailyshot if source == 'dailyshot' else parse_thesool)(data, url)
         store_product(db, document, source_id, source, url)
+        if paired_images and document.get('imageSourceUrl'):
+            image_job(root, (document['id'], document['imageSourceUrl']))
     except Exception as error:
         status = 'gone' if isinstance(error, urllib.error.HTTPError) and error.code in (404, 410) else 'failed'
         db.execute('update jobs set state=?,error=?,updated_at=? where url=?',
@@ -319,7 +348,7 @@ def image_job(root, row):
         host = urllib.parse.urlsplit(url).hostname
         if host not in ('thesool.com', 'd1e2y5wc27crnp.cloudfront.net'):
             raise ValueError('Image origin requires review: ' + str(host))
-        data, content_type = fetch(url, delay=0.5)
+        data, content_type = fetch(url)
         if not (content_type.startswith('image/') or content_type == 'application/octet-stream'):
             raise ValueError('Expected image content type')
         digest = hashlib.sha256(data).hexdigest()
@@ -375,8 +404,14 @@ def main():
     parser.add_argument('--images', type=int, default=0)
     parser.add_argument('--workers', type=int, default=3)
     parser.add_argument('--retry', action='store_true')
+    parser.add_argument('--interval', type=float, default=1.0)
+    parser.add_argument('--paired-images', action='store_true')
     parser.add_argument('--continuous', action='store_true')
     args = parser.parse_args()
+    global REQUEST_INTERVAL
+    if not 0.25 <= args.interval <= 60:
+        parser.error('Request interval must be between 0.25 and 60 seconds')
+    REQUEST_INTERVAL = args.interval
     if args.limit < 0 or args.images < 0 or args.workers < 1:
         parser.error('Counts must be non-negative and workers positive')
     if args.continuous and (args.limit == 0 or args.images == 0):
@@ -404,7 +439,7 @@ def main():
             db.execute("update jobs set attempts=attempts+1,updated_at=? where url=?", (now(), url))
         db.commit()
         with ThreadPoolExecutor(max_workers=min(args.workers, 4)) as pool:
-            for index, _ in enumerate(pool.map(lambda row: product_job(args.root, row), rows), 1):
+            for index, _ in enumerate(pool.map(lambda row: product_job(args.root, row, args.paired_images), rows), 1):
                 if index % 50 == 0:
                     report(db, args.root)
         rows = db.execute("select product_id,source_url from images where state='pending' limit ?",

@@ -66,13 +66,15 @@ export function MenuFlow({
   const [result, setResult] = useState<MenuResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const catalogLookup = JSON.stringify(draft.items.map(item => [item.name, item.productId]));
   useEffect(()=>{
     if(adapter)return;
     let active=true;
     const client=getSupabase();
-    if(client)void loadMenuCatalog(client,owner).then(rows=>{if(active)setCatalog(rows);}).catch(()=>{if(active)setError("제품 정보를 불러오지 못했어요. 메뉴 다시 읽기를 눌러 다시 확인해주세요.");});
-    return ()=>{active=false;};
-  },[owner,adapter]);
+    const lookup: [string, string | null][] = JSON.parse(catalogLookup);
+    const timer = setTimeout(()=>{if(client)void loadMenuCatalog(client,owner,lookup.map(row=>row[0]),lookup.flatMap(row=>row[1]?[row[1]]:[])).then(rows=>{if(active)setCatalog(rows);}).catch(()=>{if(active)setError("제품 정보를 불러오지 못했어요. 메뉴 다시 읽기를 눌러 다시 확인해주세요.");});},300);
+    return ()=>{active=false;clearTimeout(timer);};
+  },[owner,adapter,catalogLookup]);
   const alive = useRef(true);
   const epoch = useRef(0);
   const lock = useRef(false);
