@@ -14,7 +14,8 @@ export function discoveryPrefill(
     wine: "와인",
     traditional: "전통주",
   } as const;
-  const year = product.category === "wine"
+  const explicitVintage = !["retailer", "public-dataset"].includes(product.source.kind);
+  const year = product.category === "wine" && explicitVintage
     ? product.edition.match(/(?:19|20)\d{2}/)?.[0]
     : undefined;
   return {
@@ -23,7 +24,7 @@ export function discoveryPrefill(
     vintageYear: year ?? "",
     vintageMode: year
       ? ("year" as const)
-      : product.category === "wine" && /NV/i.test(product.edition)
+      : product.category === "wine" && explicitVintage && /NV/i.test(product.edition)
       ? ("NV" as const)
       : ("unknown" as const),
   };
