@@ -4,6 +4,7 @@ Dry-run by default. Source data and image files remain outside git.
 """
 import argparse,fcntl,hashlib,json,sqlite3,subprocess
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor,as_completed
 PROJECT='vsckzjfgzdpzkzuumldf'
 
 def plan(root):
@@ -23,8 +24,23 @@ def plan(root):
     if not files:raise RuntimeError('MISSING_SQL_BATCHES')
     return files,report
 
+def import_phases(files):
+    # Images have inventory FKs; canonical products/link rows require all source batches.
+    products,mixed,images,canonical=[],[],[],[]
+    for file in files:
+        if file.parent.name=='canonical-sql':canonical.append(file);continue
+        sql=file.read_text()
+        has_products='insert into private.product_inventory(' in sql
+        has_images='insert into private.product_inventory_images(' in sql
+        if has_products and has_images:mixed.append(file)
+        elif has_products:products.append(file)
+        elif has_images:images.append(file)
+        else:raise RuntimeError('UNKNOWN_IMPORT_BATCH')
+    return [products,mixed,images,canonical]
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--root',type=Path,required=True)
+    parser.add_argument('--workers',type=int,choices=[1,2,3],default=3)
     parser.add_argument('--project-ref',choices=[PROJECT],default=PROJECT);parser.add_argument('--execute',action='store_true')
     args=parser.parse_args();root=args.root.resolve();files,report=plan(root)
     print(json.dumps({'project':args.project_ref,'batches':len(files),'execute':args.execute,**report}),flush=True)
@@ -34,15 +50,22 @@ def main():
     checkpoint=json.loads(checkpoint_path.read_text()) if checkpoint_path.exists() else {'project':args.project_ref,'completed':[]}
     if checkpoint['project']!=args.project_ref:raise RuntimeError('CHECKPOINT_PROJECT_MISMATCH')
     completed=set(checkpoint['completed'])
-    for index,file in enumerate(files):
+    def apply(file):
         digest=hashlib.sha256(file.read_bytes()).hexdigest()
         key=str(file.relative_to(root))+':'+digest
-        if key in completed:continue
+        if key in completed:return None
         result=subprocess.run(['node_modules/.bin/supabase','db','query','--linked','--project-ref',args.project_ref,'--file',str(file)],capture_output=True,text=True,timeout=120)
         if result.returncode:raise RuntimeError('IMPORT_BATCH_FAILED: '+str(file.relative_to(root))+' '+result.stderr[-1000:])
-        completed.add(key);checkpoint['completed']=sorted(completed)
-        temporary=checkpoint_path.with_suffix('.tmp');temporary.write_text(json.dumps(checkpoint,indent=2));temporary.replace(checkpoint_path)
-        print(json.dumps({'batch':index+1,'total':len(files)}),flush=True)
+        return key
+    current_keys={str(file.relative_to(root))+':'+hashlib.sha256(file.read_bytes()).hexdigest() for file in files}
+    for phase in import_phases(files):
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            for future in as_completed([pool.submit(apply,file) for file in phase]):
+                key=future.result()
+                if key is None:continue
+                completed.add(key);checkpoint['completed']=sorted(completed)
+                temporary=checkpoint_path.with_suffix('.tmp');temporary.write_text(json.dumps(checkpoint,indent=2));temporary.replace(checkpoint_path)
+                print(json.dumps({'batch':len(completed & current_keys),'total':len(files)}),flush=True)
     (root/'production-import-finished.json').write_text(json.dumps({'project':args.project_ref,**report,'batches':len(files)},indent=2))
 
 if __name__=='__main__':main()
